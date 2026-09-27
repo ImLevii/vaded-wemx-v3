@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\AppTaskLog;
+use App\Models\IntegratedMarketplaceInstallation;
 use App\Services\WemxGitHubReleases;
 use Livewire\Volt\Component;
 
@@ -22,6 +23,10 @@ new class extends Component
 
         if (! $this->hasGitHubUpdate()) {
             session()->forget('admin_dismiss_update_toast');
+        }
+
+        if ($this->marketplaceUpdates()->isEmpty()) {
+            session()->forget('admin_dismiss_marketplace_update_toast');
         }
     }
 
@@ -61,6 +66,35 @@ new class extends Component
     public function closeUpdateToast(): void
     {
         session()->put('admin_dismiss_update_toast', true);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, IntegratedMarketplaceInstallation>
+     */
+    public function marketplaceUpdates()
+    {
+        if (! auth()->user()?->hasPermission('admin.integrated-marketplace')) {
+            return collect();
+        }
+
+        return IntegratedMarketplaceInstallation::query()
+            ->where('update_available', true)
+            ->orderBy('resource_name')
+            ->get()
+            ->filter(fn (IntegratedMarketplaceInstallation $installation): bool => $installation->isPresent())
+            ->values();
+    }
+
+    public function marketplaceUpdateSignature(): string
+    {
+        return $this->marketplaceUpdates()
+            ->map(fn (IntegratedMarketplaceInstallation $installation): string => $installation->resource_slug.':'.$installation->latest_version)
+            ->implode('|');
+    }
+
+    public function closeMarketplaceUpdateToast(): void
+    {
+        session()->put('admin_dismiss_marketplace_update_toast', $this->marketplaceUpdateSignature());
     }
 }
 
@@ -112,6 +146,43 @@ new class extends Component
                 <a href="{{ route('admin.updates.index') }}" wire:navigate class="btn btn-primary" style="padding: 6px 12px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-refresh"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" /></svg>
                     {{ __('View updates') }}
+                </a>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @php($marketplaceUpdates = $this->marketplaceUpdates())
+    @if($marketplaceUpdates->isNotEmpty() && session('admin_dismiss_marketplace_update_toast') !== $this->marketplaceUpdateSignature())
+    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" data-bs-toggle="toast">
+        <div class="toast-header">
+            <strong class="me-auto">Marketplace updates</strong>
+            <button type="button" wire:click="closeMarketplaceUpdateToast" class="ms-2 btn-close" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+            {{ $marketplaceUpdates->count() === 1
+                ? 'A resource you installed from the marketplace has an update ready.'
+                : $marketplaceUpdates->count().' resources you installed from the marketplace have an update ready.' }}
+            <ul class="mb-0 mt-2 ps-3">
+                @foreach($marketplaceUpdates as $update)
+                    <li>
+                        {{ $update->resource_name }}
+                        <span class="text-secondary">
+                            @if(filled($update->version))
+                                version {{ $update->version }} installed
+                            @else
+                                installed
+                            @endif
+                            @if($update->latest_version)
+                                , version {{ $update->latest_version }} available
+                            @endif
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
+            <div class="mt-2 pt-2 border-top">
+                <a href="{{ route('admin.marketplace.installed') }}" wire:navigate class="btn btn-primary" style="padding: 6px 12px;">
+                    View installed resources
                 </a>
             </div>
         </div>

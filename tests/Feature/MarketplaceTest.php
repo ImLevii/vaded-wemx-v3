@@ -551,12 +551,12 @@ class MarketplaceTest extends TestCase
         $this->assertSame(18, $response->json('per_page'));
         $this->assertNotEmpty($response->json('categories'));
         $this->assertEqualsCanonicalizing(
-            MarketplaceCategory::INTEGRATED_SLUGS,
+            MarketplaceCategory::query()->visible()->pluck('slug')->all(),
             collect($response->json('categories'))->pluck('slug')->all(),
         );
     }
 
-    public function test_integrated_api_hides_resources_that_are_not_servers_modules_or_gateways(): void
+    public function test_integrated_api_lists_every_category_but_refuses_installs_outside_supported_ones(): void
     {
         $theme = MarketplaceCategory::query()->where('slug', 'client-theme')->firstOrFail();
         $resource = $this->createResource([
@@ -575,10 +575,11 @@ class MarketplaceTest extends TestCase
 
         $this->getJson('/api/v1/marketplace/resources')
             ->assertOk()
-            ->assertJsonMissing(['name' => 'Client theme']);
+            ->assertJsonFragment(['name' => 'Client theme']);
 
         $this->getJson('/api/v1/marketplace/resources/'.$resource->slug)
-            ->assertNotFound();
+            ->assertOk()
+            ->assertJsonPath('data.category.slug', 'client-theme');
 
         $this->expectException(ValidationException::class);
 
@@ -721,8 +722,16 @@ class MarketplaceTest extends TestCase
         $this->assertSame(2, $version->fresh()->downloads_count);
     }
 
-    public function test_integrated_downloads_are_only_available_for_servers_modules_and_gateways(): void
+    public function test_integrated_downloads_are_only_available_for_installable_categories(): void
     {
+        foreach (MarketplaceCategory::INSTALLABLE_SLUGS as $slug) {
+            $this->assertTrue(MarketplaceCategory::query()->where('slug', $slug)->firstOrFail()->supportsIntegratedInstall());
+        }
+
+        foreach (['client-theme', 'admin-theme', 'other'] as $slug) {
+            $this->assertFalse(MarketplaceCategory::query()->where('slug', $slug)->firstOrFail()->supportsIntegratedInstall());
+        }
+
         $theme = MarketplaceCategory::query()->where('slug', 'client-theme')->firstOrFail();
         $resource = $this->createResource(['category_id' => $theme->id]);
 
@@ -739,7 +748,16 @@ class MarketplaceTest extends TestCase
 
         Volt::test('client_area.default.marketplace.livewire.creator-resource-versions', ['resourceId' => $resource->id])
             ->assertDontSee('Downloadable from the integrated marketplace')
-            ->assertSee('Integrated marketplace downloads are available for servers, modules, and payment gateways.');
+            ->assertSee('One-click installs are available for servers, modules, payment gateways, email themes, and invoice themes.');
+
+        $email = $this->createResource([
+            'name' => 'Welcome emails',
+            'category_id' => MarketplaceCategory::query()->where('slug', 'email-theme')->value('id'),
+        ]);
+
+        Volt::test('client_area.default.marketplace.livewire.creator-resource-versions', ['resourceId' => $email->id])
+            ->assertSee('Downloadable from the integrated marketplace')
+            ->assertSet('version_integrated', true);
 
         $module = $this->createResource();
 

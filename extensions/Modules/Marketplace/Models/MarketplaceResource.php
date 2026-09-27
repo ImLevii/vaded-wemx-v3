@@ -328,8 +328,7 @@ class MarketplaceResource extends Model
     public function scopeIntegrated(Builder $query): Builder
     {
         return $query->listed()
-            ->where('available_on_integrated_marketplace', true)
-            ->whereHas('category', fn (Builder $category) => $category->integrated());
+            ->where('available_on_integrated_marketplace', true);
     }
 
     public function isFree(): bool

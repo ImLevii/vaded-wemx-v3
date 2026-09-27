@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Mail\EmailTheme;
 use App\Models\EmailTemplate;
 use App\Models\MassMail;
 use App\Models\Package;
@@ -32,6 +33,7 @@ class MassMailActions extends Action
             'body' => ['required', 'string', 'max:20000'],
             'button_text' => ['nullable', 'string', 'max:255', 'required_with:button_url'],
             'button_url' => ['nullable', 'url', 'max:2048', 'required_with:button_text'],
+            'theme' => ['nullable', 'string', 'max:255', Rule::in(array_keys(EmailTheme::all()))],
             'audience_type' => ['required', Rule::in(MassMail::AUDIENCE_TYPES)],
             'package_id' => [
                 Rule::requiredIf(fn () => ($input['audience_type'] ?? null) === MassMail::AUDIENCE_WITH_PACKAGE),
@@ -98,6 +100,7 @@ class MassMailActions extends Action
             'body' => $validated['body'],
             'button_text' => $validated['button_text'] ?? null,
             'button_url' => $validated['button_url'] ?? null,
+            'theme' => $validated['theme'] ?? EmailTheme::default()->slug,
             'audience_type' => $validated['audience_type'],
             'filters' => $filters === [] ? null : $filters,
             'status' => MassMail::STATUS_QUEUED,
@@ -210,6 +213,7 @@ class MassMailActions extends Action
             'mailable_id' => $massMail->id,
             'subject' => $subject,
             'lines' => $lines,
+            'theme' => $massMail->theme,
         ];
 
         if ($massMail->button_text && $massMail->button_url) {

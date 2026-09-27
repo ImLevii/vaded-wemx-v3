@@ -343,6 +343,8 @@ return [
     'mass_mail_no_recipients' => 'No customers match this audience.',
     'mass_mail_body_placeholder' => 'Write the email body. Markdown is supported.',
     'mass_mail_body_hint' => 'Each line is sent as markdown. Use placeholders to personalize the message for each customer.',
+    'mass_mail_theme' => 'Email theme',
+    'mass_mail_theme_hint' => 'The layout used for every message in this send.',
     'mass_mail_when' => 'When to send',
     'mass_mail_send_now' => 'Send as soon as the scheduler runs',
     'mass_mail_schedule' => 'Schedule',

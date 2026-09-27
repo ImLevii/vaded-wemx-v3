@@ -47,8 +47,12 @@ class IntegratedMarketplaceInstaller
         $resource = $response->json('data');
         $category = is_array($resource) && is_array($resource['category'] ?? null) ? $resource['category'] : [];
 
-        if (! $response->successful() || ! is_array($resource) || ! in_array($category['slug'] ?? null, IntegratedMarketplace::CATEGORY_SLUGS, true)) {
+        if (! $response->successful() || ! is_array($resource)) {
             throw new RuntimeException('This resource could not be loaded from the marketplace.');
+        }
+
+        if (! in_array($category['slug'] ?? null, IntegratedMarketplace::INSTALLABLE_CATEGORY_SLUGS, true)) {
+            throw new RuntimeException('This resource cannot be installed from the marketplace.');
         }
 
         return $resource;
@@ -231,19 +235,27 @@ class IntegratedMarketplaceInstaller
             : null;
         $category = is_array($resource['category'] ?? null) ? $resource['category'] : [];
 
+        $slug = (string) ($resource['slug'] ?? $this->relativePath($destination));
+        $installedVersion = (string) ($version['version'] ?? '');
+        $latestVersion = IntegratedMarketplaceInstallation::query()
+            ->where('resource_slug', $slug)
+            ->value('latest_version');
+
         IntegratedMarketplaceInstallation::query()->updateOrCreate(
-            ['resource_slug' => (string) ($resource['slug'] ?? $this->relativePath($destination))],
+            ['resource_slug' => $slug],
             [
                 'user_id' => auth()->id(),
                 'marketplace_resource_id' => isset($resource['id']) ? (int) $resource['id'] : null,
                 'resource_name' => (string) ($resource['name'] ?? 'Resource'),
                 'category' => is_string($category['name'] ?? null) ? $category['name'] : null,
                 'version_id' => isset($version['id']) ? (int) $version['id'] : null,
-                'version' => (string) ($version['version'] ?? ''),
+                'version' => $installedVersion,
                 'namespace' => $namespace,
                 'identifier' => $extension?->identifier,
                 'path' => $this->relativePath($destination),
                 'installed_at' => now(),
+                'update_available' => is_string($latestVersion)
+                    && app(IntegratedMarketplace::class)->isNewerVersion($latestVersion, $installedVersion),
             ],
         );
     }

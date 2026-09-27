@@ -22,6 +22,7 @@ class MassMailFactory extends Factory
             'created_by' => User::factory(),
             'subject' => fake()->sentence(4),
             'body' => "Hello {{user_name}},\n\nThis is a message from {{app_name}}.",
+            'theme' => 'default',
             'audience_type' => MassMail::AUDIENCE_ALL_CUSTOMERS,
             'filters' => null,
             'status' => MassMail::STATUS_QUEUED,

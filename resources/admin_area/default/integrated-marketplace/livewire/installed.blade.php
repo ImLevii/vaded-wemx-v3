@@ -63,7 +63,14 @@ new class extends Component
                                         @endif
                                     </div>
                                 </td>
-                                <td>{{ $installation->version !== '' ? $installation->version : '—' }}</td>
+                                <td>{{ $installation->version !== '' ? $installation->version : '—' }}
+                                    @if($present && $installation->update_available)
+                                        <div class="mt-1"><span class="badge bg-yellow-lt">Update available</span></div>
+                                        @if($installation->latest_version)
+                                            <div class="text-secondary small">Version {{ $installation->latest_version }} is ready to install</div>
+                                        @endif
+                                    @endif
+                                </td>
                                 <td class="text-secondary"><code>{{ $installation->namespace ?: '—' }}</code></td>
                                 <td class="text-secondary"><code>{{ $installation->path }}</code></td>
                                 <td>

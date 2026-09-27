@@ -1,6 +1,8 @@
 @php
     /** @var array<string, mixed> $resource */
+    /** @var \App\Models\IntegratedMarketplaceInstallation|null $installation */
     $latest = $resource['latest_version'] ?? ($resource['versions'][0]['version'] ?? null);
+    $installation = $installation ?? null;
 @endphp
 
 <div class="col-sm-6 col-lg-4" wire:key="resource-{{ $resource['slug'] }}">
@@ -16,6 +18,9 @@
                         <span class="badge {{ ($resource['price'] ?? '') === 'Free' ? 'bg-green-lt' : 'bg-yellow-lt' }}">{{ $resource['price'] }}</span>
                         @if(! empty($resource['featured']))
                             <span class="badge bg-purple-lt">Featured</span>
+                        @endif
+                        @if($installation)
+                            <span class="badge bg-green-lt">Installed</span>
                         @endif
                     </div>
                     <h3 class="card-title mb-1 d-flex align-items-center gap-1">

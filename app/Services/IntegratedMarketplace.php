@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\IntegratedMarketplaceInstallation;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
@@ -10,7 +11,13 @@ use Illuminate\Support\Facades\Http;
 
 class IntegratedMarketplace
 {
-    public const CATEGORY_SLUGS = ['server', 'module', 'payment-gateway'];
+    public const INSTALLABLE_CATEGORY_SLUGS = [
+        'server',
+        'module',
+        'payment-gateway',
+        'email-theme',
+        'invoice-theme',
+    ];
 
     public const PER_PAGE = 18;
 
@@ -34,13 +41,13 @@ class IntegratedMarketplace
     {
         $query = [
             'search' => trim((string) ($filters['search'] ?? '')),
-            'category' => (string) ($filters['category'] ?? ''),
+            'category' => $this->normalizeCategory($filters['category'] ?? null) ?? '',
             'sort_by' => (string) ($filters['sort_by'] ?? 'popular'),
             'page' => max(1, (int) ($filters['page'] ?? 1)),
             'per_page' => self::PER_PAGE,
         ];
 
-        if ($query['category'] === '' || ! in_array($query['category'], self::CATEGORY_SLUGS, true)) {
+        if ($query['category'] === '') {
             unset($query['category']);
         }
 
@@ -48,7 +55,7 @@ class IntegratedMarketplace
             unset($query['search']);
         }
 
-        $key = 'integrated-marketplace.catalog.'.md5((string) json_encode($query));
+        $key = 'integrated-marketplace.catalog.v2.'.md5((string) json_encode($query));
 
         return $this->remember($key, fn (): array => $this->fetchCatalog($query), self::CATALOG_CACHE_TTL_SECONDS);
     }
@@ -56,15 +63,124 @@ class IntegratedMarketplace
     /**
      * @return array{resource: array<string, mixed>|null, error: string|null}
      */
-    public function resource(string $slug): array
+    public function resource(string $slug, bool $fresh = false): array
     {
         $slug = trim($slug);
+
+        if ($fresh) {
+            $this->forgetResource($slug);
+        }
 
         return $this->remember(
             'integrated-marketplace.resource.'.$slug,
             fn (): array => $this->fetchResource($slug),
             self::RESOURCE_CACHE_TTL_SECONDS,
         );
+    }
+
+    public function canInstall(mixed $resource): bool
+    {
+        if (! is_array($resource)) {
+            return false;
+        }
+
+        $category = is_array($resource['category'] ?? null) ? $resource['category'] : [];
+
+        return in_array($category['slug'] ?? null, self::INSTALLABLE_CATEGORY_SLUGS, true);
+    }
+
+    public function normalizeCategory(mixed $category): ?string
+    {
+        $category = trim((string) $category);
+
+        if ($category === '' || preg_match('/\A[a-z0-9]+(?:-[a-z0-9]+)*\z/', $category) !== 1) {
+            return null;
+        }
+
+        return $category;
+    }
+
+    public function isNewerVersion(string $latest, string $installed): bool
+    {
+        $latest = $this->normalizeVersion($latest);
+        $installed = $this->normalizeVersion($installed);
+
+        if ($latest === '' || $installed === '') {
+            return false;
+        }
+
+        return version_compare($latest, $installed, '>');
+    }
+
+    public function refreshInstalledUpdates(): int
+    {
+        $updates = 0;
+
+        foreach (IntegratedMarketplaceInstallation::query()->orderBy('id')->get() as $installation) {
+            if (! $installation->isPresent()) {
+                if ($installation->update_available) {
+                    $installation->update([
+                        'update_available' => false,
+                        'update_checked_at' => now(),
+                    ]);
+                }
+
+                continue;
+            }
+
+            $payload = $this->resource($installation->resource_slug, fresh: true);
+
+            if (($payload['error'] ?? null) !== null) {
+                continue;
+            }
+
+            $latest = $this->latestInstallableVersion(is_array($payload['resource'] ?? null) ? $payload['resource'] : null);
+            $available = is_string($latest) && $this->isNewerVersion($latest, (string) ($installation->version ?: ''));
+
+            $installation->update([
+                'latest_version' => $latest,
+                'update_available' => $available,
+                'update_checked_at' => now(),
+            ]);
+
+            if ($available) {
+                $updates++;
+            }
+        }
+
+        return $updates;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $resource
+     */
+    private function latestInstallableVersion(?array $resource): ?string
+    {
+        $versions = is_array($resource['versions'] ?? null) ? $resource['versions'] : [];
+        $latest = null;
+
+        foreach ($versions as $version) {
+            if (! is_array($version) || empty($version['integrated_marketplace'])) {
+                continue;
+            }
+
+            $number = trim((string) ($version['version'] ?? ''));
+
+            if ($number === '') {
+                continue;
+            }
+
+            if ($latest === null || version_compare($this->normalizeVersion($number), $this->normalizeVersion($latest), '>')) {
+                $latest = $number;
+            }
+        }
+
+        return $latest;
+    }
+
+    private function normalizeVersion(string $version): string
+    {
+        return ltrim(strtolower(trim($version)), 'v');
     }
 
     public function forgetResource(string $slug): void
@@ -165,10 +281,13 @@ class IntegratedMarketplace
         $categories = is_array($json['categories'] ?? null) ? $json['categories'] : [];
 
         return [
-            'resources' => array_values(array_filter(array_map($this->summary(...), $resources), $this->isIntegratedCategory(...))),
-            'featured' => array_values(array_filter(array_map($this->summary(...), $featured), $this->isIntegratedCategory(...))),
+            'resources' => array_values(array_filter(array_map($this->summary(...), $resources))),
+            'featured' => array_values(array_filter(array_map($this->summary(...), $featured))),
             'categories' => array_values(array_filter($categories, function (mixed $category): bool {
-                return is_array($category) && in_array($category['slug'] ?? null, self::CATEGORY_SLUGS, true);
+                return is_array($category)
+                    && is_string($category['slug'] ?? null)
+                    && $category['slug'] !== ''
+                    && is_string($category['name'] ?? null);
             })),
             'page' => (int) ($json['current_page'] ?? 1),
             'last_page' => max(1, (int) ($json['last_page'] ?? 1)),
@@ -207,10 +326,10 @@ class IntegratedMarketplace
 
         $data = $response->json('data');
 
-        if (! is_array($data) || ! $this->isIntegratedCategory($data)) {
+        if (! is_array($data)) {
             return [
                 'resource' => null,
-                'error' => is_array($data) ? null : 'This resource could not be loaded.',
+                'error' => 'This resource could not be loaded.',
             ];
         }
 
@@ -218,17 +337,6 @@ class IntegratedMarketplace
             'resource' => $data,
             'error' => null,
         ];
-    }
-
-    private function isIntegratedCategory(mixed $resource): bool
-    {
-        if (! is_array($resource)) {
-            return false;
-        }
-
-        $category = is_array($resource['category'] ?? null) ? $resource['category'] : [];
-
-        return in_array($category['slug'] ?? null, self::CATEGORY_SLUGS, true);
     }
 
     /**

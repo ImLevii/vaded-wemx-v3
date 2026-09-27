@@ -80,6 +80,7 @@ class MassMail extends Model
         'body',
         'button_text',
         'button_url',
+        'theme',
         'audience_type',
         'filters',
         'status',
@@ -96,6 +97,7 @@ class MassMail extends Model
 
     protected $attributes = [
         'status' => self::STATUS_QUEUED,
+        'theme' => 'default',
         'recipient_count' => 0,
         'sent_count' => 0,
         'failed_count' => 0,

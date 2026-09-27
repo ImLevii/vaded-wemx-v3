@@ -16,6 +16,9 @@ class IntegratedMarketplaceInstallation extends Model
         'category',
         'version_id',
         'version',
+        'latest_version',
+        'update_available',
+        'update_checked_at',
         'namespace',
         'identifier',
         'path',
@@ -25,6 +28,8 @@ class IntegratedMarketplaceInstallation extends Model
     protected function casts(): array
     {
         return [
+            'update_available' => 'boolean',
+            'update_checked_at' => 'datetime',
             'installed_at' => 'datetime',
         ];
     }

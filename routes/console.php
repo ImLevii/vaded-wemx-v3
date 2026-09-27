@@ -25,3 +25,4 @@ Schedule::command('server-connections:test')->everyFiveMinutes();
 
 // Every thirty minutes
 Schedule::command('cronjobs:check-github-update')->everyThirtyMinutes()->withoutOverlapping();
+Schedule::command('cronjobs:check-marketplace-updates')->daily()->withoutOverlapping();

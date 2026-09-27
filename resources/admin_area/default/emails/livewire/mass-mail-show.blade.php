@@ -1,5 +1,6 @@
 <?php
 
+use App\Mail\EmailTheme;
 use App\Models\MassMail;
 use Livewire\Attributes\Locked;
 use Livewire\Volt\Component;
@@ -30,6 +31,11 @@ new class extends Component
     public function refreshCampaign(): void
     {
         $this->massMail = $this->massMail->fresh();
+    }
+
+    public function themeName(): string
+    {
+        return EmailTheme::find($this->massMail->theme)?->name ?? (string) $this->massMail->theme;
     }
 
     public function statusBadge(): string
@@ -111,6 +117,10 @@ new class extends Component
                     <div class="mb-3">
                         <div class="subheader">{{ __('messages.mass_mail_audience') }}</div>
                         <div>{{ implode(' · ', $massMail->audienceSummary()) }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="subheader">{{ __('messages.mass_mail_theme') }}</div>
+                        <div>{{ $this->themeName() }}</div>
                     </div>
                     <div class="mb-3">
                         <div class="subheader">{{ __('messages.mass_mail_scheduled_at') }}</div>

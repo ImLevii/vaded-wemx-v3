@@ -271,7 +271,7 @@ new class extends Component
                 @if($canIntegrate)
                     <x-theme::form.toggle wire:model.live="version_integrated" text="Downloadable from the integrated marketplace"/>
                 @else
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Integrated marketplace downloads are available for servers, modules, and payment gateways.</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">One-click installs are available for servers, modules, payment gateways, email themes, and invoice themes.</p>
                 @endif
                 @if($canIntegrate && $version_integrated)
                     <div>

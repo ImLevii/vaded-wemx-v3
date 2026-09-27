@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\IntegratedMarketplaceInstallation;
 use App\Services\IntegratedMarketplace;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -48,14 +49,24 @@ new class extends Component
 
     private function forgetDisallowedCategory(): void
     {
-        if ($this->category !== null && ! in_array($this->category, IntegratedMarketplace::CATEGORY_SLUGS, true)) {
-            $this->category = null;
-        }
+        $this->category = app(IntegratedMarketplace::class)->normalizeCategory($this->category);
     }
 
     public function setPage(int $page): void
     {
         $this->page = max(1, $page);
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<string, IntegratedMarketplaceInstallation>
+     */
+    #[Computed]
+    public function installedBySlug()
+    {
+        return IntegratedMarketplaceInstallation::query()
+            ->get()
+            ->filter(fn (IntegratedMarketplaceInstallation $installation): bool => $installation->isPresent())
+            ->keyBy('resource_slug');
     }
 
     /**
@@ -105,7 +116,7 @@ new class extends Component
 @endphp
 
 <div>
-    <p class="text-secondary mb-3">Browse servers, modules, and payment gateways published on the marketplace.</p>
+    <p class="text-secondary mb-3">Browse resources published on the marketplace.</p>
 
     @if($catalog['error'])
         <div class="alert alert-warning" role="alert">{{ $catalog['error'] }}</div>
@@ -134,7 +145,10 @@ new class extends Component
         <h3 class="subheader mb-2">Featured</h3>
         <div class="row row-cards mb-4">
             @foreach($featured as $resource)
-                @include('admin::integrated-marketplace.partials.resource-card', ['resource' => $resource])
+                @include('admin::integrated-marketplace.partials.resource-card', [
+                    'resource' => $resource,
+                    'installation' => $this->installedBySlug->get($resource['slug'] ?? ''),
+                ])
             @endforeach
         </div>
     @endif
@@ -147,7 +161,10 @@ new class extends Component
     @elseif($resources->isNotEmpty())
         <div class="row row-cards">
             @foreach($resources as $resource)
-                @include('admin::integrated-marketplace.partials.resource-card', ['resource' => $resource])
+                @include('admin::integrated-marketplace.partials.resource-card', [
+                    'resource' => $resource,
+                    'installation' => $this->installedBySlug->get($resource['slug'] ?? ''),
+                ])
             @endforeach
         </div>
     @endif

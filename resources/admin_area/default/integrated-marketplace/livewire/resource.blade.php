@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\IntegratedMarketplaceInstallation;
 use App\Services\IntegratedMarketplace;
 use App\Services\IntegratedMarketplaceInstaller;
 use Illuminate\Support\Carbon;
@@ -35,6 +36,10 @@ new class extends Component
 
     public function openInstall(int $versionId): void
     {
+        if (! app(IntegratedMarketplace::class)->canInstall($this->payload['resource'] ?? null)) {
+            return;
+        }
+
         $this->installVersionId = $versionId;
         $this->installAcknowledged = false;
     }
@@ -48,6 +53,12 @@ new class extends Component
     public function install(): void
     {
         if (! $this->installAcknowledged || $this->installVersionId === null) {
+            return;
+        }
+
+        if (! app(IntegratedMarketplace::class)->canInstall($this->payload['resource'] ?? null)) {
+            $this->closeInstall();
+
             return;
         }
 
@@ -70,6 +81,20 @@ new class extends Component
         return app(IntegratedMarketplace::class)->resource($this->slug);
     }
 
+    #[Computed]
+    public function installation(): ?IntegratedMarketplaceInstallation
+    {
+        $installation = IntegratedMarketplaceInstallation::query()
+            ->where('resource_slug', $this->slug)
+            ->first();
+
+        if ($installation === null || ! $installation->isPresent()) {
+            return null;
+        }
+
+        return $installation;
+    }
+
     public function renderMarkdown(?string $markdown): string
     {
         return Str::markdown($markdown ?? '', [
@@ -89,7 +114,9 @@ new class extends Component
     $reviews = collect($resource['reviews'] ?? []);
     $latest = $versions->first();
     $installVersion = $versions->firstWhere('id', $this->installVersionId);
+    $canInstall = is_array($resource) && app(IntegratedMarketplace::class)->canInstall($resource);
     $installCompatible = ! is_array($installVersion) || app(IntegratedMarketplaceInstaller::class)->supportsCurrentVersion((string) ($installVersion['wemx_version'] ?? ''));
+    $installation = $this->installation;
 @endphp
 
 <div>
@@ -140,6 +167,9 @@ new class extends Component
                                     @if($latest)
                                         <span class="badge bg-secondary-lt">v{{ $latest['version'] }}</span>
                                     @endif
+                                    @if($installation)
+                                        <span class="badge bg-green-lt">Installed</span>
+                                    @endif
                                 </div>
                                 <h2 class="mb-1 d-flex align-items-center gap-2">
                                     <span>{{ $resource['name'] }}</span>
@@ -148,6 +178,9 @@ new class extends Component
                                     @endif
                                 </h2>
                                 <div class="text-secondary">{{ $resource['short_description'] }}</div>
+                                @if($installation)
+                                    <div class="text-secondary mt-1">Installed version {{ filled($installation->version) ? $installation->version : 'unknown' }}</div>
+                                @endif
                                 @if(($resource['reviews_count'] ?? 0) > 0)
                                     <div class="mt-2">
                                         @include('admin::integrated-marketplace.partials.stars', ['rating' => $resource['reviews_avg'], 'count' => $resource['reviews_count']])
@@ -189,11 +222,11 @@ new class extends Component
                                                         @if($index === 0)
                                                             <span class="badge bg-blue-lt">Latest</span>
                                                         @endif
-                                                        @if(! empty($version['integrated_marketplace']))
+                                                        @if($canInstall && ! empty($version['integrated_marketplace']))
                                                             <span class="badge bg-green-lt">One-click install</span>
                                                         @endif
                                                     </div>
-                                                    @if(! empty($version['integrated_marketplace']))
+                                                    @if($canInstall && ! empty($version['integrated_marketplace']))
                                                         <button
                                                             type="button"
                                                             class="btn btn-primary btn-sm"
@@ -203,7 +236,7 @@ new class extends Component
                                                         </button>
                                                     @endif
                                                 </div>
-                                                @if(! empty($version['integrated_marketplace']) && ! app(IntegratedMarketplaceInstaller::class)->supportsCurrentVersion((string) ($version['wemx_version'] ?? '')))
+                                                @if($canInstall && ! empty($version['integrated_marketplace']) && ! app(IntegratedMarketplaceInstaller::class)->supportsCurrentVersion((string) ($version['wemx_version'] ?? '')))
                                                     <div class="alert alert-warning mt-3 mb-0" role="alert">This version requires WemX {{ $version['wemx_version'] }}. This site is running {{ config('app.version') }}.</div>
                                                 @endif
                                                 <div class="text-secondary small mt-1">
@@ -307,7 +340,7 @@ new class extends Component
                                 @include('admin::integrated-marketplace.partials.stars', ['rating' => $resource['reviews_avg'], 'count' => $resource['reviews_count']])
                             </div>
                         @endif
-                        @if($latest && ! empty($latest['integrated_marketplace']))
+                        @if($canInstall && $latest && ! empty($latest['integrated_marketplace']))
                             <button
                                 type="button"
                                 class="btn btn-primary w-100 mb-2"
@@ -335,6 +368,9 @@ new class extends Component
                         <div class="modal-body">
                             @if(! $installCompatible)
                                 <div class="alert alert-warning" role="alert">This version requires WemX {{ $installVersion['wemx_version'] }}. This site is running {{ config('app.version') }}, so it may not work.</div>
+                            @endif
+                            @if($installation)
+                                <div class="alert alert-warning" role="alert">This resource is already installed. Version {{ filled($installation->version) ? $installation->version : 'unknown' }} is currently on this site.</div>
                             @endif
                             <p>You are installing a resource from a third-party developer. Review the listing before adding it to this site.</p>
                             <label class="form-check">

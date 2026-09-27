@@ -122,6 +122,7 @@ class MassMailTest extends TestCase
 
         $this->assertNotNull($massMail);
         $this->assertSame('Platform update', $massMail->subject);
+        $this->assertSame('default', $massMail->theme);
         $this->assertSame(MassMail::STATUS_QUEUED, $massMail->status);
         $this->assertSame(2, $massMail->recipient_count);
         $this->assertSame($this->admin->id, $massMail->created_by);
@@ -310,8 +311,67 @@ class MassMailTest extends TestCase
         $this->assertSame('Hello Ada', $adaEmail->subject);
         $this->assertSame(['Hi ada from '.settings('app_name', 'My Application').'.'], $adaEmail->lines);
         $this->assertSame('Hello Grace', $graceEmail->subject);
+        $this->assertSame('default', $adaEmail->theme);
 
         Queue::assertPushed(DeliverCustomerMail::class, 2);
+    }
+
+    public function test_mass_mail_can_use_a_selected_email_theme(): void
+    {
+        $this->actingAsAdmin();
+        $customer = $this->customer();
+
+        Volt::test('admin_area.default.emails.livewire.mass-mail-form')
+            ->set('subject', 'A dark note')
+            ->set('body', 'Hello {{user_name}}')
+            ->set('theme', 'client-dark')
+            ->call('queue')
+            ->assertHasNoErrors()
+            ->assertRedirect();
+
+        $massMail = MassMail::query()->first();
+
+        $this->assertSame('client-dark', $massMail->theme);
+
+        Artisan::call('cronjobs:mass-mails:send');
+
+        $email = Email::query()->where('user_id', $customer->id)->first();
+
+        $this->assertNotNull($email);
+        $this->assertSame('client-dark', $email->theme);
+    }
+
+    public function test_unknown_mass_mail_theme_is_rejected(): void
+    {
+        $this->actingAsAdmin();
+        $this->customer();
+
+        Volt::test('admin_area.default.emails.livewire.mass-mail-form')
+            ->set('subject', 'Hello')
+            ->set('body', 'Welcome')
+            ->set('theme', 'missing-theme')
+            ->call('queue')
+            ->assertHasErrors(['theme']);
+
+        $this->assertSame(0, MassMail::query()->count());
+    }
+
+    public function test_preview_uses_the_selected_email_theme(): void
+    {
+        $this->actingAsAdmin();
+        $this->customer(['first_name' => 'Ada']);
+
+        $html = Volt::test('admin_area.default.emails.livewire.mass-mail-form')
+            ->set('subject', 'Hello')
+            ->set('body', 'Welcome')
+            ->set('button_text', 'Open')
+            ->set('button_url', 'https://example.com')
+            ->set('theme', 'client-dark')
+            ->instance()
+            ->previewHtml();
+
+        $this->assertStringContainsString('#11111d', $html);
+        $this->assertStringContainsString('#2563eb', $html);
     }
 
     public function test_scheduled_mass_mails_wait_until_their_send_time(): void

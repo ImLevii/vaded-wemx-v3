@@ -2,6 +2,7 @@
 
 use App\Facades\World;
 use App\Mail\CustomerMail;
+use App\Mail\EmailTheme;
 use App\Models\Email;
 use App\Models\EmailTemplate;
 use App\Models\MassMail;
@@ -25,6 +26,8 @@ new class extends Component
 
     public bool $verified_only = false;
 
+    public string $theme = 'default';
+
     public string $subject = '';
 
     public string $body = '';
@@ -36,6 +39,11 @@ new class extends Component
     public string $send_mode = 'now';
 
     public ?string $scheduled_at = null;
+
+    public function mount(): void
+    {
+        $this->theme = EmailTheme::default()->slug;
+    }
 
     public function updatedAudienceType(): void
     {
@@ -76,6 +84,7 @@ new class extends Component
             'body' => $this->body,
             'button_text' => $this->button_text,
             'button_url' => $this->button_url,
+            'theme' => $this->theme,
             'audience_type' => $this->audience_type,
             'package_id' => $this->package_id,
             'order_status' => $this->order_status,
@@ -143,6 +152,7 @@ new class extends Component
             'button_url' => filled($this->button_url)
                 ? EmailTemplate::replacePlaceholders($this->button_url, $variables)
                 : null,
+            'theme' => $this->theme,
         ]);
 
         if ($previewUser instanceof User) {
@@ -166,6 +176,14 @@ new class extends Component
     public function countries(): array
     {
         return World::countries();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function emailThemes(): array
+    {
+        return EmailTheme::options();
     }
 }
 
@@ -300,6 +318,15 @@ new class extends Component
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
+                        <x-admin::form.label class="required">{{ __('messages.mass_mail_theme') }}</x-admin::form.label>
+                        <x-admin::form.select wire:model.live="theme" id="mass-mail-theme" value="{{ $theme }}" :options="$this->emailThemes()" name="theme" />
+                        @error('theme')
+                            <x-admin::form.error :message="$message" />
+                        @else
+                            <x-admin::form.description>{{ __('messages.mass_mail_theme_hint') }}</x-admin::form.description>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
                         <x-admin::form.label class="required">{{ __('messages.subject') }}</x-admin::form.label>
                         <x-admin::form.input type="text" wire:model.live.debounce.400ms="subject" name="subject" placeholder="{{ __('messages.subject') }}" />
                         @error('subject')
@@ -410,7 +437,7 @@ new class extends Component
                 </div>
                 <div class="card-body p-0 bg-light">
                     <iframe
-                        wire:key="email-preview-{{ md5($subject.$body.$button_text.$button_url.($this->sampleRecipients()->first()?->id ?? 'none')) }}"
+                        wire:key="email-preview-{{ md5($theme.$subject.$body.$button_text.$button_url.($this->sampleRecipients()->first()?->id ?? 'none')) }}"
                         title="{{ __('messages.email_preview') }}"
                         class="border-0 w-100 d-block"
                         style="min-height: 36rem; background: #f8fafc;"

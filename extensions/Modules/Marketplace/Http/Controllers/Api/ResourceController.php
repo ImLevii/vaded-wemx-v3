@@ -69,7 +69,6 @@ class ResourceController extends Controller
         $payload = $resources->toArray();
         $payload['categories'] = MarketplaceCategory::query()
             ->visible()
-            ->integrated()
             ->ordered()
             ->get(['slug', 'name'])
             ->map(fn (MarketplaceCategory $category) => [
