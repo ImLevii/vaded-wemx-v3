@@ -102,6 +102,32 @@ new class extends Component
             'allow_unsafe_links' => false,
         ]);
     }
+
+    /**
+     * @param  array<string, mixed>|null  $resource
+     * @param  array<string, mixed>  $version
+     * @return array{location: ?string, uses_archive_folder: bool, outcome: string}
+     */
+    public function installSummary(?array $resource, array $version): array
+    {
+        $extractPath = trim(str_replace('\\', '/', (string) ($version['extract_path'] ?? '')), '/');
+        $folder = trim((string) ($version['rename_extract_to'] ?? ''));
+        $folderIsNamed = $folder !== '' && preg_match('/\A[A-Za-z0-9._-]+\z/', $folder) === 1;
+        $category = is_array($resource['category'] ?? null) ? (string) ($resource['category']['slug'] ?? '') : '';
+
+        return [
+            'location' => $extractPath === '' ? null : ($folderIsNamed ? $extractPath.'/'.$folder : $extractPath),
+            'uses_archive_folder' => $extractPath !== '' && ! $folderIsNamed,
+            'outcome' => match ($category) {
+                'payment-gateway' => 'WemX then enables the gateway and runs its migrations.',
+                'server' => 'WemX then enables the server and runs its migrations.',
+                'module' => 'WemX then enables the module and runs its migrations.',
+                'email-theme' => 'WemX then adds it to the list of email themes.',
+                'invoice-theme' => 'WemX then adds it to the list of invoice themes.',
+                default => 'WemX then adds it to this site.',
+            },
+        ];
+    }
 }
 
 ?>
@@ -117,6 +143,7 @@ new class extends Component
     $canInstall = is_array($resource) && app(IntegratedMarketplace::class)->canInstall($resource);
     $installCompatible = ! is_array($installVersion) || app(IntegratedMarketplaceInstaller::class)->supportsCurrentVersion((string) ($installVersion['wemx_version'] ?? ''));
     $installation = $this->installation;
+    $installSummary = is_array($installVersion) ? $this->installSummary(is_array($resource) ? $resource : null, $installVersion) : null;
 @endphp
 
 <div>
@@ -371,6 +398,25 @@ new class extends Component
                             @endif
                             @if($installation)
                                 <div class="alert alert-warning" role="alert">This resource is already installed. Version {{ filled($installation->version) ? $installation->version : 'unknown' }} is currently on this site.</div>
+                            @endif
+                            @if(is_array($installSummary))
+                                <div class="mb-3">
+                                    <div class="fw-medium mb-1">How this will be installed</div>
+                                    @if($installSummary['location'])
+                                        <p class="mb-2">The zip is downloaded from the marketplace and extracted to</p>
+                                        <code class="d-block">{{ $installSummary['location'] }}</code>
+                                        <p class="mb-0 mt-2">
+                                            @if($installSummary['uses_archive_folder'])
+                                                The folder name comes from the archive. If that folder already exists, it is replaced.
+                                            @else
+                                                If that folder already exists, it is replaced.
+                                            @endif
+                                            {{ $installSummary['outcome'] }}
+                                        </p>
+                                    @else
+                                        <p class="mb-0">The zip is downloaded from the marketplace. {{ $installSummary['outcome'] }}</p>
+                                    @endif
+                                </div>
                             @endif
                             <p>You are installing a resource from a third-party developer. Review the listing before adding it to this site.</p>
                             <label class="form-check">

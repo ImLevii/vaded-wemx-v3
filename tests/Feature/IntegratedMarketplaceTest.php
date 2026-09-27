@@ -257,11 +257,15 @@ class IntegratedMarketplaceTest extends TestCase
         $email['slug'] = 'welcome-emails';
         $email['name'] = 'Welcome emails';
         $email['category'] = ['slug' => 'email-theme', 'name' => 'Email Theme'];
+        $email['versions'][0]['extract_path'] = 'resources/email_templates';
+        $email['versions'][0]['rename_extract_to'] = 'welcome';
 
         $invoice = $this->resourcePayload();
         $invoice['slug'] = 'accent-invoice';
         $invoice['name'] = 'Accent invoice';
         $invoice['category'] = ['slug' => 'invoice-theme', 'name' => 'Invoice Theme'];
+        $invoice['versions'][0]['extract_path'] = 'resources/invoices';
+        $invoice['versions'][0]['rename_extract_to'] = '';
 
         Http::fake([
             'http://wemx.test/api/v1/marketplace/resources/welcome-emails/view' => Http::response(['views' => 1]),
@@ -273,10 +277,17 @@ class IntegratedMarketplaceTest extends TestCase
         $this->actingAsMarketplaceAdmin();
 
         Volt::test('admin_area.default.integrated-marketplace.livewire.resource', ['slug' => 'welcome-emails'])
-            ->assertSee('Install 1.0.0');
+            ->assertSee('Install 1.0.0')
+            ->call('openInstall', 9)
+            ->assertSee('resources/email_templates/welcome')
+            ->assertSee('WemX then adds it to the list of email themes.');
 
         Volt::test('admin_area.default.integrated-marketplace.livewire.resource', ['slug' => 'accent-invoice'])
-            ->assertSee('Install 1.0.0');
+            ->assertSee('Install 1.0.0')
+            ->call('openInstall', 9)
+            ->assertSee('resources/invoices')
+            ->assertSee('The folder name comes from the archive.')
+            ->assertSee('WemX then adds it to the list of invoice themes.');
     }
 
     public function test_one_click_install_rejects_a_version_that_is_not_on_the_integrated_marketplace(): void
@@ -338,7 +349,10 @@ class IntegratedMarketplaceTest extends TestCase
             ->assertSee('Installed')
             ->assertSee('Installed version 0.9.0')
             ->call('openInstall', 9)
-            ->assertSee('This resource is already installed. Version 0.9.0 is currently on this site.');
+            ->assertSee('This resource is already installed. Version 0.9.0 is currently on this site.')
+            ->assertSee('How this will be installed')
+            ->assertSee('extensions/Modules/DemoModule')
+            ->assertSee('WemX then enables the module and runs its migrations.');
     }
 
     public function test_removed_installations_are_not_shown_as_installed(): void
@@ -527,6 +541,8 @@ class IntegratedMarketplaceTest extends TestCase
                 'changelog' => 'First public build.',
                 'created_at' => now()->toIso8601String(),
                 'integrated_marketplace' => true,
+                'extract_path' => 'extensions/Modules',
+                'rename_extract_to' => 'DemoModule',
                 'size_label' => '40.0 KB',
             ]],
             'reviews' => [[
