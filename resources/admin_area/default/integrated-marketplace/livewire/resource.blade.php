@@ -36,7 +36,7 @@ new class extends Component
 
     public function openInstall(int $versionId): void
     {
-        if (! app(IntegratedMarketplace::class)->canInstall($this->payload['resource'] ?? null)) {
+        if (! app(IntegratedMarketplace::class)->canInstall($this->payload['resource'] ?? null) || ! $this->hasAccess()) {
             return;
         }
 
@@ -56,8 +56,12 @@ new class extends Component
             return;
         }
 
-        if (! app(IntegratedMarketplace::class)->canInstall($this->payload['resource'] ?? null)) {
+        if (! app(IntegratedMarketplace::class)->canInstall($this->payload['resource'] ?? null) || ! $this->hasAccess()) {
             $this->closeInstall();
+
+            if (! $this->hasAccess()) {
+                session()->flash('error', 'Your account does not have access to this resource.');
+            }
 
             return;
         }
@@ -79,6 +83,26 @@ new class extends Component
     public function payload(): array
     {
         return app(IntegratedMarketplace::class)->resource($this->slug);
+    }
+
+    /**
+     * @return array{username: ?string, email: ?string, error: ?string}
+     */
+    #[Computed]
+    public function account(): array
+    {
+        return app(IntegratedMarketplace::class)->account();
+    }
+
+    public function hasAccess(): bool
+    {
+        $resource = $this->payload['resource'] ?? null;
+
+        if (! is_array($resource)) {
+            return false;
+        }
+
+        return ($resource['has_access'] ?? true) !== false;
     }
 
     #[Computed]
@@ -141,6 +165,7 @@ new class extends Component
     $latest = $versions->first();
     $installVersion = $versions->firstWhere('id', $this->installVersionId);
     $canInstall = is_array($resource) && app(IntegratedMarketplace::class)->canInstall($resource);
+    $hasAccess = ! is_array($resource) || ($resource['has_access'] ?? true) !== false;
     $installCompatible = ! is_array($installVersion) || app(IntegratedMarketplaceInstaller::class)->supportsCurrentVersion((string) ($installVersion['wemx_version'] ?? ''));
     $installation = $this->installation;
     $installSummary = is_array($installVersion) ? $this->installSummary(is_array($resource) ? $resource : null, $installVersion) : null;
@@ -157,6 +182,8 @@ new class extends Component
 
     @if($payload['error'])
         <div class="alert alert-warning" role="alert">{{ $payload['error'] }}</div>
+    @elseif($resource)
+        @include('admin::integrated-marketplace.partials.account', ['account' => $this->account])
     @endif
 
     @if(session('success'))
@@ -253,7 +280,7 @@ new class extends Component
                                                             <span class="badge bg-green-lt">One-click install</span>
                                                         @endif
                                                     </div>
-                                                    @if($canInstall && ! empty($version['integrated_marketplace']))
+                                                    @if($canInstall && $hasAccess && ! empty($version['integrated_marketplace']))
                                                         <button
                                                             type="button"
                                                             class="btn btn-primary btn-sm"
@@ -362,12 +389,15 @@ new class extends Component
                 <div class="card">
                     <div class="card-body">
                         <div class="h2 mb-1">{{ $resource['price'] }}</div>
+                        @if(! $hasAccess)
+                            <div class="alert alert-warning" role="alert">Your account does not have access to this resource.</div>
+                        @endif
                         @if(($resource['reviews_count'] ?? 0) > 0)
                             <div class="mb-3">
                                 @include('admin::integrated-marketplace.partials.stars', ['rating' => $resource['reviews_avg'], 'count' => $resource['reviews_count']])
                             </div>
                         @endif
-                        @if($canInstall && $latest && ! empty($latest['integrated_marketplace']))
+                        @if($canInstall && $hasAccess && $latest && ! empty($latest['integrated_marketplace']))
                             <button
                                 type="button"
                                 class="btn btn-primary w-100 mb-2"

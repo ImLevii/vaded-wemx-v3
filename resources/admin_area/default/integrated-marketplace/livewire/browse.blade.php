@@ -70,6 +70,15 @@ new class extends Component
     }
 
     /**
+     * @return array{username: ?string, email: ?string, error: ?string}
+     */
+    #[Computed]
+    public function account(): array
+    {
+        return app(IntegratedMarketplace::class)->account();
+    }
+
+    /**
      * @return array<string, mixed>
      */
     #[Computed]
@@ -120,6 +129,8 @@ new class extends Component
 
     @if($catalog['error'])
         <div class="alert alert-warning" role="alert">{{ $catalog['error'] }}</div>
+    @else
+        @include('admin::integrated-marketplace.partials.account', ['account' => $this->account])
     @endif
 
     <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 mb-3">

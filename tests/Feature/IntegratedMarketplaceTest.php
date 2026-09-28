@@ -38,6 +38,14 @@ class IntegratedMarketplaceTest extends TestCase
         Cache::put('lcs_checked_at', now(), 21600);
 
         Http::preventStrayRequests();
+        Http::fake([
+            'http://wemx.test/api/v1/marketplace/account' => Http::response([
+                'account' => [
+                    'username' => 'buyer',
+                    'email' => 'buyer@example.com',
+                ],
+            ]),
+        ]);
     }
 
     public function test_admin_can_browse_cached_marketplace_resources(): void
@@ -50,6 +58,8 @@ class IntegratedMarketplaceTest extends TestCase
             ->get(route('admin.marketplace.index'))
             ->assertOk()
             ->assertSee('Demo module')
+            ->assertSee('Connected as')
+            ->assertSee('buyer@example.com')
             ->assertSee('Featured')
             ->assertSee('Modules')
             ->assertSee('1 purchases')
@@ -59,7 +69,7 @@ class IntegratedMarketplaceTest extends TestCase
             ->get(route('admin.marketplace.index'))
             ->assertOk();
 
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
         Http::assertSent(fn ($request): bool => $request->hasHeader('Authorization', 'Bearer WMX-TESTING-KEY'));
 
         $cached = Cache::get('integrated-marketplace.catalog.'.md5("http://wemx.test\n".json_encode([
@@ -143,6 +153,34 @@ class IntegratedMarketplaceTest extends TestCase
             ->call('setTab', 'reviews')
             ->assertSee('Great free tool')
             ->assertSee('Works well.');
+    }
+
+    public function test_resource_page_prompts_when_the_account_lacks_access(): void
+    {
+        $payload = $this->resourcePayload();
+        $payload['price'] = '$12.00';
+        $payload['has_access'] = false;
+
+        Http::fake([
+            'http://wemx.test/api/v1/marketplace/resources/demo-module/view' => Http::response(['views' => 1]),
+            'http://wemx.test/api/v1/marketplace/resources/demo-module' => Http::response([
+                'data' => $payload,
+            ]),
+        ]);
+
+        $this->actingAsMarketplaceAdmin();
+
+        Volt::test('admin_area.default.integrated-marketplace.livewire.resource', ['slug' => 'demo-module'])
+            ->assertSee('Your account does not have access to this resource.')
+            ->assertSee('buyer@example.com')
+            ->assertDontSee('Install 1.0.0')
+            ->call('openInstall', 9)
+            ->assertSet('installVersionId', null);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Your account does not have access to this resource.');
+
+        app(IntegratedMarketplaceInstaller::class)->install('demo-module', 9);
     }
 
     public function test_resource_page_offers_install_for_the_latest_version(): void

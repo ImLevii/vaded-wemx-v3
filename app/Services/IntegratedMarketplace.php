@@ -6,6 +6,7 @@ use App\Models\IntegratedMarketplaceInstallation;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -39,6 +40,10 @@ class IntegratedMarketplace
      */
     public function catalog(array $filters = []): array
     {
+        if ($this->licenseKey() === '') {
+            return $this->emptyCatalog('Add a license key before using the marketplace.');
+        }
+
         $query = [
             'search' => trim((string) ($filters['search'] ?? '')),
             'category' => $this->normalizeCategory($filters['category'] ?? null) ?? '',
@@ -66,6 +71,13 @@ class IntegratedMarketplace
     public function resource(string $slug, bool $fresh = false): array
     {
         $slug = trim($slug);
+
+        if ($this->licenseKey() === '') {
+            return [
+                'resource' => null,
+                'error' => 'Add a license key before using the marketplace.',
+            ];
+        }
 
         if ($fresh) {
             $this->forgetResource($slug);
@@ -188,11 +200,67 @@ class IntegratedMarketplace
         Cache::forget($this->cacheKey('resource', trim($slug)));
     }
 
+    /**
+     * @return array{username: ?string, email: ?string, error: ?string}
+     */
+    public function account(): array
+    {
+        $empty = [
+            'username' => null,
+            'email' => null,
+            'error' => null,
+        ];
+
+        if ($this->licenseKey() === '') {
+            $empty['error'] = 'Add a license key before using the marketplace.';
+
+            return $empty;
+        }
+
+        $key = $this->cacheKey('account', hash('sha256', $this->licenseKey()));
+        $cached = Cache::get($key);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        try {
+            $response = $this->request()->get('/api/v1/marketplace/account');
+        } catch (ConnectionException) {
+            $empty['error'] = 'The marketplace could not be reached. Try again in a moment.';
+
+            return $empty;
+        }
+
+        if ($response->notFound()) {
+            return $empty;
+        }
+
+        if (! $response->successful()) {
+            $empty['error'] = $this->failureMessage($response);
+
+            return $empty;
+        }
+
+        $account = $response->json('account');
+        $payload = [
+            'username' => is_array($account) && is_string($account['username'] ?? null) ? $account['username'] : null,
+            'email' => is_array($account) && is_string($account['email'] ?? null) ? $account['email'] : null,
+            'error' => null,
+        ];
+
+        if ($payload['username'] !== null || $payload['email'] !== null) {
+            Cache::put($key, $payload, self::CATALOG_CACHE_TTL_SECONDS);
+        }
+
+        return $payload;
+    }
+
     public function recordView(string $slug): void
     {
         $slug = trim($slug);
 
-        if ($slug === '') {
+        if ($slug === '' || $this->licenseKey() === '') {
             return;
         }
 
@@ -269,7 +337,7 @@ class IntegratedMarketplace
         }
 
         if (! $response->successful()) {
-            $empty['error'] = 'The marketplace returned an unexpected response.';
+            $empty['error'] = $this->failureMessage($response);
 
             return $empty;
         }
@@ -320,7 +388,7 @@ class IntegratedMarketplace
         if (! $response->successful()) {
             return [
                 'resource' => null,
-                'error' => 'The marketplace returned an unexpected response.',
+                'error' => $this->failureMessage($response),
             ];
         }
 
@@ -376,6 +444,7 @@ class IntegratedMarketplace
                 'username' => $user['username'] ?? null,
                 'avatar' => $user['avatar'] ?? null,
             ],
+            'has_access' => array_key_exists('has_access', $resource) ? (bool) $resource['has_access'] : true,
         ];
     }
 
@@ -386,10 +455,54 @@ class IntegratedMarketplace
         return 'integrated-marketplace.'.$type.'.'.md5($scope."\n".$discriminator);
     }
 
+    private function licenseKey(): string
+    {
+        return trim((string) config('app.license_key'));
+    }
+
+    private function failureMessage(Response $response): string
+    {
+        $message = $response->json('message');
+
+        if (is_string($message) && $message !== '') {
+            return $message;
+        }
+
+        return match ($response->status()) {
+            401 => 'A license key is required.',
+            403 => 'License is not active.',
+            default => 'The marketplace returned an unexpected response.',
+        };
+    }
+
+    /**
+     * @return array{
+     *     resources: list<array<string, mixed>>,
+     *     featured: list<array<string, mixed>>,
+     *     categories: list<array{slug: string, name: string}>,
+     *     page: int,
+     *     last_page: int,
+     *     total: int,
+     *     error: string|null
+     * }
+     */
+    private function emptyCatalog(string $error): array
+    {
+        return [
+            'resources' => [],
+            'featured' => [],
+            'categories' => [],
+            'page' => 1,
+            'last_page' => 1,
+            'total' => 0,
+            'error' => $error,
+        ];
+    }
+
     private function request(): PendingRequest
     {
         return Http::baseUrl(rtrim((string) config('services.marketplace.url'), '/'))
-            ->withToken((string) config('app.license_key'))
+            ->withToken($this->licenseKey())
             ->acceptJson()
             ->withOptions([
                 'allow_redirects' => [

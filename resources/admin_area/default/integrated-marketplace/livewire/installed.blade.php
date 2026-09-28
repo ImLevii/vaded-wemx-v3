@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\IntegratedMarketplaceInstallation;
+use App\Services\IntegratedMarketplace;
 use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
@@ -18,12 +19,23 @@ new class extends Component
             ->orderByDesc('id')
             ->get();
     }
+
+    /**
+     * @return array{username: ?string, email: ?string, error: ?string}
+     */
+    #[Computed]
+    public function account(): array
+    {
+        return app(IntegratedMarketplace::class)->account();
+    }
 }
 
 ?>
 
 <div>
     <p class="text-secondary mb-3">Resources installed from the integrated marketplace, newest first.</p>
+
+    @include('admin::integrated-marketplace.partials.account', ['account' => $this->account])
 
     @if($this->installations->isEmpty())
         <div class="empty">

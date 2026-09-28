@@ -119,22 +119,24 @@ class IntegratedMarketplaceInstaller
         $path = storage_path('app/marketplace-installs/'.Str::uuid().'.zip');
         File::ensureDirectoryExists(dirname($path));
 
-        $query = [];
+        if (trim((string) config('app.license_key')) === '') {
+            throw new RuntimeException('Add a license key before using the marketplace.');
+        }
 
-        if (($resource['price'] ?? 'Free') !== 'Free') {
-            throw new RuntimeException('Paid resources need a license before they can be installed from the marketplace.');
+        if (array_key_exists('has_access', $resource) && ! $resource['has_access']) {
+            throw new RuntimeException('Your account does not have access to this resource.');
         }
 
         try {
             $response = $this->http()
                 ->withHeaders(['Accept' => 'application/zip, application/json'])
-                ->get('/api/v1/marketplace/resources/download/'.$version['id'], $query);
+                ->get('/api/v1/marketplace/resources/download/'.$version['id']);
         } catch (ConnectionException) {
             throw new RuntimeException('The marketplace could not be reached.');
         }
 
         if (! $response->successful() || $response->body() === '') {
-            $message = $response->json('message');
+            $message = $response->json('errors.version_id.0') ?: $response->json('message');
 
             throw new RuntimeException(is_string($message) && $message !== ''
                 ? $message
@@ -343,7 +345,7 @@ class IntegratedMarketplaceInstaller
     private function http(): PendingRequest
     {
         return Http::baseUrl(rtrim((string) config('services.marketplace.url'), '/'))
-            ->withToken((string) config('app.license_key'))
+            ->withToken(trim((string) config('app.license_key')))
             ->acceptJson()
             ->connectTimeout(3)
             ->timeout(60);
