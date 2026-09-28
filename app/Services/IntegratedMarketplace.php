@@ -55,7 +55,7 @@ class IntegratedMarketplace
             unset($query['search']);
         }
 
-        $key = 'integrated-marketplace.catalog.v2.'.md5((string) json_encode($query));
+        $key = $this->cacheKey('catalog', (string) json_encode($query));
 
         return $this->remember($key, fn (): array => $this->fetchCatalog($query), self::CATALOG_CACHE_TTL_SECONDS);
     }
@@ -72,7 +72,7 @@ class IntegratedMarketplace
         }
 
         return $this->remember(
-            'integrated-marketplace.resource.'.$slug,
+            $this->cacheKey('resource', $slug),
             fn (): array => $this->fetchResource($slug),
             self::RESOURCE_CACHE_TTL_SECONDS,
         );
@@ -185,7 +185,7 @@ class IntegratedMarketplace
 
     public function forgetResource(string $slug): void
     {
-        Cache::forget('integrated-marketplace.resource.'.trim($slug));
+        Cache::forget($this->cacheKey('resource', trim($slug)));
     }
 
     public function recordView(string $slug): void
@@ -379,9 +379,17 @@ class IntegratedMarketplace
         ];
     }
 
+    private function cacheKey(string $type, string $discriminator): string
+    {
+        $scope = rtrim((string) config('services.marketplace.url'), '/');
+
+        return 'integrated-marketplace.'.$type.'.'.md5($scope."\n".$discriminator);
+    }
+
     private function request(): PendingRequest
     {
         return Http::baseUrl(rtrim((string) config('services.marketplace.url'), '/'))
+            ->withToken((string) config('app.license_key'))
             ->acceptJson()
             ->withOptions([
                 'allow_redirects' => [

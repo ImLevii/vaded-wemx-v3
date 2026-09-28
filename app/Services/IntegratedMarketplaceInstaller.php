@@ -343,6 +343,7 @@ class IntegratedMarketplaceInstaller
     private function http(): PendingRequest
     {
         return Http::baseUrl(rtrim((string) config('services.marketplace.url'), '/'))
+            ->withToken((string) config('app.license_key'))
             ->acceptJson()
             ->connectTimeout(3)
             ->timeout(60);

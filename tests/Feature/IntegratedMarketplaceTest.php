@@ -60,8 +60,9 @@ class IntegratedMarketplaceTest extends TestCase
             ->assertOk();
 
         Http::assertSentCount(1);
+        Http::assertSent(fn ($request): bool => $request->hasHeader('Authorization', 'Bearer WMX-TESTING-KEY'));
 
-        $cached = Cache::get('integrated-marketplace.catalog.v2.'.md5((string) json_encode([
+        $cached = Cache::get('integrated-marketplace.catalog.'.md5("http://wemx.test\n".json_encode([
             'sort_by' => 'popular',
             'page' => 1,
             'per_page' => 18,
@@ -195,6 +196,9 @@ class IntegratedMarketplaceTest extends TestCase
 
         $message = app(IntegratedMarketplaceInstaller::class)->install('one-click-demo', 9);
 
+        Http::assertSent(fn ($request): bool => $request->hasHeader('Authorization', 'Bearer WMX-TESTING-KEY')
+            && str_contains($request->url(), '/resources/download/9'));
+
         $this->assertSame('One Click Demo 1.0.0 was installed.', $message);
         $this->assertTrue(
             IntegratedMarketplaceInstallation::query()->where('resource_slug', 'one-click-demo')->value('update_available')
@@ -314,7 +318,7 @@ class IntegratedMarketplaceTest extends TestCase
         $catalog = app(IntegratedMarketplace::class)->catalog();
 
         $this->assertNotNull($catalog['error']);
-        $this->assertNull(Cache::get('integrated-marketplace.catalog.v2.'.md5((string) json_encode([
+        $this->assertNull(Cache::get('integrated-marketplace.catalog.'.md5("http://wemx.test\n".json_encode([
             'sort_by' => 'popular',
             'page' => 1,
             'per_page' => 18,
