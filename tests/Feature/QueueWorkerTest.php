@@ -3,13 +3,17 @@
 namespace Tests\Feature;
 
 use App\Jobs\InstallerQueueProbeJob;
+use App\Mail\CustomerMail;
 use App\Models\AppTaskLog;
+use App\Models\Email;
+use App\Models\User;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
 use Tests\TestCase;
@@ -160,6 +164,42 @@ class QueueWorkerTest extends TestCase
         config(['queue.default' => 'sync']);
 
         $this->withToken('test-worker-secret')->postJson('/internal/queue/work')->assertStatus(409);
+    }
+
+    public function test_sync_jobs_execute_immediately_without_database_queue_records(): void
+    {
+        config(['queue.default' => 'sync']);
+
+        InstallerQueueProbeJob::dispatch('sync-queue-probe');
+
+        $this->assertTrue(Cache::has('sync-queue-probe'));
+        $this->assertDatabaseCount('jobs', 0);
+    }
+
+    public function test_sync_queue_health_does_not_require_a_worker_heartbeat(): void
+    {
+        config(['queue.default' => 'sync']);
+        Cache::shouldReceive('store')->never();
+
+        $this->assertTrue(AppTaskLog::isQueueWorkerRunning());
+    }
+
+    public function test_sync_queue_delivers_customer_email_when_the_record_is_created(): void
+    {
+        config(['queue.default' => 'sync']);
+        Mail::fake();
+        $user = User::factory()->create();
+
+        $email = Email::create([
+            'user_id' => $user->id,
+            'to' => $user->email,
+            'subject' => 'Immediate delivery',
+            'lines' => ['Your background job has completed.'],
+        ]);
+
+        Mail::assertSent(CustomerMail::class, fn (CustomerMail $mail): bool => $mail->hasTo($user->email));
+        $this->assertSame('delivered', $email->fresh()->status);
+        $this->assertDatabaseCount('jobs', 0);
     }
 
     public function test_existing_worker_check_handles_unix_job_timestamps(): void

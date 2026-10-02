@@ -10,28 +10,12 @@ window.toastr = toastr;
 document.addEventListener('livewire:navigated', () => {
     initFlowbite();
 
-    const navigation = document.getElementById('client-main-navigation');
-    const toggle = document.getElementById('client-nav-toggle');
-
-    if (
-        navigation &&
-        toggle &&
-        window.matchMedia('(max-width: 1023px)').matches &&
-        !navigation.classList.contains('hidden')
-    ) {
-        toggle.click();
-    }
+    window.dispatchEvent(new CustomEvent('vaded-nav-close'));
 });
 
 document.addEventListener('click', (event) => {
     const navigationLink = event.target.closest('#client-main-navigation a');
-    const toggle = document.getElementById('client-nav-toggle');
-
-    if (navigationLink && toggle && toggle.getAttribute('aria-expanded') === 'true') {
-        toggle.click();
-    }
-
-    if (navigationLink || (event.target.closest('#client-nav-toggle') && toggle?.getAttribute('aria-expanded') === 'false')) {
+    if (navigationLink) {
         window.dispatchEvent(new CustomEvent('vaded-nav-close'));
     }
 });

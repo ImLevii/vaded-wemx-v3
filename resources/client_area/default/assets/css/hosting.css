@@ -67,7 +67,7 @@
 .vh-service-card[aria-current="true"] { border-color: color-mix(in srgb,var(--vh-accent) 45%,var(--vh-border)); }
 .vh-service-art { position: relative; display: grid; place-items: center; height: 148px; overflow: hidden; background: radial-gradient(ellipse at 50% 120%,var(--vh-accent-soft),transparent 75%),var(--vh-raised); border-bottom: 1px solid var(--vh-border); }
 .vh-service-art > .vh-icon { width: 70px; height: 70px; color: var(--vh-muted); stroke-width: .75; transform: rotate(-8deg); }
-.vh-service-art img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.65); }
+.vh-service-art img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; filter: saturate(.65); }
 .vh-service-art:has(img)::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent,var(--vh-surface)); }
 .vh-service-index { position: absolute; top: 16px; left: 20px; z-index: 1; color: var(--vh-muted); font: 11px var(--vh-mono); }
 .vh-service-body { display: flex; flex: 1; flex-direction: column; padding: 24px; }

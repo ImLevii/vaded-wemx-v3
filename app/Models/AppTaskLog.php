@@ -44,6 +44,10 @@ class AppTaskLog extends Model
 
     public static function isQueueWorkerRunning(): bool
     {
+        if (config('queue.default') === 'sync') {
+            return true;
+        }
+
         if (config('queue.worker.secret')) {
             $lastCompletedAt = Cache::store('database')->get('queue:worker:last_completed_at');
 

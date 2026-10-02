@@ -2,7 +2,11 @@
     'activePage' => '',
 ])
 
-<header class="vh-client-header">
+<header class="vh-client-header" x-data="{ mobileOpen: false }"
+    @vaded-nav-close.window="mobileOpen = false"
+    @click.outside="if (mobileOpen) { $dispatch('vaded-nav-close') }"
+    @keydown.escape.window="if (mobileOpen) { $dispatch('vaded-nav-close'); $refs.mobileToggle.focus() }"
+    @resize.window="if (window.matchMedia('(min-width: 1024px)').matches && mobileOpen) { $dispatch('vaded-nav-close') }">
     <nav
         class="bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700"
     >
@@ -14,7 +18,9 @@
                     class="inline-flex items-center justify-center p-2 text-sm text-gray-500 rounded-lg lg:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600 shrink-0"
                     aria-controls="client-main-navigation"
                     aria-expanded="false"
-                    data-collapse-toggle="client-main-navigation"
+                    x-ref="mobileToggle"
+                    :aria-expanded="mobileOpen.toString()"
+                    @click="mobileOpen = !mobileOpen; if (!mobileOpen) { $dispatch('vaded-nav-close') }"
                 >
                     <span class="sr-only">Open main menu</span>
                     <svg class="w-6 h-6 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
@@ -33,6 +39,7 @@
                 <div
                     id="client-main-navigation"
                     class="hidden w-full border-t border-gray-200 dark:border-gray-700 lg:flex lg:flex-row lg:items-center lg:justify-center lg:border-t-0 lg:py-5"
+                    :class="{ hidden: !mobileOpen }"
                 >
                     <nav
                         class="w-full bg-gray-50 dark:bg-gray-900 lg:bg-transparent"
@@ -45,7 +52,7 @@
                             <li class="vh-mega-item"
                                 x-data="{ open: false, hoverOpened: false, closeTimer: null }"
                                 @pointerenter="clearTimeout(closeTimer); if (window.matchMedia('(min-width: 1024px) and (hover: hover)').matches && $event.pointerType === 'mouse') { $dispatch('vaded-nav-open', { id: '{{ $navigationGroupKey }}' }); if (!open) { hoverOpened = true; open = true } }"
-                                @pointerleave="closeTimer = setTimeout(() => { if (!$el.contains(document.activeElement)) { open = false; hoverOpened = false } }, 180)"
+                                @pointerleave="if (window.matchMedia('(min-width: 1024px) and (hover: hover)').matches && $event.pointerType === 'mouse') { closeTimer = setTimeout(() => { if (!$el.contains(document.activeElement)) { open = false; hoverOpened = false } }, 180) }"
                                 @vaded-nav-open.window="if ($event.detail.id !== '{{ $navigationGroupKey }}') { open = false; hoverOpened = false }"
                                 @click.outside="open = false; hoverOpened = false"
                                 @keydown.escape.window="if (open) { open = false; hoverOpened = false; $refs.trigger.focus() }"
@@ -89,7 +96,7 @@
                                     Client area
                                 </a>
                             </li>
-                            <li x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false; $refs.resources.focus()">
+                            <li x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false; $refs.resources.focus()" @vaded-nav-close.window="open = false">
                                 <button type="button" class="vh-nav-trigger" x-ref="resources" @click="open = !open" :aria-expanded="open" aria-controls="resources-menu">Resources <svg class="vh-nav-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg></button>
                                 <div id="resources-menu" class="vh-mega-panel vh-mega-panel-compact vh-resource-links" x-show="open" x-cloak>
                                     <a href="{{ route('categories.index') }}#infrastructure"><x-theme::icon name="cpu" /> Infrastructure</a>
