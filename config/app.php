@@ -21,9 +21,11 @@ return [
 
     'license_key' => env('LICENSE_KEY', ''),
 
+    'license_bypass' => (bool) env('LICENSE_BYPASS', false),
+
     'installed' => env('APP_INSTALLED', false),
 
-    'version' => 'v3-alpha',
+    'version' => 'v3-beta-0.1.1',
 
     'force_https' => env('FORCE_HTTPS', false),
 

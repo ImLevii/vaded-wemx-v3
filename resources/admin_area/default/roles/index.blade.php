@@ -7,9 +7,7 @@
 @section('actions')
     <div class="col-auto ms-auto d-print-none">
         <div class="btn-list">
-            @perm('admin.roles.create')
             <x-admin::button href="{{ route('admin.roles.create') }}" wire:navigate>{{ __('messages.create') }}</x-admin::button>
-            @endperm
         </div>
     </div>
 @endsection
@@ -29,20 +27,14 @@
             '',
         ],
         'rows' =>\App\Models\Role::get()->map(function ($role) {
-            $canUpdate = auth()->user()->hasPermission('admin.roles.update');
-
             return [
                 $role->id,
-                $canUpdate
-                    ? '<a href="' . route('admin.roles.edit', $role->id) . '" wire:navigate>' . $role->name . '</a>'
-                    : e($role->name),
+                '<a href="' . route('admin.roles.edit', $role->id) . '" wire:navigate>' . $role->name . '</a>',
                 $role->description,
                 $role->super_admin ? 'All Permissions' : count($role->getAllPermissions()) . ' Permissions',
                 $role->parent ? $role->parent->name : '-',
                 $role->created_at->format('d M, Y'),
-                $canUpdate
-                    ? '<a href="' . route('admin.roles.edit', $role->id) . '" wire:navigate>Edit</a>'
-                    : '',
+                '<a href="' . route('admin.roles.edit', $role->id) . '" wire:navigate>Edit</a>',
             ];
         })->toArray(),
     ])

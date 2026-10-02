@@ -229,12 +229,17 @@
                 <div class="card card-md">
                     <div class="card-body py-4 p-sm-5">
                         <div class="text-center">
-                            <h1>Activate License Key</h1>
+                            <h1>{{ \App\Support\LocalLicense::isBypassed() ? 'Local Development' : 'Activate License Key' }}</h1>
                             <p class="text-secondary">
+                                @if(\App\Support\LocalLicense::isBypassed())
+                                    License checks are bypassed for this local development environment. Continue to configure the database.
+                                @else
                                 Please enter your license key to activate the application. You can obtain a license key at <a href="https://app.wemx.net" target="_blank" rel="noopener noreferrer">app.wemx.net</a>.
+                                @endif
                             </p>
                         </div>
                     </div>
+                    @if(!\App\Support\LocalLicense::isBypassed())
                     <div class="hr-text hr-text-center hr-text-spaceless">License Activation</div>
                     <div class="card-body">
                         @if(!$isLicenseActive && $license_key != '')
@@ -308,6 +313,7 @@
                         </table>
                         @endif
                     </div>
+                    @endif
                 </div>
                 <div class="row align-items-center mt-3">
                     <div class="col-4">

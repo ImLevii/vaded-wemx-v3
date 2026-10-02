@@ -72,10 +72,6 @@
     </div>
     @endperm
 
-    @foreach(extensionElements(['admin-dashboard-top-view']) as $element)
-        @includeIf($element['view'])
-    @endforeach
-
     @perm('admin.dashboard.world_map')
     <div class="row row-deck row-cards mb-3">
         <!-- World Map and Visitors List -->
@@ -92,11 +88,6 @@
     <div class="row mb-3">
         <div class="col-8">
             @include('admin::dashboard.partials.system-alerts')
-
-            @foreach(extensionElements(['admin-dashboard-main-view']) as $element)
-                @includeIf($element['view'])
-            @endforeach
-
             @perm('admin.dashboard.recent_orders')
             <div class="mb-3">
                 {{--  Orders Table  --}}
@@ -174,9 +165,6 @@
             $onlineUsers = \App\Models\User::where('last_seen_at', '>=', now()->subMinutes(5))->get();
         @endphp
         <div class="col-4 flex-column">
-            @foreach(extensionElements(['admin-dashboard-sidebar-view']) as $element)
-                @includeIf($element['view'])
-            @endforeach
 
             @perm('admin.dashboard.online_users')
             <div class="card mb-3">

@@ -74,22 +74,19 @@ new class extends Component {
         @endif
 
         @foreach(cart()->items as $item)
-            @php($itemUrl = $item->packageUrl())
             <div class="grid grid-cols-4 items-center justify-between gap-3">
                 <div class="col-span-2 flex items-center gap-2">
-                    <a href="{{ $itemUrl ?? '#' }}" @if($itemUrl) wire:navigate @endif class="flex aspect-square h-9 w-9 shrink-0 items-center">
+                    <a href="#" class="flex aspect-square h-9 w-9 shrink-0 items-center">
                         <img class="h-auto max-h-full w-full"
                              src="{{ $item->getIcon() }}"
                              alt="image"/>
                     </a>
-                    <div class="min-w-0 flex-1">
-                        <a href="{{ $itemUrl ?? '#' }}"
-                           @if($itemUrl) wire:navigate @endif
-                           title="{{ $item->getName() }}"
-                           class="block text-sm font-semibold leading-none text-gray-900 hover:underline dark:text-white">{{ Str::limit($item->getName(), 32) }}</a>
-                        <p class="mt-0.5 text-sm font-normal text-gray-500 dark:text-gray-400">
-                            @if($item->package?->short_description)
-                                {{ Str::limit($item->package->short_description, 40) }}
+                    <div class="flex-1">
+                        <a href="#"
+                           class="truncate text-sm font-semibold leading-none text-gray-900 hover:underline dark:text-white">{{ $item->getName() }}</a>
+                        <p class="mt-0.5 truncate text-sm font-normal text-gray-500 dark:text-gray-400">
+                            @if($item->package)
+                                {{ $item->package->short_description }}
                             @endif
                         </p>
                     </div>

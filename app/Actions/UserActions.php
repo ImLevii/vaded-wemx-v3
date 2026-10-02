@@ -4,7 +4,6 @@ namespace App\Actions;
 
 use App\Facades\World;
 use App\Models\Email;
-use App\Models\EmailTemplate;
 use App\Models\Session;
 use App\Models\User;
 use App\Models\UserBan;
@@ -76,7 +75,12 @@ class UserActions extends Action
         // if a random password was generated, send it to the user
         if (isset($randomPassword)) {
             $user->email([
-                'identifier' => 'account.created',
+                'subject' => 'Your account has been created on '.settings('app_name', 'My Application'),
+                'lines' => [
+                    'You are receiving this email because your account has been created on '.settings('app_name', 'My Application').'.',
+                    'Please change your password after logging in.',
+                    '**Account Details:**',
+                ],
                 'table' => [
                     'columns' => [
                         'Username',
@@ -92,6 +96,7 @@ class UserActions extends Action
                     ],
                 ],
                 'button' => [
+                    'text' => 'Login to your account',
                     'url' => route('login'),
                 ],
             ]);
@@ -113,58 +118,6 @@ class UserActions extends Action
         ]);
 
         return $user;
-    }
-
-    /**
-     * Send a manual email to a user from the admin area.
-     *
-     * @param  array<string, mixed>  $input
-     *
-     * @throws ValidationException
-     */
-    public function sendEmailAsAdmin(array $input): void
-    {
-        $input['button_text'] = filled($input['button_text'] ?? null) ? trim((string) $input['button_text']) : null;
-        $input['button_url'] = filled($input['button_url'] ?? null) ? trim((string) $input['button_url']) : null;
-
-        $validated = Validator::make($input, [
-            'user_id' => ['required', 'exists:users,id'],
-            'subject' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string', 'max:20000'],
-            'button_text' => ['nullable', 'string', 'max:255', 'required_with:button_url'],
-            'button_url' => ['nullable', 'url', 'max:2048', 'required_with:button_text'],
-        ])->validate();
-
-        $user = User::query()->find($validated['user_id']);
-
-        if (! $user) {
-            throw ValidationException::withMessages([
-                'user_id' => 'User not found',
-            ]);
-        }
-
-        $lines = EmailTemplate::bodyToLines($validated['body']);
-
-        if ($lines === []) {
-            throw ValidationException::withMessages([
-                'body' => __('validation.required', ['attribute' => 'body']),
-            ]);
-        }
-
-        $payload = [
-            'identifier' => 'admin.manual-email',
-            'subject' => $validated['subject'],
-            'lines' => $lines,
-        ];
-
-        if ($validated['button_text'] && $validated['button_url']) {
-            $payload['button'] = [
-                'text' => $validated['button_text'],
-                'url' => $validated['button_url'],
-            ];
-        }
-
-        $user->email($payload);
     }
 
     /**
@@ -208,8 +161,13 @@ class UserActions extends Action
         // if the status is changed to active, email the user
         if (isset($validatedData['status']) && $user->status !== $validatedData['status'] && $validatedData['status'] === 'active') {
             $user->email([
-                'identifier' => 'account.activated',
+                'subject' => 'Your account has been activated',
+                'lines' => [
+                    'You are receiving this email because your account on '.settings('app_name', 'My Application').' is now active.',
+                    'You can now log in to your account.',
+                ],
                 'button' => [
+                    'text' => 'Login to your account',
                     'url' => route('login'),
                 ],
             ]);
@@ -357,7 +315,13 @@ class UserActions extends Action
 
         // Notify user of 2FA disable
         $user->email([
-            'identifier' => 'account.2fa.disabled_by_admin',
+            'identifier' => 'account.2fa.disabled',
+            'subject' => 'Two-factor authentication has been disabled by an administrator',
+            'lines' => [
+                'You are receiving this email because two-factor authentication was disabled on your account on '.settings('app_name', 'Application').'.',
+                'This action was performed by an administrator.',
+                'If you did not request this change, please contact support immediately.',
+            ],
         ]);
 
         return true;
@@ -481,13 +445,21 @@ class UserActions extends Action
         }
 
         $token = Str::random(48);
-        Email::actions()->sendEmailToAddress([
+        Email::create([
             'user_id' => $user->id,
             'token' => $token,
             'identifier' => 'account.email.change.requested',
             'to' => $validatedData['new_email'],
+            'subject' => 'Confirm your new email address',
+            'lines' => [
+                'You are receiving this email because you requested to change your email address on '.settings('app_name', 'My Application').'.',
+                'Please click the button below to confirm your new email address.',
+                'If you did not request this change, please ignore this email.',
+            ],
+            'button_text' => 'Confirm New Email Address',
             'button_url' => route('confirm-email-address', $token),
-            'display' => false,
+            'theme' => 'default',
+            'display' => 0, // do not display this email in the user's email list
         ]);
     }
 
@@ -542,6 +514,11 @@ class UserActions extends Action
         // Notify user of password change
         $user->email([
             'identifier' => 'account.password.change.confirmed',
+            'subject' => 'Your password has been changed',
+            'lines' => [
+                'You are receiving this email because your password was changed of your account on '.settings('app_name', 'Application').'.',
+                'If you did not make this change, please contact support immediately.',
+            ],
         ]);
 
         return $user->update([

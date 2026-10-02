@@ -115,32 +115,4 @@ class CartItem extends Model
     {
         return $this->total() + $this->options->sum('price');
     }
-
-    public function getPackageAttribute(): ?Package
-    {
-        $cartable = $this->cartable;
-
-        if ($cartable instanceof PackagePrice) {
-            return $cartable->package;
-        }
-
-        return null;
-    }
-
-    public function packageUrl(): ?string
-    {
-        $package = $this->package;
-
-        if (! $package) {
-            return null;
-        }
-
-        $parameters = ['package' => $package->slug];
-
-        if ($this->cartable instanceof PackagePrice) {
-            $parameters['packagePriceId'] = $this->cartable->id;
-        }
-
-        return route('packages.view', $parameters);
-    }
 }

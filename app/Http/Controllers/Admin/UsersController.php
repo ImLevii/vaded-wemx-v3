@@ -25,11 +25,6 @@ class UsersController extends Controller
         return view('admin::users.edit', compact('user'));
     }
 
-    public function sendEmail(User $user)
-    {
-        return view('admin::users.send-email', compact('user'));
-    }
-
     public function impersonate(User $user)
     {
         if ($user->isStaff()) {

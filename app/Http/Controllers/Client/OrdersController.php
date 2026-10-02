@@ -10,29 +10,21 @@ class OrdersController extends Controller
 {
     public function view(Order $order)
     {
-        $this->authorizeOrderAccess($order);
-
         return view('theme::orders.view', compact('order'));
     }
 
     public function payments(Order $order)
     {
-        $this->authorizeOrderAccess($order);
-
         return view('theme::orders.payments', compact('order'));
     }
 
     public function subscription(Order $order)
     {
-        $this->authorizeOrderAccess($order);
-
         return view('theme::orders.subscription', compact('order'));
     }
 
     public function subscribe(Order $order, $gateway_id)
     {
-        $this->authorizeOrderAccess($order);
-
         // if order already has an active subscription, redirect to order view page
         if ($order->hasActiveSubscription(true)) {
             return redirect()->back();
@@ -59,30 +51,12 @@ class OrdersController extends Controller
 
     public function emails(Order $order)
     {
-        $this->authorizeOrderAccess($order);
-
         return view('theme::orders.emails', compact('order'));
     }
 
     public function members(Order $order)
     {
-        $this->authorizeOrderAccess($order);
-
         return view('theme::orders.members', compact('order'));
-    }
-
-    private function authorizeOrderAccess(Order $order): void
-    {
-        if ($order->user_id === auth()->id()) {
-            return;
-        }
-
-        $isActiveMember = $order->members()
-            ->where('status', 'active')
-            ->where('user_id', auth()->id())
-            ->exists();
-
-        abort_unless($isActiveMember, 403);
     }
 
     public function acceptInvite()

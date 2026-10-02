@@ -2,11 +2,11 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Session;
+use App\Support\LocalLicense;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class SyncRuntimeMiddleware
 {
@@ -23,19 +23,23 @@ class SyncRuntimeMiddleware
     protected $syncRuntimeUrl = 'https://api-v3.wemx.org/api/v1/licenses/validate';
 
     public function handle(Request $request, Closure $next)
-    {           
-        if (auth()->guest()){
+    {
+        if (LocalLicense::isBypassed()) {
             return $next($request);
         }
 
-        if (empty(config('app.license_key')) OR !str_starts_with(config('app.license_key'), 'WMX-')) {
-            if (auth()->user()->hasPermission('admin.settings.index') AND !in_array($request->route()->getName(), $this->except)) {
+        if (auth()->guest()) {
+            return $next($request);
+        }
+
+        if (empty(config('app.license_key')) or ! str_starts_with(config('app.license_key'), 'WMX-')) {
+            if (auth()->user()->hasPermission('admin.settings.index') and ! in_array($request->route()->getName(), $this->except)) {
                 return redirect()->route('admin.license.index');
             } else {
                 abort(403, 'License Expired');
             }
         }
- 
+
         if (Cache::has('lcs_checked_at')) {
             return $next($request);
         }
@@ -45,26 +49,25 @@ class SyncRuntimeMiddleware
             'domain' => request()->getHost(),
         ]);
 
-        if ($response->successful() AND $response->json('success')) {
+        if ($response->successful() and $response->json('success')) {
 
             Cache::put('lcs_checked_at', now(), 21600);
 
             settings([
                 'encrypted:lcs_plan_data' => $response->json('data'),
             ]);
-            
+
             return $next($request);
         }
 
         // redirect user to license page and skip the except routes
         if (auth()->user()->hasPermission('admin.settings.index')) {
-            if ($request->route() && !in_array($request->route()->getName(), $this->except)) {
+            if ($request->route() && ! in_array($request->route()->getName(), $this->except)) {
                 return redirect()->route('admin.license.index');
             }
         } else {
             abort(403, 'License Expired');
         }
-
 
         return $next($request);
     }

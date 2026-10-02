@@ -41,15 +41,8 @@ new class extends Component {
         return \App\Models\Role::find($this->parent_role_id);
     }
 
-    public function mount(): void
-    {
-        abort_if(!auth()->user()->hasPerm('admin.roles.create'), 403);
-    }
-
     public function createRole()
     {
-        abort_if(!auth()->user()->hasPerm('admin.roles.create'), 403);
-
         $this->resetErrorBag();
 
         RoleActions::createRoleAsAdmin([
@@ -110,21 +103,19 @@ new class extends Component {
                 @enderror
             </div>
         </div>
-        @if(auth()->user()->isPrimaryAdmin())
-            <div class="mb-3 row">
-                <label class="col-3 col-form-label" for="all_permissions-input">Full Access</label>
-                <div class="col">
-                    <label class="form-check form-switch">
-                        <input class="form-check-input" wire:model.change="all_permissions" id="all_permissions-input"
-                               type="checkbox"/>
-                        <span class="form-check-label">Does this role have all permissions</span>
-                    </label>
-                    @error('super_admin')
-                        <x-admin::form.error :message="$message"/>
-                    @enderror
-                </div>
+        <div class="mb-3 row">
+            <label class="col-3 col-form-label" for="all_permissions-input">Full Access</label>
+            <div class="col">
+                <label class="form-check form-switch">
+                    <input class="form-check-input" wire:model.change="all_permissions" id="all_permissions-input"
+                           type="checkbox"/>
+                    <span class="form-check-label">Does this role have all permissions</span>
+                </label>
+                @error('super_admin')
+                    <x-admin::form.error :message="$message"/>
+                @enderror
             </div>
-        @endif
+        </div>
         @if(!$all_permissions)
             <div class="mb-3 row">
                 <label class="col-3 col-form-label required" for="permissions-input">Permissions</label>
@@ -140,7 +131,6 @@ new class extends Component {
                                     <strong class="text-uppercase">{{ $permissionGroupName }}</strong>
                                 </div>
                                 @foreach($permissionGroup as $permission => $description)
-                                    @continue(!auth()->user()->isPrimaryAdmin() && !auth()->user()->hasPermission($permission))
                                 <div class="mb-2 col-4">
                                     <div class="form-label">{{ $permission }} @if(in_array($permission, $inheritedPermissions)) (Parent) @endif</div>
                                     <label class="form-check form-switch"

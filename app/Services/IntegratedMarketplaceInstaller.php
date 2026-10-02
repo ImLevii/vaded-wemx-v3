@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Extension;
 use App\Models\IntegratedMarketplaceInstallation;
+use App\Support\LocalLicense;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Artisan;
@@ -38,16 +39,21 @@ class IntegratedMarketplaceInstaller
      */
     private function resource(string $slug): array
     {
-        try {
-            $response = $this->http()->get('/api/v1/marketplace/resources/'.rawurlencode(trim($slug)));
-        } catch (ConnectionException) {
-            throw new RuntimeException('The marketplace could not be reached.');
+        if (LocalMarketplace::isEnabled()) {
+            $resource = app(LocalMarketplace::class)->resource($slug);
+        } else {
+            try {
+                $response = $this->http()->get('/api/v1/marketplace/resources/'.rawurlencode(trim($slug)));
+            } catch (ConnectionException) {
+                throw new RuntimeException('The marketplace could not be reached.');
+            }
+
+            $resource = $response->successful() ? $response->json('data') : null;
         }
 
-        $resource = $response->json('data');
         $category = is_array($resource) && is_array($resource['category'] ?? null) ? $resource['category'] : [];
 
-        if (! $response->successful() || ! is_array($resource)) {
+        if (! is_array($resource)) {
             throw new RuntimeException('This resource could not be loaded from the marketplace.');
         }
 
@@ -119,7 +125,7 @@ class IntegratedMarketplaceInstaller
         $path = storage_path('app/marketplace-installs/'.Str::uuid().'.zip');
         File::ensureDirectoryExists(dirname($path));
 
-        if (trim((string) config('app.license_key')) === '') {
+        if (trim((string) config('app.license_key')) === '' && ! LocalLicense::isBypassed() && ! LocalMarketplace::isEnabled()) {
             throw new RuntimeException('Add a license key before using the marketplace.');
         }
 
@@ -127,23 +133,29 @@ class IntegratedMarketplaceInstaller
             throw new RuntimeException('Your account does not have access to this resource.');
         }
 
-        try {
-            $response = $this->http()
-                ->withHeaders(['Accept' => 'application/zip, application/json'])
-                ->get('/api/v1/marketplace/resources/download/'.$version['id']);
-        } catch (ConnectionException) {
-            throw new RuntimeException('The marketplace could not be reached.');
+        if (LocalMarketplace::isEnabled()) {
+            $contents = app(LocalMarketplace::class)->archive((string) $resource['slug'], (int) $version['id']);
+        } else {
+            try {
+                $response = $this->http()
+                    ->withHeaders(['Accept' => 'application/zip, application/json'])
+                    ->get('/api/v1/marketplace/resources/download/'.$version['id']);
+            } catch (ConnectionException) {
+                throw new RuntimeException('The marketplace could not be reached.');
+            }
+
+            if (! $response->successful() || $response->body() === '') {
+                $message = $response->json('errors.version_id.0') ?: $response->json('message');
+
+                throw new RuntimeException(is_string($message) && $message !== ''
+                    ? $message
+                    : 'The version could not be downloaded.');
+            }
+
+            $contents = $response->body();
         }
 
-        if (! $response->successful() || $response->body() === '') {
-            $message = $response->json('errors.version_id.0') ?: $response->json('message');
-
-            throw new RuntimeException(is_string($message) && $message !== ''
-                ? $message
-                : 'The version could not be downloaded.');
-        }
-
-        File::put($path, $response->body());
+        File::put($path, $contents);
 
         $checksum = (string) ($version['checksum'] ?? '');
 
@@ -344,8 +356,10 @@ class IntegratedMarketplaceInstaller
 
     private function http(): PendingRequest
     {
+        $licenseKey = trim((string) config('app.license_key'));
+
         return Http::baseUrl(rtrim((string) config('services.marketplace.url'), '/'))
-            ->withToken(trim((string) config('app.license_key')))
+            ->when($licenseKey !== '', fn (PendingRequest $request): PendingRequest => $request->withToken($licenseKey))
             ->acceptJson()
             ->connectTimeout(3)
             ->timeout(60);

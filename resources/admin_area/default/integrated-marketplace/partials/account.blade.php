@@ -2,7 +2,11 @@
     /** @var array{username?: ?string, email?: ?string, error?: ?string} $account */
 @endphp
 
-@if(! empty($account['error']))
+@if(! empty($account['mock']))
+    <div class="alert alert-info" role="status">
+        <strong>Local mock marketplace</strong> — Sample resources only. No connection to the WemX marketplace.
+    </div>
+@elseif(! empty($account['error']))
     <div class="alert alert-warning" role="alert">{{ $account['error'] }}</div>
 @elseif(! empty($account['username']) || ! empty($account['email']))
     <div class="alert alert-info" role="status">

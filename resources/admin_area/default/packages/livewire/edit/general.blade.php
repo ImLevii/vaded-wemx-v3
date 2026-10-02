@@ -112,7 +112,7 @@ new class extends Component
         <x-admin::form.label for="slug" label="Slug"/>
         <div class="input-group input-group-flat">
               <span class="input-group-text">
-                {{ url('/packages') }}/
+                https://wemx.net/packages/
               </span>
             <input type="text" wire:model="slug" class="form-control ps-0"  id="slug-input" value="" autocomplete="off">
         </div>

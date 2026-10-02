@@ -44,12 +44,6 @@ new class extends Component
 
     public function openInstallModal(int $releaseId): void
     {
-        if (! auth()->user()->isPrimaryAdmin()) {
-            $this->dispatch('alert', 'error', 'Only the primary administrator can install application updates.');
-
-            return;
-        }
-
         $release = app(WemxGitHubReleases::class)->findReleaseById($this->releases, $releaseId);
 
         if ($release === null) {
@@ -90,12 +84,6 @@ new class extends Component
         WemxGitHubReleases $githubReleases,
         WemxReleaseInstaller $installer,
     ): void {
-        if (! auth()->user()->isPrimaryAdmin()) {
-            $this->dispatch('install-release-failed', message: 'Only the primary administrator can install application updates.');
-
-            return;
-        }
-
         $this->understandsInstallRisks = $understandsRisks;
 
         if (! $understandsRisks) {
@@ -122,13 +110,6 @@ new class extends Component
         WemxGitHubReleases $githubReleases,
         WemxReleaseInstaller $installer,
     ): void {
-        if (! auth()->user()->isPrimaryAdmin()) {
-            $this->dispatch('install-release-failed', message: 'Only the primary administrator can install application updates.');
-            $this->installingReleaseId = null;
-
-            return;
-        }
-
         $this->installStatus = null;
         $this->installingReleaseId = $releaseId;
 
@@ -255,15 +236,6 @@ new class extends Component
             <x-admin::alerts.warning
                 :title="__('Pre-release version') . ' (' . ($status['installed_version'] ?? '') . ')'"
                 :message="__('You are running an alpha or beta channel build. Production deployments should use a stable tagged release.')"
-            />
-        </div>
-    @endif
-
-    @if (! auth()->user()->isPrimaryAdmin())
-        <div class="mb-3">
-            <x-admin::alerts.warning
-                title="Install restricted"
-                message="Only the primary administrator (user ID 1) can install application updates. You can still review release notes below."
             />
         </div>
     @endif
@@ -401,7 +373,7 @@ new class extends Component
                                             <button type="button" class="btn btn-sm btn-success" disabled>
                                                 Installed
                                             </button>
-                                        @elseif (auth()->user()->isPrimaryAdmin())
+                                        @else
                                             <button
                                                 type="button"
                                                 class="btn btn btn-primary"
@@ -490,7 +462,7 @@ new class extends Component
                             </div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="border rounded-3 p-3 h-100 bg-secondary-lt">
+                            <div class="border rounded-3 p-3 h-100">
                                 <div class="fw-semibold text-body mb-2">Will not touch</div>
                                 <ul class="mb-0 ps-3">
                                     <li><code>.env</code></li>
@@ -503,23 +475,6 @@ new class extends Component
                     <p class="text-secondary small mt-3 mb-0">
                         Back up your site first. Keep this tab open during install. Run migrations afterward if the release requires them.
                     </p>
-                    @if (auth()->user()->isPrimaryAdmin())
-                        <div class="border rounded-3 p-3 mt-3 bg-secondary-lt">
-                            <div class="fw-semibold text-body mb-2">Database backup</div>
-                            <p class="text-secondary small mb-2">
-                                Download a SQL export of your current database before installing.
-                            </p>
-                            <a
-                                href="{{ route('admin.updates.database-export') }}"
-                                class="btn btn-outline-primary"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <x-admin::icon icon="download" outline class="icon icon-sm me-1"/>
-                                Download SQL backup
-                            </a>
-                        </div>
-                    @endif
                     <p class="text-danger small mt-2 mb-0" x-show="error" x-text="error"></p>
                 </div>
                 <div class="modal-footer border-0 pt-0 flex-column align-items-stretch" x-show="!installing">

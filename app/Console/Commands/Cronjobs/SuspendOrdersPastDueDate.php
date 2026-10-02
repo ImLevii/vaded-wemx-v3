@@ -50,12 +50,11 @@ class SuspendOrdersPastDueDate extends Command
 
         $adminEmail = User::first()->email;
 
-        Email::actions()->sendEmailToAddress([
+        Email::create([
             'to' => $adminEmail,
-            'identifier' => 'admin.orders.suspended_batch',
-            'variables' => [
-                'count' => $orders->count(),
-                'grace_period' => $gracePeriodInDays,
+            'subject' => "{$orders->count()} Orders were suspended by the system",
+            'lines' => [
+                "**{$orders->count()} Orders** were suspended because they were **{$gracePeriodInDays} days** past their due date:",
             ],
             'table' => [
                 'columns' => [
@@ -71,6 +70,7 @@ class SuspendOrdersPastDueDate extends Command
                     $order->due_date?->toDateString(),
                 ])->toArray(),
             ],
+            'button_text' => 'View Suspended Orders',
             'button_url' => route('admin.orders.index', ['status' => 'suspended']),
         ]);
 

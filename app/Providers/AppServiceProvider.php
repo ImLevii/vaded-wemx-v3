@@ -4,8 +4,6 @@ namespace App\Providers;
 
 use App\Extensions\ExtensionServiceProvider;
 use App\Install\InstallServiceProvider;
-use App\Invoices\InvoiceTheme;
-use App\Mail\EmailTheme;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
@@ -48,17 +46,17 @@ class AppServiceProvider extends ServiceProvider
         Number::useLocale('en');
         Number::useCurrency('USD');
 
+        // load invoices views
+        $this->loadViewsFrom(resource_path('invoices'), 'invoices');
+
         // register custom client theme
         $this->registerClientTheme();
 
         // register custom admin theme
         $this->registerAdminTheme();
 
-        // register installed email themes
-        $this->registerEmailThemes();
-
-        // register installed invoice themes
-        $this->registerInvoiceThemes();
+        // register custom email theme
+        $this->registerEmailTheme();
 
         // define @settings('key') directive
         Blade::directive('settings', function ($key, $default = null) {
@@ -106,31 +104,16 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register every invoice theme installed under resources/invoices.
+     * Register the email theme
      */
-    private function registerInvoiceThemes(): void
+    private function registerEmailTheme(): void
     {
-        if (! is_dir(resource_path('invoices'))) {
-            throw new \RuntimeException('Invoice themes directory not found.');
+        // check if the theme directory exists
+        if (! is_dir(resource_path('email_templates/'.config('app.email_theme', 'default')))) {
+            throw new \RuntimeException('Email theme "'.config('app.email_theme', 'default').'" not found');
         }
 
-        foreach (InvoiceTheme::all() as $theme) {
-            $this->loadViewsFrom($theme->path, $theme->namespace());
-        }
-    }
-
-    /**
-     * Register every email theme installed under resources/email_templates.
-     */
-    private function registerEmailThemes(): void
-    {
-        if (! is_dir(resource_path('email_templates'))) {
-            throw new \RuntimeException('Email themes directory not found.');
-        }
-
-        foreach (EmailTheme::all() as $theme) {
-            $this->loadViewsFrom($theme->path, $theme->namespace());
-        }
+        $this->loadViewsFrom(resource_path('email_templates/'.config('app.email_theme', 'default')), 'email');
     }
 
     /**

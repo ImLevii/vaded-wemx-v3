@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\IntegratedMarketplaceInstallation;
+use App\Support\LocalLicense;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
@@ -40,7 +41,11 @@ class IntegratedMarketplace
      */
     public function catalog(array $filters = []): array
     {
-        if ($this->licenseKey() === '') {
+        if (LocalMarketplace::isEnabled()) {
+            return app(LocalMarketplace::class)->catalog($filters);
+        }
+
+        if ($this->licenseKey() === '' && ! LocalLicense::isBypassed()) {
             return $this->emptyCatalog('Add a license key before using the marketplace.');
         }
 
@@ -72,7 +77,11 @@ class IntegratedMarketplace
     {
         $slug = trim($slug);
 
-        if ($this->licenseKey() === '') {
+        if (LocalMarketplace::isEnabled()) {
+            return ['resource' => app(LocalMarketplace::class)->resource($slug), 'error' => null];
+        }
+
+        if ($this->licenseKey() === '' && ! LocalLicense::isBypassed()) {
             return [
                 'resource' => null,
                 'error' => 'Add a license key before using the marketplace.',
@@ -201,7 +210,7 @@ class IntegratedMarketplace
     }
 
     /**
-     * @return array{username: ?string, email: ?string, error: ?string}
+     * @return array{username: ?string, email: ?string, error: ?string, mock?: bool}
      */
     public function account(): array
     {
@@ -211,7 +220,11 @@ class IntegratedMarketplace
             'error' => null,
         ];
 
-        if ($this->licenseKey() === '') {
+        if (LocalMarketplace::isEnabled()) {
+            return [...$empty, 'mock' => true];
+        }
+
+        if ($this->licenseKey() === '' && ! LocalLicense::isBypassed()) {
             $empty['error'] = 'Add a license key before using the marketplace.';
 
             return $empty;
@@ -258,9 +271,13 @@ class IntegratedMarketplace
 
     public function recordView(string $slug): void
     {
+        if (LocalMarketplace::isEnabled()) {
+            return;
+        }
+
         $slug = trim($slug);
 
-        if ($slug === '' || $this->licenseKey() === '') {
+        if ($slug === '' || ($this->licenseKey() === '' && ! LocalLicense::isBypassed())) {
             return;
         }
 
@@ -502,7 +519,7 @@ class IntegratedMarketplace
     private function request(): PendingRequest
     {
         return Http::baseUrl(rtrim((string) config('services.marketplace.url'), '/'))
-            ->withToken($this->licenseKey())
+            ->when($this->licenseKey() !== '', fn (PendingRequest $request): PendingRequest => $request->withToken($this->licenseKey()))
             ->acceptJson()
             ->withOptions([
                 'allow_redirects' => [

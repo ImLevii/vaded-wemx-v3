@@ -5,6 +5,7 @@ namespace App\Install\Livewire;
 use App\Helpers\EnvironmentWriter;
 use App\Models\Setting;
 use App\Models\User;
+use App\Support\LocalLicense;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
@@ -361,6 +362,10 @@ class InstallWizard extends Component
 
     protected function reportLicenseCheck(string $eventType): void
     {
+        if (LocalLicense::isBypassed()) {
+            return;
+        }
+
         $payload = $this->buildLicenseReportPayload($eventType);
         if ($payload['license_key'] === '') {
             return;
@@ -388,6 +393,12 @@ class InstallWizard extends Component
 
     public function checkLicense(): void
     {
+        if (LocalLicense::isBypassed()) {
+            $this->validateLicenseKey();
+
+            return;
+        }
+
         $this->validate([
             'license_key' => 'required|string|starts_with:WMX-',
         ]);
@@ -401,6 +412,14 @@ class InstallWizard extends Component
         $this->isLicenseActive = false;
         $this->licenseCheckedSuccessfully = false;
         session()->forget('installer.license_active');
+
+        if (LocalLicense::isBypassed()) {
+            $this->resetValidation('license_key');
+            $this->isLicenseActive = true;
+            $this->licenseCheckedSuccessfully = true;
+
+            return;
+        }
 
         $licenseKey = trim((string) $this->license_key);
         if ($licenseKey === '') {
@@ -470,8 +489,15 @@ class InstallWizard extends Component
         session(['installer.license_active' => true]);
     }
 
-    public function checkLicenseAndContinue()
+    public function checkLicenseAndContinue(): void
     {
+        if (LocalLicense::isBypassed()) {
+            $this->validateLicenseKey();
+            $this->step = 'database';
+
+            return;
+        }
+
         $this->validate([
             'license_key' => 'required|string|not_in:test',
         ]);

@@ -34,9 +34,9 @@ class MigrateExtensions extends Command
 
     protected function migrateExtension($extension): void
     {
-        $migrationPath = $extension->extension()->getMigrationsPath();
+        $migrationPath = $extension->extension()->getExtensionDirectory().'/migrations';
         if (is_dir($migrationPath)) {
-            $relativePath = str_replace(base_path().DIRECTORY_SEPARATOR, '', $migrationPath);
+            $relativePath = str_replace(base_path().'/', '', $migrationPath);
             $this->info("Performing migrations for the {$extension->name} at {$relativePath}");
             $this->call('migrate', [
                 '--path' => $relativePath,

@@ -433,7 +433,7 @@ new class extends Component
                                 <div class="mb-3">
                                     <div class="fw-medium mb-1">How this will be installed</div>
                                     @if($installSummary['location'])
-                                        <p class="mb-2">The zip is downloaded from the marketplace and extracted to</p>
+                                        <p class="mb-2">{{ ! empty($this->account['mock']) ? 'The demo zip is generated locally and extracted to' : 'The zip is downloaded from the marketplace and extracted to' }}</p>
                                         <code class="d-block">{{ $installSummary['location'] }}</code>
                                         <p class="mb-0 mt-2">
                                             @if($installSummary['uses_archive_folder'])
@@ -444,7 +444,7 @@ new class extends Component
                                             {{ $installSummary['outcome'] }}
                                         </p>
                                     @else
-                                        <p class="mb-0">The zip is downloaded from the marketplace. {{ $installSummary['outcome'] }}</p>
+                                        <p class="mb-0">{{ ! empty($this->account['mock']) ? 'The demo zip is generated locally.' : 'The zip is downloaded from the marketplace.' }} {{ $installSummary['outcome'] }}</p>
                                     @endif
                                 </div>
                             @endif

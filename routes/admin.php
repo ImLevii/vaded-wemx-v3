@@ -14,15 +14,14 @@ Route::group(['prefix' => 'users'], function () {
     Route::get('/', [Admin\UsersController::class, 'index'])->name('users.index')->middleware('permission:admin.users');
     Route::get('/create', [Admin\UsersController::class, 'create'])->name('users.create')->middleware('permission:admin.users.create');
     Route::get('/edit/{user:id}', [Admin\UsersController::class, 'edit'])->name('users.edit')->middleware('permission:admin.users.view');
-    Route::get('/edit/{user:id}/send-email', [Admin\UsersController::class, 'sendEmail'])->name('users.send-email')->middleware('permission:admin.users.update');
     Route::get('/edit/{user:id}/impersonate', [Admin\UsersController::class, 'impersonate'])->name('users.impersonate')->middleware('permission:admin.users.impersonate');
     Route::get('/exit-impersonate', [Admin\UsersController::class, 'exitImpersonate'])->name('users.exit-impersonate')->withoutMiddleware(['admin', AdminPathMiddleware::class]);
 });
 
 Route::group(['prefix' => 'roles'], function () {
-    Route::get('/', [Admin\RolesController::class, 'index'])->name('roles.index')->middleware('permission:admin.roles');
-    Route::get('/create', [Admin\RolesController::class, 'create'])->name('roles.create')->middleware('permission:admin.roles.create');
-    Route::get('/edit/{role:id}', [Admin\RolesController::class, 'edit'])->name('roles.edit')->middleware('permission:admin.roles.update');
+    Route::get('/', [Admin\RolesController::class, 'index'])->name('roles.index');
+    Route::get('/create', [Admin\RolesController::class, 'create'])->name('roles.create');
+    Route::get('/edit/{role:id}', [Admin\RolesController::class, 'edit'])->name('roles.edit');
 });
 
 Route::group(['prefix' => 'payments'], function () {
@@ -56,24 +55,16 @@ Route::group(['prefix' => 'pages'], function () {
     Route::get('/edit/{page:id}', [Admin\PagesController::class, 'edit'])->name('pages.edit')->middleware('permission:admin.pages.update');
 });
 
-Route::group(['prefix' => 'marketplace'], function () {
-    Route::get('/', [Admin\IntegratedMarketplaceController::class, 'index'])
-        ->name('marketplace.index')
-        ->middleware('permission:admin.integrated-marketplace');
-    Route::get('/installed', [Admin\IntegratedMarketplaceController::class, 'installed'])
-        ->name('marketplace.installed')
-        ->middleware('permission:admin.integrated-marketplace');
-    Route::get('/{slug}', [Admin\IntegratedMarketplaceController::class, 'show'])
-        ->name('marketplace.show')
-        ->middleware('permission:admin.integrated-marketplace')
-        ->where('slug', '[A-Za-z0-9\-]+');
-});
-
 Route::group(['prefix' => 'packages'], function () {
     Route::get('/', [Admin\PackagesController::class, 'index'])->name('packages.index');
     Route::get('/create', [Admin\PackagesController::class, 'create'])->name('packages.create');
     Route::get('/edit/{package:id}', [Admin\PackagesController::class, 'edit'])->name('packages.edit');
 });
+
+// TEMPORARY: Admin marketplace disabled — uncomment to restore.
+// Route::group(['prefix' => 'marketplace'], function () {
+//     Route::get('/', [Admin\MarketplaceController::class, 'index'])->name('marketplace.index');
+// });
 
 Route::group(['prefix' => 'gateways'], function () {
     Route::get('/', [Admin\GatewaysController::class, 'index'])->name('gateways.index');
@@ -83,17 +74,9 @@ Route::group(['prefix' => 'gateways'], function () {
 });
 
 Route::group(['prefix' => 'emails'], function () {
-    Route::get('/', [Admin\EmailsController::class, 'index'])->name('emails.index')->middleware('permission:admin.emails.index');
-    Route::get('/view/{email:id}', [Admin\EmailsController::class, 'view'])->name('emails.view')->middleware('permission:admin.emails.index');
-    Route::get('/configure', [Admin\EmailsController::class, 'configure'])->name('emails.configure')->middleware('permission:admin.emails.configure');
-    Route::get('/templates', [Admin\EmailsController::class, 'templates'])->name('emails.templates.index')->middleware('permission:admin.emails.templates');
-    Route::get('/templates/{template}', [Admin\EmailsController::class, 'editTemplate'])
-        ->name('emails.templates.edit')
-        ->middleware('permission:admin.emails.templates')
-        ->where('template', '[A-Za-z0-9._-]+');
-    Route::get('/mass-mails', [Admin\MassMailsController::class, 'index'])->name('emails.mass-mails.index')->middleware('permission:admin.emails.mass-mails');
-    Route::get('/mass-mails/create', [Admin\MassMailsController::class, 'create'])->name('emails.mass-mails.create')->middleware('permission:admin.emails.mass-mails');
-    Route::get('/mass-mails/{massMail}', [Admin\MassMailsController::class, 'show'])->name('emails.mass-mails.show')->middleware('permission:admin.emails.mass-mails');
+    Route::get('/', [Admin\EmailsController::class, 'index'])->name('emails.index');
+    Route::get('/view/{email:id}', [Admin\EmailsController::class, 'view'])->name('emails.view');
+    Route::get('/configure', [Admin\EmailsController::class, 'configure'])->name('emails.configure');
 });
 
 Route::group(['prefix' => 'servers'], function () {
@@ -137,22 +120,10 @@ Route::group(['prefix' => 'taxes'], function () {
     Route::get('/edit/{country_code}', [Admin\TaxesController::class, 'edit'])->name('taxes.edit');
 });
 
-Route::group(['prefix' => 'data-export'], function () {
-    Route::get('/', [Admin\DataExportController::class, 'index'])->name('data-export.index')->middleware('permission:admin.data-export');
-    Route::get('/{dataset}/download', [Admin\DataExportController::class, 'download'])
-        ->name('data-export.download')
-        ->middleware('permission:admin.data-export')
-        ->where('dataset', '[a-z0-9_]+');
-});
-
 Route::group(['prefix' => 'schedule-logs'], function () {
     Route::get('/', [Admin\ScheduleLogController::class, 'index'])->name('schedule-logs.index');
     Route::get('/view/{log}', [Admin\ScheduleLogController::class, 'view'])->name('schedule-logs.view');
 });
-
-Route::get('/updates/database-export', [Admin\UpdatesController::class, 'exportDatabase'])
-    ->name('updates.database-export')
-    ->middleware('permission:admin.settings.index');
 
 Route::view('/updates', 'admin::updates.index')
     ->name('updates.index')

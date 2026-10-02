@@ -94,11 +94,6 @@ class User extends Authenticatable
         });
     }
 
-    public function isPrimaryAdmin(): bool
-    {
-        return $this->id === 1;
-    }
-
     /**
      * Get the user's full name.
      */
@@ -255,24 +250,21 @@ class User extends Authenticatable
 
     public function email(array $data): void
     {
-        Email::actions()->sendUserEmail(array_filter([
+        Email::actions()->sendUserEmail([
             'user_id' => $this->id,
             'token' => $data['token'] ?? null,
             'identifier' => $data['identifier'] ?? null,
-            'template' => $data['template'] ?? null,
-            'variables' => $data['variables'] ?? null,
             'mailable_type' => $data['mailable_type'] ?? null,
             'mailable_id' => $data['mailable_id'] ?? null,
-            'subject' => $data['subject'] ?? null,
-            'lines' => $data['lines'] ?? null,
+            'subject' => $data['subject'],
+            'lines' => $data['lines'],
             'table' => $data['table'] ?? null,
             'button_text' => $data['button']['text'] ?? null,
             'button_url' => $data['button']['url'] ?? null,
             'attachments' => $data['attachments'] ?? null,
             'theme' => $data['theme'] ?? null,
             'display' => $data['display'] ?? null,
-            'data' => $data['data'] ?? null,
-        ], fn ($value) => $value !== null));
+        ]);
     }
 
     public function addresses(): HasMany
@@ -353,7 +345,12 @@ class User extends Authenticatable
 
         $this->email([
             'identifier' => 'email_verification',
+            'subject' => 'Verify your email address',
+            'lines' => [
+                'Thanks for signing up! Please click the button below to verify your email address. If you did not create an account, no further action is required.',
+            ],
             'button' => [
+                'text' => 'Verify Email Address',
                 'url' => route('verify-email.token', ['token' => $this->verification_token]),
             ],
         ]);
@@ -373,7 +370,13 @@ class User extends Authenticatable
 
         $this->email([
             'identifier' => 'password_reset',
+            'subject' => 'Password Reset Request',
+            'lines' => [
+                'You are receiving this email because we received a password reset request for your account.',
+                'If you did not request a password reset, no further action is required.',
+            ],
             'button' => [
+                'text' => 'Reset Password',
                 'url' => route('reset-password', ['token' => $newToken]),
             ],
         ]);

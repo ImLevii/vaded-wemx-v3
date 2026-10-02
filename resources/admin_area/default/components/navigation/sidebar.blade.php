@@ -180,18 +180,6 @@
                 </x-admin::navigation.sidebar-item>
                 @endperm
 
-                <!-- Data Export -->
-                @perm('admin.data-export')
-                <x-admin::navigation.sidebar-item
-                    :title="__('messages.data_export')"
-                    :href="route('admin.data-export.index')"
-                    :active="$activePage === 'data-export'">
-                    <x-slot name="icon">
-                        <x-admin::icon icon="database-export" outline/>
-                    </x-slot>
-                </x-admin::navigation.sidebar-item>
-                @endperm
-
                 <li class="nav-item mt-2 mb-1">
                     <div class="text-muted text-uppercase px-3 small">Application Settings</div>
                 </li>
@@ -267,37 +255,23 @@
                 @endperm
 
                 <!-- Emails -->
-                @perm(['admin.emails.index', 'admin.emails.configure', 'admin.emails.templates', 'admin.emails.mass-mails'])
+                @perm('admin.emails.*')
                 <x-admin::navigation.sidebar-item
                     :title="__('messages.emails')"
-                    :active="in_array($activePage, ['emails', 'configure_emails', 'email_templates', 'mass_mails'])"
+                    :active="in_array($activePage, ['emails', 'configure_emails'])"
                     :dropdown="true"
                     :id="'email-menu'">
                     <x-slot name="icon">
                         <x-admin::icon icon="mail-cog" outline/>
                     </x-slot>
-                    @perm('admin.emails.mass-mails')
-                    <x-admin::navigation.sidebar-dropdown-item
-                        :title="__('messages.mass_mails')"
-                        :href="route('admin.emails.mass-mails.index')"
-                        :active="$activePage === 'mass_mails'"
-                        :icon="'mail-forward'"/>
-                    @endperm
-                    @perm('admin.emails.templates')
-                    <x-admin::navigation.sidebar-dropdown-item
-                        :title="__('messages.email_templates')"
-                        :href="route('admin.emails.templates.index')"
-                        :active="$activePage === 'email_templates'"
-                        :icon="'file-text'"/>
-                    @endperm
-                    @perm('admin.emails.configure')
+                    @perm('admin.gateways.configure')
                     <x-admin::navigation.sidebar-dropdown-item
                         :title="__('messages.configure_smtp')"
                         :href="route('admin.emails.configure')"
                         :active="$activePage === 'configure_emails'"
                         :icon="'mail-cog'"/>
                     @endperm
-                    @perm('admin.emails.index')
+                    @perm('admin.gateways.index')
                     <x-admin::navigation.sidebar-dropdown-item
                         :title="__('messages.email_history')"
                         :href="route('admin.emails.index')"
@@ -311,27 +285,18 @@
                     <div class="text-muted text-uppercase px-3 small">Third Party</div>
                 </li>
 
-                @perm('admin.integrated-marketplace')
+                {{-- TEMPORARY: Marketplace sidebar entry disabled — uncomment to restore.
+                @perm('admin.marketplace.index')
                 <x-admin::navigation.sidebar-item
                     title="Marketplace"
-                    :active="in_array($activePage, ['marketplace', 'marketplace_installed'])"
-                    :dropdown="true"
-                    :id="'integrated-marketplace'">
+                    :href="route('admin.marketplace.index')"
+                    :active="$activePage === 'marketplace'">
                     <x-slot name="icon">
-                        <x-admin::icon icon="building-store" outline/>
+                        <x-admin::icon icon="plug" outline/>
                     </x-slot>
-                    <x-admin::navigation.sidebar-dropdown-item
-                        title="Browse"
-                        :href="route('admin.marketplace.index')"
-                        :active="$activePage === 'marketplace'"
-                        icon="building-store"/>
-                    <x-admin::navigation.sidebar-dropdown-item
-                        title="Installed"
-                        :href="route('admin.marketplace.installed')"
-                        :active="$activePage === 'marketplace_installed'"
-                        icon="download"/>
                 </x-admin::navigation.sidebar-item>
                 @endperm
+                --}}
 
                 <!-- Installed Extensions -->
                 @perm('admin.extensions.index')

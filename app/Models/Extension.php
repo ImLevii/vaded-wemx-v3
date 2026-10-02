@@ -72,16 +72,13 @@ class Extension extends Model
             }
 
             foreach ($elements as $element) {
-                $this->elements()->firstOrCreate(
-                    [
-                        'element' => $element['element'],
-                        'view' => $element['view'] ?? null,
-                    ],
-                    [
-                        'permission' => $element['permission'] ?? null,
-                        'attributes' => $element['attributes'] ?? [],
-                    ]
-                );
+                ExtensionElement::create([
+                    'extension_identifier' => $this->identifier,
+                    'element' => $element['element'],
+                    'view' => $element['view'] ?? null,
+                    'permission' => $element['permission'] ?? null,
+                    'attributes' => $element['attributes'] ?? [],
+                ]);
             }
         }
 

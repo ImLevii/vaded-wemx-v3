@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Invoices\InvoiceTheme;
 use App\Models\Payment;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -26,9 +25,11 @@ class PaymentsController extends Controller
 
     public function downloadInvoicePdf(Payment $payment)
     {
-        $theme = InvoiceTheme::default();
+        $payment->load(['user', 'gatewayConfig', 'taxDetails']);
 
-        $pdf = Pdf::loadView($theme->view(), $theme->viewData($payment));
+        $pdf = Pdf::loadView('invoices::payment-invoice', [
+            'payment' => $payment,
+        ]);
 
         return $pdf->download('invoice-'.($payment->invoice_id ?: $payment->id).'.pdf');
     }

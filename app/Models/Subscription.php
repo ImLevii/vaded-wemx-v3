@@ -253,74 +253,105 @@ class Subscription extends Model
 
     public function emailSubscriptionActivation()
     {
-        $this->sendSubscriptionEmail('subscription.activated');
-    }
+        if (! $this->user) {
+            return;
+        }
 
-    public function emailSubscriptionCancellation()
-    {
-        $this->sendSubscriptionEmail('subscription.cancelled', [
-            'active_until' => $this->next_billing_at
-                ? 'Your subscription will remain active until '.$this->next_billing_at->toDayDateTimeString()
-                : '',
+        $this->user->email([
+            'subject' => 'Your Subscription is now Active',
+            'lines' => [
+                'You are receiving this email because your subscription has been activated.',
+                '**Subscription Details:**',
+            ],
+            'table' => [
+                'columns' => [
+                    'Description',
+                    'Amount',
+                    'Gateway',
+                    'Subscription ID',
+                ],
+                'rows' => [
+                    [
+                        Str::limit($this->description, 50),
+                        priceIn($this->total(), $this->currency).' / '.daysToPeriod($this->frequency),
+                        $this->gatewayConfig ? $this->gatewayConfig->display_name : 'N/A',
+                        Str::limit($this->subscription_id, 32),
+                    ],
+                ],
+            ],
+            'button' => [
+                'text' => 'View Subscription',
+                'url' => route('subscriptions.index'),
+            ],
         ]);
     }
 
-    public function emailSubscriptionInactive()
-    {
-        $this->sendSubscriptionEmail('subscription.inactive');
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function subscriptionEmailVariables(): array
-    {
-        return [
-            'description' => Str::limit($this->description, 50),
-            'amount' => priceIn($this->total(), $this->currency).' / '.daysToPeriod($this->frequency),
-            'gateway' => $this->gatewayConfig ? $this->gatewayConfig->display_name : 'N/A',
-            'subscription_id' => Str::limit((string) $this->subscription_id, 32),
-        ];
-    }
-
-    /**
-     * @return array{columns: array<int, string>, rows: array<int, array<int, mixed>>}
-     */
-    public function subscriptionEmailTable(): array
-    {
-        $variables = $this->subscriptionEmailVariables();
-
-        return [
-            'columns' => [
-                'Description',
-                'Amount',
-                'Gateway',
-                'Subscription ID',
-            ],
-            'rows' => [
-                [
-                    $variables['description'],
-                    $variables['amount'],
-                    $variables['gateway'],
-                    $variables['subscription_id'],
-                ],
-            ],
-        ];
-    }
-
-    public function sendSubscriptionEmail(string $identifier, array $variables = []): void
+    public function emailSubscriptionCancellation()
     {
         if (! $this->user) {
             return;
         }
 
         $this->user->email([
-            'identifier' => $identifier,
-            'mailable_type' => self::class,
-            'mailable_id' => $this->id,
-            'variables' => array_merge($this->subscriptionEmailVariables(), $variables),
-            'table' => $this->subscriptionEmailTable(),
+            'subject' => 'Your Subscription has been Cancelled',
+            'lines' => [
+                'You are receiving this email because your subscription has been cancelled.',
+                $this->next_billing_at ? 'Your subscription will remain active until '.$this->next_billing_at->toDayDateTimeString() : '',
+                '**Subscription Details:**',
+            ],
+            'table' => [
+                'columns' => [
+                    'Description',
+                    'Amount',
+                    'Gateway',
+                    'Subscription ID',
+                ],
+                'rows' => [
+                    [
+                        Str::limit($this->description, 50),
+                        priceIn($this->total(), $this->currency).' / '.daysToPeriod($this->frequency),
+                        $this->gatewayConfig ? $this->gatewayConfig->display_name : 'N/A',
+                        Str::limit($this->subscription_id, 32),
+                    ],
+                ],
+            ],
             'button' => [
+                'text' => 'View Subscription',
+                'url' => route('subscriptions.index'),
+            ],
+        ]);
+    }
+
+    public function emailSubscriptionInactive()
+    {
+        if (! $this->user) {
+            return;
+        }
+
+        $this->user->email([
+            'subject' => 'Your Subscription is no longer Active',
+            'lines' => [
+                'You are receiving this email because your subscription is no longer active.',
+                '**Subscription Details:**',
+            ],
+            'table' => [
+                'columns' => [
+                    'Description',
+                    'Amount',
+                    'Gateway',
+                    'Subscription ID',
+                ],
+                'rows' => [
+                    [
+                        Str::limit($this->description, 50),
+                        priceIn($this->total(), $this->currency).' / '.daysToPeriod($this->frequency),
+                        $this->gatewayConfig ? $this->gatewayConfig->display_name : 'N/A',
+                        Str::limit($this->subscription_id, 32),
+                    ],
+                ],
+            ],
+            'button' => [
+                'text' => 'View Subscription',
                 'url' => route('subscriptions.index'),
             ],
         ]);

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands\Cronjobs;
 
+use App\Support\LocalLicense;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -47,6 +48,12 @@ class ReportLicenseActiveCheckCommand extends Command
 
     public function handle(): int
     {
+        if (LocalLicense::isBypassed()) {
+            $this->info('Skipping active license check in local development mode.');
+
+            return self::SUCCESS;
+        }
+
         if (Cache::has('last_license_check_reported_at')) {
             $this->info('Already reported active check');
 

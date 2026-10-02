@@ -4,6 +4,7 @@ namespace App\Traits\Models;
 
 use App\Models\RoleUser;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 /**
  * Trait HasRoles
@@ -26,7 +27,13 @@ trait HasRoles
      */
     public function isAdmin(): bool
     {
-        return $this->isPrimaryAdmin();
+        // If you consider user with ID=1 as super admin:
+        if ($this->id === 1) {
+            return true;
+        }
+
+        // Otherwise, check if there's any admin group in the loaded collection
+        return false;
     }
 
     public function isStaff(): bool

@@ -125,7 +125,7 @@ new class extends Component
 @endphp
 
 <div>
-    <p class="text-secondary mb-3">Browse resources published on the marketplace.</p>
+    <p class="text-secondary mb-3">{{ ! empty($this->account['mock']) ? 'Browse local sample resources.' : 'Browse resources published on the marketplace.' }}</p>
 
     @if($catalog['error'])
         <div class="alert alert-warning" role="alert">{{ $catalog['error'] }}</div>

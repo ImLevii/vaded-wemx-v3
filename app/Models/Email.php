@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Actions\EmailActions;
 use App\Jobs\DeliverCustomerMail;
-use App\Mail\EmailTheme;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -46,6 +45,7 @@ class Email extends Model
 
     protected $attributes = [
         'status' => 'pending',
+        'theme' => 'default',
         'display' => true,
     ];
 
@@ -55,10 +55,6 @@ class Email extends Model
 
         static::creating(function ($email) {
             $email->from = config('mail.from.address');
-
-            if (EmailTheme::find($email->theme) === null) {
-                $email->theme = EmailTheme::default()->slug;
-            }
         });
 
         static::created(function ($email) {

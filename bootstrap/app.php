@@ -30,14 +30,10 @@ return Application::configure(basePath: dirname(__DIR__))
             Route::middleware(['web'])->prefix('auth')
                 ->group(base_path('routes/auth.php'));
         }
-    )->withCommands([
-        __DIR__.'/../app/Extensions/Commands',
-    ])->withMiddleware(function (Middleware $middleware) {
+    )->withMiddleware(function (Middleware $middleware) {
         $middleware->validateCsrfTokens(except: [
             'gateways/webhooks/*',
             'gateways/callbacks/*',
-            'tickets/inbound-mail',
-            'marketplace/webhooks/*',
         ]);
 
         $middleware->alias([
