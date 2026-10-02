@@ -4,28 +4,51 @@
         return;
     }
 
+    const canChooseTheme = () => document.querySelector('meta[name="wemx-theme-control"]')?.content === 'manual';
+    const automaticTheme = () => {
+        const hour = new Date().getHours();
+        return hour >= 7 && hour < 19 ? 'light' : 'dark';
+    };
+    const isTheme = (theme) => theme === 'dark' || theme === 'light';
+    let manualTheme;
+
     const readTheme = () => {
+        if (!canChooseTheme()) return automaticTheme();
+
         const requested = new URLSearchParams(window.location.search).get('theme');
-        if (requested === 'dark' || requested === 'light') return requested;
+        if (isTheme(requested)) return requested;
+        if (isTheme(manualTheme)) return manualTheme;
 
         try {
             const legacyKey = document.documentElement.dataset.vadedArea === 'admin' ? 'tablerTheme' : 'color-theme';
             const saved = localStorage.getItem('wemx-theme') || localStorage.getItem(legacyKey);
-            return saved === 'dark' ? 'dark' : 'light';
+            return isTheme(saved) ? saved : automaticTheme();
         } catch {
-            return 'light';
+            return automaticTheme();
         }
     };
 
-    const apply = (theme = readTheme()) => {
+    const apply = (preferredTheme) => {
+        const canChoose = canChooseTheme();
+        const theme = canChoose && isTheme(preferredTheme) ? preferredTheme : readTheme();
+
         document.documentElement.classList.toggle('dark', theme === 'dark');
         document.documentElement.dataset.bsTheme = theme;
         if (document.body) document.body.dataset.bsTheme = theme;
 
-        try {
-            for (const key of ['wemx-theme', 'tablerTheme', 'color-theme']) localStorage.setItem(key, theme);
-        } catch {
-            // The theme still works when browser storage is unavailable.
+        if (!canChoose) {
+            manualTheme = undefined;
+            return;
+        }
+
+        const requested = new URLSearchParams(window.location.search).get('theme');
+        if (isTheme(preferredTheme) || isTheme(requested)) {
+            manualTheme = theme;
+            try {
+                for (const key of ['wemx-theme', 'tablerTheme', 'color-theme']) localStorage.setItem(key, theme);
+            } catch {
+                // Keep the administrator's choice for this page when storage is unavailable.
+            }
         }
     };
 
@@ -51,6 +74,11 @@
 
     window.WemxTheme = { apply };
     window.toggleDarkmode = () => {
+        if (!canChooseTheme()) {
+            apply();
+            return;
+        }
+
         const theme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
         const url = new URL(window.location.href);
         if (url.searchParams.has('theme')) {
@@ -63,9 +91,20 @@
     apply();
     document.addEventListener('DOMContentLoaded', () => { apply(); revealSections(); });
     document.addEventListener('livewire:navigated', () => { apply(); revealSections(); });
-    document.addEventListener('livewire:navigating', () => revealObserver?.disconnect());
+    document.addEventListener('livewire:navigating', (event) => {
+        revealObserver?.disconnect();
+        event.detail?.onSwap?.(() => apply());
+    });
     motionPreference.addEventListener('change', revealSections);
     window.addEventListener('storage', (event) => {
-        if (event.key === 'wemx-theme') apply();
+        if (event.key === 'wemx-theme' || event.key === null) {
+            manualTheme = undefined;
+            apply();
+        }
+    });
+    window.setInterval(() => apply(), 60_000);
+    window.addEventListener('focus', () => apply());
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') apply();
     });
 })();

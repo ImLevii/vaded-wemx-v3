@@ -24,6 +24,7 @@
     <meta property="og:description" content="{{ html_entity_decode(trim($__env->yieldContent('description', 'Game server and cloud hosting. Compare plans, configure your server, and manage your community with Vaded Hosting.')), ENT_QUOTES, 'UTF-8') }}">
     <meta property="og:image" content="@settings('seo::image', '/assets/common/img/vaded-social.png')">
 
+    <meta name="wemx-theme-control" content="{{ auth()->user()?->hasPermission('admin.dashboard') ? 'manual' : 'automatic' }}">
     <script src="{{ asset('assets/common/js/vaded-theme.js') }}?v={{ filemtime(public_path('assets/common/js/vaded-theme.js')) }}" data-navigate-once></script>
     <link href="{{ asset('assets/common/css/vaded-theme.css') }}?v={{ filemtime(public_path('assets/common/css/vaded-theme.css')) }}" rel="stylesheet">
 
@@ -60,7 +61,9 @@
                 </div>
                 <div class="vh-auth-footer">
                     <span>{{ settings('app_name', config('app.name')) }} &copy; {{ now()->year }}</span>
-                    <button type="button" class="vh-auth-theme" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button>
+                    @if(auth()->user()?->hasPermission('admin.dashboard'))
+                        <button type="button" class="vh-auth-theme" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button>
+                    @endif
                 </div>
             </div>
         </div>

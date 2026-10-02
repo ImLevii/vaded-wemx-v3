@@ -47,7 +47,9 @@
         <div>
             @foreach(config('hosting.legal', []) as $label => $href)<a href="{{ $href }}">{{ $label }}</a>@endforeach
             @foreach($legalLinks as $element)<a href="{{ $element['attributes']['href'] ?? '#' }}">{{ $element['attributes']['name'] }}</a>@endforeach
-            <button type="button" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button>
+            @if(auth()->user()?->hasPermission('admin.dashboard'))
+                <button type="button" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button>
+            @endif
         </div>
     </div>
 </footer>

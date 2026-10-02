@@ -29,6 +29,7 @@
             <x-admin::icon icon="search" class="icon"/>
         </a>
 
+        @if(auth()->user()?->hasPermission('admin.dashboard'))
         <a wire:navigate href="?theme=dark" class="nav-link px-0 hide-theme-dark me-2" data-bs-toggle="tooltip"
            data-bs-placement="bottom"
            aria-label="{{ __('messages.enable_dark') }}" data-bs-original-title="{{ __('messages.enable_dark') }}">
@@ -39,6 +40,7 @@
            aria-label="{{ __('messages.enable_light') }}" data-bs-original-title="{{ __('messages.enable_light') }}">
             <x-admin::icon icon="sun" class="icon"/>
         </a>
+        @endif
     </div>
 
     <livewire:admin.user-menu/>

@@ -38,7 +38,9 @@
 
             <div class="vh-auth-footer">
                 <span>{{ settings('app_name', config('app.name')) }} &copy; {{ now()->year }}</span>
-                <button type="button" class="vh-auth-theme" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button>
+                @if(auth()->user()?->hasPermission('admin.dashboard'))
+                    <button type="button" class="vh-auth-theme" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button>
+                @endif
             </div>
         </div>
     </main>

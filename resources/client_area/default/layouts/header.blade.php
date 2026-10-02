@@ -122,12 +122,14 @@
                 </div>
             </div>
             <div class="vh-header-tools flex items-center lg:order-2">
-                <button aria-label="Toggle color theme" data-tooltip-target="tooltip-dark" type="button" onclick="toggleDarkmode()" class="inline-flex items-center p-2 mr-1 text-sm font-medium text-gray-500 rounded-lg dark:text-gray-400 hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
+                @if(auth()->user()?->hasPermission('admin.dashboard'))
+                <button aria-label="Toggle color theme" type="button" onclick="toggleDarkmode()" class="inline-flex items-center p-2 mr-1 text-sm font-medium text-gray-500 rounded-lg dark:text-gray-400 hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                     </svg>
                 </button>
                 <span class="hidden mx-2 w-px h-5 bg-gray-200 dark:bg-gray-600 lg:inline"></span>
+                @endif
                 @livewire(client_view_path('livewire.widgets.currency-dropdown'))
                 <span class="hidden mx-2 w-px h-5 bg-gray-200 dark:bg-gray-600 lg:inline"></span>
                 @auth
