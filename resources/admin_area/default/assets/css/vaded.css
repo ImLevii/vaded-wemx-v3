@@ -29,6 +29,7 @@
 }
 
 .vaded-admin .page { background: transparent; }
+.vaded-admin[data-bs-theme="light"] { --tblr-primary: var(--vh-accent); --tblr-primary-rgb: 185, 35, 24; --tblr-link-hover-color: #8e1b12; }
 .vaded-admin .page-wrapper { min-width: 0; }
 .vaded-admin .navbar-vertical {
     background: linear-gradient(155deg, var(--vh-glass-highlight), transparent 40%), var(--vh-glass);

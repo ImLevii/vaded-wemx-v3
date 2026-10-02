@@ -26,6 +26,8 @@ body.vaded-client[data-bs-theme="dark"]:has(.vh-store) { --vh-background: #000; 
 .vh-store-hero-copy > .vh-kicker { padding: 8px 12px; border: 1px solid var(--vh-border); border-radius: 5px; background: var(--vh-surface); font-size: 10px; }
 .vaded-client .vh-store-hero h1 { margin: 28px 0 24px; font: 850 clamp(38px,4.6vw,70px)/1.04 var(--vh-display); letter-spacing: -.065em; }
 .vh-store-hero h1 em { display: inline-block; color: var(--vh-accent); background: linear-gradient(115deg,var(--vh-accent) 35%,#ff7c83); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.vaded-client[data-bs-theme="light"] :is(.vh-store-hero h1 em, .vh-services-section h2 em) { background-image: linear-gradient(115deg, var(--vh-accent) 35%, #df3b16); }
+.vaded-client[data-bs-theme="light"] .vh-hero-backdrop-glow { background: radial-gradient(ellipse at 77% 48%, rgba(45, 65, 90, .14), transparent 56%); }
 .vh-store-hero .vh-cta-row { gap: 14px; }
 .vaded-theme .vh-store-hero .vh-action {
     position: relative;

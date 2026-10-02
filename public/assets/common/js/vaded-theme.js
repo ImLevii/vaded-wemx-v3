@@ -11,9 +11,9 @@
         try {
             const legacyKey = document.documentElement.dataset.vadedArea === 'admin' ? 'tablerTheme' : 'color-theme';
             const saved = localStorage.getItem('wemx-theme') || localStorage.getItem(legacyKey);
-            return saved === 'light' ? 'light' : 'dark';
+            return saved === 'dark' ? 'dark' : 'light';
         } catch {
-            return 'dark';
+            return 'light';
         }
     };
 

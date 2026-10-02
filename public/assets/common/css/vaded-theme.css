@@ -1,24 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@500;600;700;800&display=swap');
 
 :root {
-    --vh-background: #f5f3f4;
-    --vh-backdrop-opacity: .045;
-    --vh-ambient-opacity: .45;
-    --vh-surface: #ffffff;
-    --vh-raised: #f0edef;
-    --vh-input: #faf8f9;
-    --vh-text: #201c22;
-    --vh-muted: #706a74;
-    --vh-border: rgba(45, 28, 36, .14);
-    --vh-accent: #d9232f;
-    --vh-accent-soft: rgba(222, 53, 68, .08);
-    --vh-grid: rgba(60, 30, 40, .08);
-    --vh-header: rgba(255, 255, 255, .92);
-    --vh-glass: rgba(255, 255, 255, .78);
-    --vh-glass-edge: rgba(60, 45, 55, .12);
+    color-scheme: light;
+    --vh-background: #e7eaee;
+    --vh-backdrop-opacity: .035;
+    --vh-ambient-opacity: .35;
+    --vh-surface: #f9fafb;
+    --vh-raised: #dfe4ea;
+    --vh-input: #f0f3f6;
+    --vh-text: #19212b;
+    --vh-muted: #586273;
+    --vh-border: rgba(34, 46, 61, .17);
+    --vh-accent: #b92318;
+    --vh-accent-soft: rgba(185, 35, 24, .065);
+    --vh-grid: rgba(34, 46, 61, .07);
+    --vh-header: rgba(236, 240, 244, .95);
+    --vh-glass: rgba(240, 243, 247, .88);
+    --vh-glass-edge: rgba(34, 46, 61, .18);
     --vh-glass-highlight: rgba(255, 255, 255, .7);
-    --vh-glass-inset: rgba(60, 45, 55, .035);
-    --vh-shadow: 0 8px 32px rgba(34, 16, 24, .05), inset 0 1px rgba(255, 255, 255, .6);
+    --vh-glass-inset: rgba(34, 46, 61, .045);
+    --vh-shadow: 0 2px 5px rgba(24, 38, 56, .06), 0 14px 32px -8px rgba(24, 38, 56, .18), inset 0 1px rgba(255, 255, 255, .8);
+    --vh-shadow-hover: 0 4px 8px rgba(24, 38, 56, .08), 0 22px 42px -10px rgba(24, 38, 56, .24), inset 0 1px rgba(255, 255, 255, .8);
     --vh-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --vh-mono: 'Cascadia Code', Consolas, monospace;
 }
@@ -208,3 +210,29 @@ body[data-bs-theme="dark"] {
 
 .vaded-theme :focus-visible { outline: 2px solid var(--vh-accent); outline-offset: 3px; }
 .vaded-theme button:disabled { cursor: not-allowed; opacity: .55; }
+
+html:not(.dark):not([data-bs-theme="dark"]) .vaded-theme:not([data-bs-theme="dark"]) {
+    background-image: radial-gradient(ellipse at 85% 10%, rgba(45, 65, 90, .09), transparent 55%);
+    scrollbar-color: #768190 var(--vh-background);
+}
+html:not(.dark):not([data-bs-theme="dark"]) .vaded-theme:not([data-bs-theme="dark"])::after {
+    background: radial-gradient(ellipse at 90% 20%, rgba(45, 65, 90, .18), transparent 52%), radial-gradient(ellipse at 8% 85%, rgba(45, 65, 90, .1), transparent 45%);
+}
+.vaded-theme[data-bs-theme="light"] ::selection { background: var(--vh-accent); color: #fff; }
+.vaded-theme[data-bs-theme="light"] :is(button, input[type="checkbox"], input[type="radio"]) { accent-color: var(--vh-accent); }
+.vaded-theme[data-bs-theme="light"] :is(.vh-window-bar > i:first-child, .vh-auth-line) { background: var(--vh-accent); }
+.vaded-theme[data-bs-theme="light"] :is(.vh-auth-intro h1 span, .vh-hosting-hero h1 span) { background-image: linear-gradient(105deg, var(--vh-accent), #df3b16); }
+.vaded-theme[data-bs-theme="light"] .vh-hosting-hero { background: radial-gradient(ellipse at 65% 50%, rgba(45, 65, 90, .12), transparent 72%), var(--vh-surface); box-shadow: var(--vh-shadow); }
+.vaded-theme[data-bs-theme="light"] .vh-auth-card { border-top-color: var(--vh-accent); box-shadow: var(--vh-shadow); }
+.vaded-theme[data-bs-theme="light"] :is(.vh-action, .vh-button, .btn-primary, :where(a, button)[class*="bg-primary-"]):not(.vh-action-secondary) {
+    border-color: #a71f14;
+    background: linear-gradient(135deg, #c52a1b, #a71f14);
+    box-shadow: inset 0 1px rgba(255, 255, 255, .16), 0 5px 12px rgba(105, 30, 20, .18);
+}
+.vaded-theme[data-bs-theme="light"] :is(.vh-action, .vh-button, .btn-primary, :where(a, button)[class*="bg-primary-"]):not(.vh-action-secondary):hover {
+    border-color: #8e1b12;
+    background: linear-gradient(135deg, #ad2216, #8e1b12);
+    box-shadow: inset 0 1px rgba(255, 255, 255, .12), 0 7px 16px rgba(105, 30, 20, .24);
+}
+.vaded-theme[data-bs-theme="light"] :is(.vh-action, .vh-button, .btn-primary, :where(a, button)[class*="bg-primary-"]):is(:disabled, .disabled, [aria-disabled="true"]) { box-shadow: none; }
+.vaded-theme[data-bs-theme="light"] :is(.vh-action, .vh-button, .btn-primary, :where(a, button)[class*="bg-primary-"]):active { box-shadow: inset 0 2px 5px rgba(0, 0, 0, .16); }
