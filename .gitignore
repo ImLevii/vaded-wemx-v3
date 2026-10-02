@@ -1,5 +1,6 @@
 /.phpunit.cache
 /node_modules
+/.vercel
 /public/hot
 /public/storage
 /storage/*.key
