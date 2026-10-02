@@ -70,30 +70,34 @@
     --vh-nav-sheen: rgba(255, 255, 255, .22);
     --vh-nav-edge: rgba(90, 90, 105, .16);
     position: sticky;
-    top: 0;
+    top: 12px;
     z-index: 35;
+    width: calc(100% - 48px);
+    max-width: 1400px;
+    margin: 12px auto 0;
     background: linear-gradient(115deg, var(--vh-nav-sheen), transparent 42%), var(--vh-nav-glass);
-    border-bottom: 1px solid var(--vh-nav-edge);
-    box-shadow: inset 0 1px var(--vh-nav-sheen), 0 8px 24px rgba(0, 0, 0, .12);
+    border: 1px solid var(--vh-nav-edge);
+    border-radius: 14px;
+    box-shadow: inset 0 1px var(--vh-nav-sheen), 0 12px 36px rgba(0, 0, 0, .16);
     -webkit-backdrop-filter: blur(40px) saturate(110%);
     backdrop-filter: blur(40px) saturate(110%);
 }
 :is(html.dark, html[data-bs-theme="dark"], body[data-bs-theme="dark"]) .vh-client-header {
-    --vh-nav-glass: rgba(5, 5, 7, .94);
-    --vh-nav-sheen: rgba(255, 255, 255, .02);
-    --vh-nav-edge: rgba(255, 255, 255, .065);
+    --vh-nav-glass: rgba(8, 10, 15, .88);
+    --vh-nav-sheen: rgba(255, 255, 255, .055);
+    --vh-nav-edge: rgba(255, 255, 255, .10);
 }
 .vh-client-header::after {
     content: '';
     position: absolute;
-    right: 0;
+    right: 32px;
     bottom: -1px;
-    left: 0;
+    left: 32px;
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--vh-accent-soft) 25%, color-mix(in srgb, var(--vh-accent) 24%, transparent) 50%, var(--vh-accent-soft) 75%, transparent);
     pointer-events: none;
 }
-.vaded-client .vh-client-header > nav { background: transparent; border: 0; padding: 0 32px; }
+.vaded-client .vh-client-header > nav { background: transparent; border: 0; padding: 0 24px; }
 .vh-client-header > nav > div { max-width: 1280px; margin: 0 auto; gap: 16px; }
 .vh-client-header .vh-brand { font-size: 16px; }
 .vaded-theme .vh-client-header .vh-brand > span { background: none; -webkit-text-fill-color: currentColor; }
@@ -136,7 +140,9 @@
 .vh-header-tools > span { margin-right: 5px; margin-left: 5px; background: var(--vh-border); }
 .vh-header-tools > button, .vh-header-tools > div > button { min-height: 40px; }
 .vh-header-auth { margin-left: 12px; padding-left: 14px; border-left: 1px solid var(--vh-border); white-space: nowrap; }
-.vh-header-auth a { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; margin: 0; padding: 9px 14px; font-size: 12px; }
+.vh-header-auth a { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; margin: 0; padding: 9px 14px; border-radius: 8px; font-size: 12px; }
+.vh-header-auth a:first-child { border: 1px solid var(--vh-nav-edge); background: var(--vh-glass-inset); color: var(--vh-text); }
+.vh-header-auth a:first-child:hover { border-color: var(--vh-muted); background: var(--vh-raised); }
 .vh-client-header #cartDropdown1 { max-width: calc(100vw - 24px); }
 .vh-client-header :is(a, button):focus-visible { outline: 2px solid var(--vh-accent); outline-offset: 4px; }
 .vaded-client .vh-client-header .vh-client-navigation { position: relative; flex: 1; border: 0; background: transparent; }
@@ -158,15 +164,15 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    min-height: 76px;
+    min-height: 44px;
     padding: 12px 14px;
-    border: 0;
-    border-radius: 0;
+    border: 1px solid transparent;
+    border-radius: 8px;
     background: transparent;
     color: var(--vh-muted);
     font-family: var(--vh-display);
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 650;
     letter-spacing: 0;
     white-space: nowrap;
     transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
@@ -174,14 +180,15 @@
 .vh-client-header .vh-nav-list > li > a:is(:hover, :focus-visible, [aria-current="page"]),
 .vh-client-header .vh-nav-trigger:is(:hover, :focus-visible, [aria-expanded="true"], .is-current) {
     color: var(--vh-text);
-    background: linear-gradient(0deg, var(--vh-accent-soft), transparent 90%);
+    border-color: var(--vh-nav-edge);
+    background: linear-gradient(180deg, var(--vh-glass-highlight), transparent), var(--vh-glass-inset);
 }
 .vh-client-header .vh-nav-trigger:is(:hover, :focus-visible, [aria-expanded="true"], .is-current) .vh-nav-icon { color: var(--vh-accent); }
 .vh-client-header .vh-nav-list > li > a::after,
 .vh-nav-trigger::after {
     position: absolute;
     right: 14px;
-    bottom: 0;
+    bottom: 4px;
     left: 14px;
     height: 2px;
     border-radius: 2px;
@@ -242,16 +249,18 @@
 .vaded-client .vh-client-stat p { font-size: 12px; line-height: 1.6; margin-top: 5px; }
 
 @media (min-width: 1024px) and (max-width: 1399px) {
-    .vaded-client .vh-client-header > nav { padding-right: 20px; padding-left: 20px; }
+    .vaded-client .vh-client-header > nav { padding-right: 16px; padding-left: 16px; }
     .vh-client-header > nav > div { gap: 8px; }
     .vh-header-tools { gap: 2px; }
     .vh-header-tools > span { margin-right: 3px; margin-left: 3px; }
     .vh-header-auth { margin-left: 6px; padding-left: 8px; }
+    .vh-header-auth a { padding-right: 10px; padding-left: 10px; }
     .vh-client-header .vh-nav-list { flex-wrap: nowrap; }
     .vh-client-header .vh-nav-list > li > a, .vh-client-header .vh-nav-trigger { padding-right: 8px; padding-left: 8px; gap: 6px; font-size: 11px; }
     .vaded-client .vh-client-header .vh-brand > span { display: none; }
 }
 @media (max-width: 1023px) {
+    .vh-client-header { top: 8px; width: calc(100% - 24px); margin-top: 8px; border-radius: 12px; }
     .vaded-client .vh-client-header > nav { padding: 12px 18px; }
     .vh-client-header > nav > div { min-height: 44px; gap: 12px; }
     .vh-client-header .vh-nav-list > li > a, .vh-client-header .vh-nav-trigger { width: 100%; min-height: 48px; padding: 12px 14px; border-radius: 8px; }
@@ -383,8 +392,10 @@
     .vh-currency-panel { right: auto; left: -40px; }
     .vh-currency-trigger { padding: 9px 6px; gap: 6px; }
 }
-@media (max-width: 359px) {
-    .vh-header-tools { gap: 4px; }
+@media (max-width: 399px) {
+    .vh-client-header { width: calc(100% - 16px); }
+    .vaded-client .vh-client-header > nav { padding-inline: 8px; }
+    .vh-header-tools { gap: 2px; }
     .vh-header-auth a { padding-right: 6px; padding-left: 6px; font-size: 11px; }
     .vh-currency-chevron { display: none; }
 }
