@@ -6,8 +6,8 @@
     <nav
         class="bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700"
     >
-        <div class="flex flex-wrap justify-between items-center">
-            <div class="flex justify-start items-center gap-2 min-w-0">
+        <div class="vh-header-inner flex flex-wrap justify-between items-center">
+            <div class="vh-header-brand flex justify-start items-center gap-2 min-w-0">
                 <button
                     type="button"
                     id="client-nav-toggle"
@@ -21,11 +21,11 @@
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
                     </svg>
                 </button>
-                <a href="/" class="vh-brand flex mr-4 min-w-0 items-center">
+                <a href="{{ route('categories.index') }}" class="vh-brand flex mr-4 min-w-0 items-center">
                     <img
                         src="{{ settings('app_logo', '/assets/common/img/app-logo.png') }}"
                         class="mr-2 h-10 shrink-0 rounded"
-                        alt="Application Logo"
+                        alt=""
                     />
                     <span
                         class="font-semibold truncate dark:text-white"
@@ -49,23 +49,24 @@
                                 class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
                             >
                                 <a
-                                    href="/"
+                                    href="{{ route('categories.index') }}"
                                     wire:navigate
-                                    class="block py-3 px-4 @if($activePage == 'dashboard') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
+                                    class="block py-3 px-4 @if($activePage == 'categories') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
+                                    @if($activePage == 'categories') aria-current="page" @endif
                                 >
-                                    Dashboard
+                                    Home
                                 </a>
                             </li>
                             <li
                                 class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
                             >
                                 <a
-                                    href="{{ route('categories.index') }}"
+                                    href="{{ route('dashboard') }}"
                                     wire:navigate
-                                    class="block py-3 px-4 @if($activePage == 'categories') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
-                                    aria-current="page"
+                                    class="block py-3 px-4 @if($activePage == 'dashboard') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
+                                    @if($activePage == 'dashboard') aria-current="page" @endif
                                 >
-                                    Categories
+                                    Dashboard
                                 </a>
                             </li>
                             @foreach(extensionElements(['navigation-item']) as $element)
@@ -84,8 +85,8 @@
                     </nav>
                 </div>
             </div>
-            <div class="flex items-center lg:order-2">
-                <button data-tooltip-target="tooltip-dark" type="button" onclick="toggleDarkmode()" class="inline-flex items-center p-2 mr-1 text-sm font-medium text-gray-500 rounded-lg dark:text-gray-400 hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
+            <div class="vh-header-tools flex items-center lg:order-2">
+                <button aria-label="Toggle color theme" data-tooltip-target="tooltip-dark" type="button" onclick="toggleDarkmode()" class="inline-flex items-center p-2 mr-1 text-sm font-medium text-gray-500 rounded-lg dark:text-gray-400 hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
                     </svg>
@@ -208,7 +209,7 @@
                 </div>
                 @endauth
                 @guest
-                <div>
+                <div class="vh-header-auth flex items-center gap-2">
                     <a href="{{ route('login') }}" class="mr-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-800 lg:py-2.5">Login</a>
                     @if(settings('enable_registrations', true))
                         <a href="{{ route('register') }}" class="bg-primary-700 hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 mr-2 rounded-lg px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-4 lg:py-2.5">Sign up</a>

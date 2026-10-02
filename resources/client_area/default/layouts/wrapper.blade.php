@@ -44,22 +44,6 @@
         @yield('content')
     </main>
 @include('theme::layouts.footer')
-<script>
-    document.addEventListener('livewire:navigated', function () {
-        initFlowbite();
-
-        const nav = document.getElementById('client-main-navigation');
-        const toggle = document.getElementById('client-nav-toggle');
-        if (
-            nav &&
-            toggle &&
-            window.matchMedia('(max-width: 1023px)').matches &&
-            !nav.classList.contains('hidden')
-        ) {
-            toggle.click();
-        }
-    });
-</script>
 @livewireScripts
 </body>
 </html>

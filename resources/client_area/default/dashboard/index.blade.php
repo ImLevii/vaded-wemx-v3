@@ -1,7 +1,7 @@
 @extends('theme::dashboard.dashboard-layout')
 
 @section('container')
-    @if($inviteCount = \App\Models\OrderMember::where('email', auth()->user()->email)->where('status', 'pending')->count() > 0)
+    @if(($inviteCount = \App\Models\OrderMember::where('email', auth()->user()->email)->where('status', 'pending')->count()) > 0)
     <div>
         <x-theme::alert.primary class="flex items-center justify-between">
             <span>You have {{ $inviteCount }} pending invite(s) to orders.</span>
@@ -28,13 +28,20 @@
         </div>
     @endforeach
 
-    <div class="mb-4">
+    <div id="my-services" class="vh-dashboard-services mb-6">
+        <div class="vh-panel-heading">
+            <div>
+                <span class="vh-portal-eyebrow">Your infrastructure</span>
+                <h2>My services</h2>
+            </div>
+            <a href="{{ route('categories.index') }}" wire:navigate class="vh-inline-link">Browse services <span aria-hidden="true">&rarr;</span></a>
+        </div>
         @livewire(client_view_path('orders.livewire.orders-table'))
     </div>
 
     <div class="mb-4">
         @livewire(client_view_path('livewire.table'), [
-            'title' => 'Payments',
+            'title' => 'Recent payments',
             'description' => 'View your recent successful payments.',
             'perPage' => 5,
             'columns' => [

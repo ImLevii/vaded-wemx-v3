@@ -5,6 +5,9 @@ use App\Mail\CustomerMail;
 use App\Models\Email;
 use App\Models\Session;
 use App\Models\UserBan;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,7 +22,10 @@ use Illuminate\Support\Facades\Route;
 Route::view('/payments/view/{payment:token}', 'theme::payments.view')->name('payments.view');
 Route::get('/payments/view/{payment:token}/invoice-pdf', [Client\PaymentsController::class, 'downloadInvoicePdf'])->name('payments.view.invoice-pdf');
 
-Route::view('/categories', 'theme::categories.index')->name('categories.index');
+Route::view('/', 'theme::categories.index')->name('categories.index');
+Route::get('/categories', function (Request $request): RedirectResponse {
+    return redirect()->route('categories.index', Arr::except($request->query(), ['cart']), 301);
+});
 Route::get('/pages/{page:slug}', [Client\PagesController::class, 'view'])->name('pages.view');
 
 Route::view('/packages/{package:slug}', 'theme::packages.view')->name('packages.view');
@@ -43,7 +49,7 @@ Route::middleware(['web'])->group(function () {
 */
 
 Route::middleware(['web', 'auth'])->group(function () {
-    Route::view('/', 'theme::dashboard.index')->name('dashboard');
+    Route::view('/dashboard', 'theme::dashboard.index')->name('dashboard');
     Route::view('/payments', 'theme::dashboard.payments')->name('dashboard.payments');
     Route::view('/balance', 'theme::dashboard.balance')->name('dashboard.balance');
     Route::view('/order-invites', 'theme::dashboard.order-invites')->name('dashboard.order-invites');

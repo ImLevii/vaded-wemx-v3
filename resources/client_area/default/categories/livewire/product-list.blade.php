@@ -34,23 +34,26 @@ new class extends Component
 
 ?>
 
-<section class="bg-gray-50 py-4 antialiased dark:bg-gray-900 md:py-4">
-    <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
+<section class="vh-portal-plans antialiased">
+    <div class="mx-auto max-w-screen-xl">
         <!-- Heading & Filters -->
-        <div class="mb-4 items-end justify-between space-y-4 sm:flex sm:space-y-0 md:mb-8">
+        <div class="vh-portal-heading text-center">
             <div>
-                <h2 class="mt-3 text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">{{ $category->name }}</h2>
-                <p class="text-gray-500 sm:text-xl dark:text-gray-400">{{ $category->description }}</p>
+                <span class="vh-portal-eyebrow">Find your perfect fit</span>
+                <h2>{{ $category->name }} plans</h2>
+                <p>{{ $category->description }}</p>
             </div>
         </div>
 
-        <div class="grid gap-8 mb-8 grid-cols-6">
-            @foreach($packages as $package)
+        <div class="grid grid-cols-1 gap-4">
+            @forelse($packages as $package)
             <!-- Pricing Card -->
-            <div class="flex flex-col p-6 col-span-6 md:col-span-3 lg:col-span-2 mx-auto max-w-lg text-center text-gray-900 bg-white rounded-lg border border-gray-200 shadow-sm dark:border-gray-700 xl:p-8 dark:text-white dark:bg-gray-800">
+            <div wire:key="package-{{ $package->id }}" class="vh-portal-plan vh-plan-row rounded-xl border p-5 text-left">
+                <div class="min-w-0">
                 <h3 class="mb-4 text-2xl font-semibold">{{ $package->name }}</h3>
                 <p class="text-gray-500 text-light sm:text-lg dark:text-gray-400">{{ Str::limit($package->short_description, 70) }}</p>
-                <div class="flex justify-center items-baseline my-8">
+                </div>
+                <div class="vh-portal-price my-8 flex flex-wrap items-baseline gap-2">
                     <span class="mr-2 text-5xl font-extrabold">{{ price($package->prices->first()->price) }}</span>
                     <span class="text-gray-500">/{{ $package->prices->first()->cycle() }}</span>
                 </div>
@@ -64,9 +67,15 @@ new class extends Component
                     </li>
                     @endforeach
                 </ul>
-                <a href="{{ route('packages.view', $package->slug) }}" wire:navigate class="text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:focus:ring-primary-900">View Package</a>
+                <a href="{{ route('packages.view', $package->slug) }}" wire:navigate class="vh-action">Order now <span aria-hidden="true">&rarr;</span></a>
             </div>
-            @endforeach
+            @empty
+                <div class="vh-portal-empty col-span-full rounded-xl border p-8 text-center">
+                    <h3>More plans are on the way.</h3>
+                    <p>No plans are currently available for this service. Explore another service or check back soon.</p>
+                    <a href="{{ route('categories.index') }}#services" class="vh-action vh-action-secondary mt-6">Explore other services</a>
+                </div>
+            @endforelse
         </div>
 
     </div>

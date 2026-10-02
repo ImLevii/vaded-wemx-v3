@@ -62,8 +62,31 @@ body[data-bs-theme="dark"] {
 .vaded-theme :is(button, input[type="checkbox"], input[type="radio"]) { accent-color: #ef4454; }
 
 .vh-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: -.025em; text-transform: uppercase; }
-.vaded-theme .vh-client-header .vh-brand > span { color: var(--vh-text); font-family: 'Orbitron', var(--vh-mono); font-size: 13px; font-weight: 700; letter-spacing: 0; line-height: 1.3; }
-.vaded-theme .vh-client-header .vh-brand img { border: 1px solid var(--vh-border); border-radius: 6px; box-shadow: 0 0 16px var(--vh-accent-soft); }
+.vaded-theme :is(.vh-client-header .vh-brand, .navbar-vertical .navbar-brand) > span {
+    color: var(--vh-text);
+    font-family: 'Orbitron', var(--vh-display);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: .065em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    background: linear-gradient(110deg, var(--vh-text) 45%, var(--vh-accent) 100%);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 12px var(--vh-accent-soft));
+}
+.vaded-theme .navbar-vertical .navbar-brand > span { font-size: 12px; letter-spacing: .045em; }
+.vaded-theme :is(.vh-client-header .vh-brand, .navbar-vertical .navbar-brand) img {
+    border: 1px solid var(--vh-glass-edge);
+    border-radius: 9px;
+    padding: 3px;
+    background: var(--vh-glass-inset);
+    box-shadow: inset 0 1px var(--vh-glass-highlight), 0 0 22px var(--vh-accent-soft);
+}
+.vaded-theme :is(.vh-client-header .vh-brand, .navbar-vertical .navbar-brand):hover img { border-color: var(--vh-accent); }
+@media (max-width: 639px) {
+    .vaded-theme .vh-client-header .vh-brand > span { font-size: 12px; letter-spacing: .045em; }
+}
 .vh-brand-mark { color: var(--vh-accent); font: 700 24px var(--vh-mono); letter-spacing: -4px; padding-right: 4px; }
 .vh-eyebrow { display: block; margin-bottom: 12px; color: var(--vh-accent); font: 700 10px var(--vh-display); letter-spacing: .11em; text-transform: uppercase; }
 .vh-window-bar { display: flex; align-items: center; gap: 7px; padding: 15px 20px; border-bottom: 1px solid var(--vh-border); color: var(--vh-muted); font: 11px var(--vh-mono); letter-spacing: .06em; }

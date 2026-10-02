@@ -17,78 +17,97 @@
     })->count();
     $totalSubscriptionsCount = $dashboardUser->subscriptions()->count();
 @endphp
-<div class="mx-auto max-w-screen-2xl px-4 2xl:px-0">
-    <x-theme::hosting-hero />
-    <div class="flex flex-wrap">
-        <div class="w-full pl-2 pr-2 lg:w-1/4 mb-4">
+<div class="vh-dashboard mx-auto max-w-screen-2xl px-4 2xl:px-0">
+    <div class="vh-dashboard-welcome flex flex-wrap items-center justify-between gap-4">
+        <div class="min-w-0">
+            <span class="vh-portal-eyebrow">Client area / Overview</span>
+            <h1>Welcome back, {{ $dashboardUser->first_name }}.</h1>
+            <p>Your services, billing, and account. All under control.</p>
+        </div>
+        <a href="{{ route('categories.index') }}" wire:navigate class="vh-action">
+            <span aria-hidden="true">+</span> Deploy a service
+        </a>
+    </div>
 
-            <!-- Sidebar Widgets -->
-            <div class="vh-account-card gap-4 rounded-lg border border-gray-200 bg-white p-4 py-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 mb-4">
-                <div class="flex space-x-4 mb-6">
-                    <img class="h-16 w-16 rounded-lg" src="{{ auth()->user()->getAvatarUrl() }}" alt="{{ auth()->user()->full_name }}">
-                    <div>
-                        <h2 class="flex items-center text-xl font-bold leading-none text-gray-900 dark:text-white sm:text-2xl">{{ auth()->user()->full_name }}</h2>
+    <div class="vh-dashboard-stats grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <x-theme::stat label="Active services" :title="$dashboardUser->orders()->whereStatus('active')->count()" description="{{ $dashboardUser->orders()->whereStatus('suspended')->count() }} suspended · {{ $dashboardUser->orders()->whereStatus('terminated')->count() }} terminated" icon='<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4h16v6H4z M4 14h16v6H4z M7 7h2 M7 17h2 M12 7h5 M12 17h5" /></svg>' />
+        <x-theme::stat label="Account balance" :title="price($dashboardUser->balance)" description="Available for your next payment" icon='<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 5h16v15H4z M4 5V3h13v2 M15 10h5v5h-5z M17 12.5h1" /></svg>' />
+        <x-theme::stat label="Active subscriptions" :title="$activeSubscriptionsCount" description="{{ $totalSubscriptionsCount }} subscriptions in total" icon='<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 7v5h-5 M4 17v-5h5 M6 7a7 7 0 0 1 12-1l2 3 M4 15l2 3a7 7 0 0 0 12-1" /></svg>' />
+        <x-theme::stat label="Completed payments" :title="$dashboardUser->payments()->whereStatus('paid')->count()" description="View invoices in your payment history" icon='<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z M9 7h6 M9 11h6 M9 15h3" /></svg>' />
+    </div>
+
+    <div class="vh-dashboard-grid grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <aside class="vh-dashboard-sidebar flex min-w-0 flex-col gap-5">
+            <div class="vh-dashboard-panel overflow-hidden rounded-xl border">
+                <div class="vh-account-identity flex items-center gap-3 p-5">
+                    <img class="h-11 w-11 shrink-0 rounded-lg" src="{{ $dashboardUser->getAvatarUrl() }}" alt="" width="44" height="44">
+                    <div class="min-w-0">
+                        <h2 class="truncate">{{ $dashboardUser->full_name }}</h2>
+                        <p class="truncate" title="{{ $dashboardUser->email }}">{{ $dashboardUser->email }}</p>
                     </div>
                 </div>
-                <dl class="mb-4">
-                    <dt class="mb-2 font-semibold leading-none text-gray-900 dark:text-white">Email Adress</dt>
-                    <dd class="text-gray-500 dark:text-gray-400">{{ auth()->user()->email }}</dd>
-                    <dd>
-                        <x-theme::text.link wire:navigate href="{{ route('account.settings') }}" text="Edit"/>
-                    </dd>
-                </dl>
-                <dl class="mb-4">
-                    <dt class="mb-2 font-semibold leading-none text-gray-900 dark:text-white">Account Balance</dt>
-                    <dd class="text-gray-500 dark:text-gray-400">{{ price(auth()->user()->balance) }}</dd>
-                    <dd>
-                        <x-theme::text.link href="#" text="Add Balance" data-drawer-target="add-balance-drawer" data-drawer-show="add-balance-drawer" data-drawer-placement="right" aria-controls="add-balance-drawer"/>
-                    </dd>
-                </dl>
-                <dl class="mb-4">
-                    <dt class="mb-2 font-semibold leading-none text-gray-900 dark:text-white">Two Factor Authentication</dt>
-                    @if(auth()->user()->tfa_enabled)
-                    <dd class="text-gray-500 dark:text-gray-400 mb-2">
-                        <x-theme::badge.success text="Enabled"/>
-                    </dd>
-                    <dd>
-                        <x-theme::text.link href="{{ route('disable-2fa') }}" wire:navigate text="Disable"/>
-                    </dd>
-                    @else
-                    <dd class="text-gray-500 dark:text-gray-400 mb-2">
-                        <x-theme::badge.danger text="Disabled"/>
-                    </dd>
-                    <dd>
-                        <x-theme::text.link href="{{ route('enable-2fa') }}" wire:navigate text="Enable"/>
-                    </dd>
-                    @endif
-                </dl>
+                <nav class="vh-dashboard-nav flex flex-col gap-1 p-3" aria-label="Account navigation">
+                    @foreach([
+                        ['route' => 'dashboard', 'label' => 'Overview', 'icon' => 'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z'],
+                        ['route' => 'dashboard.payments', 'label' => 'Payments & invoices', 'icon' => 'M6 3h12v18l-3-2-3 2-3-2-3 2V3z M9 7h6 M9 11h6'],
+                        ['route' => 'subscriptions.index', 'label' => 'Subscriptions', 'icon' => 'M20 7v5h-5 M4 17v-5h5 M6 7a7 7 0 0 1 12-1l2 3 M4 15l2 3a7 7 0 0 0 12-1'],
+                        ['route' => 'dashboard.balance', 'label' => 'Balance history', 'icon' => 'M4 5h16v15H4z M4 5V3h13v2 M15 10h5v5h-5z'],
+                        ['route' => 'dashboard.order-invites', 'label' => 'Service invitations', 'icon' => 'M3 5h18v14H3z M3 5l9 7 9-7'],
+                        ['route' => 'account.settings', 'label' => 'Account settings', 'icon' => 'M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M4 21v-3a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v3'],
+                    ] as $item)
+                        <a href="{{ route($item['route']) }}" wire:navigate @class(['flex items-center gap-3 rounded-lg px-3 py-3', 'is-active' => request()->routeIs($item['route'])]) @if(request()->routeIs($item['route'])) aria-current="page" @endif>
+                            <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $item['icon'] }}" /></svg>
+                            {{ $item['label'] }}
+                        </a>
+                    @endforeach
+                </nav>
             </div>
 
-            @livewire(client_view_path('dashboard.livewire.add-balance-drawer'))
+            <div class="vh-dashboard-panel vh-wallet rounded-xl border p-5">
+                <span class="vh-stat-label">Your wallet</span>
+                <div class="vh-wallet-amount">{{ price($dashboardUser->balance) }}</div>
+                <p>Keep your next renewal covered.</p>
+                <button type="button" class="vh-action mt-4 w-full" data-drawer-target="add-balance-drawer" data-drawer-show="add-balance-drawer" data-drawer-placement="right" aria-controls="add-balance-drawer">Add funds <span aria-hidden="true">+</span></button>
+            </div>
 
-            <!-- Sidebar Widgets -->
+            <div class="vh-dashboard-panel rounded-xl border p-5">
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="vh-sidebar-heading">Account security</h2>
+                    @if($dashboardUser->tfa_enabled)
+                        <x-theme::badge.success text="Protected" />
+                    @else
+                        <x-theme::badge.warning text="Action needed" />
+                    @endif
+                </div>
+                <p class="vh-sidebar-copy mt-3">{{ $dashboardUser->tfa_enabled ? 'Two-factor authentication adds an extra layer of protection to your account.' : 'Enable two-factor authentication to add an extra layer of protection.' }}</p>
+                <a href="{{ route($dashboardUser->tfa_enabled ? 'account.settings' : 'enable-2fa') }}" wire:navigate class="vh-inline-link mt-4 inline-flex items-center gap-2">{{ $dashboardUser->tfa_enabled ? 'Security settings' : 'Enable two-factor' }} <span aria-hidden="true">&rarr;</span></a>
+            </div>
+
             @foreach(extensionElements(['client-dashboard-sidebar-view']) as $element)
-                @includeIf($element['view'], ['user' => auth()->user()])
+                @includeIf($element['view'], ['user' => $dashboardUser])
             @endforeach
-        </div>
-        <div class="w-full pl-2 pr-2 lg:w-3/4">
-            <div class="grid grid-cols-1 mb-4 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <x-theme::stat title="{{ auth()->user()->orders()->whereStatus('active')->count() }} active orders" description="{{ auth()->user()->orders()->whereStatus('suspended')->count() }} suspended, {{ auth()->user()->orders()->whereStatus('terminated')->count() }} terminated" icon='<svg class="w-6 h-6 text-primary-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M20 10H4v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8ZM9 13v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1Z" clip-rule="evenodd"/><path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 1 1 0 4H4a2 2 0 0 1-2-2Z"/></svg>' />
-                <x-theme::stat :title="price(auth()->user()->balance)" description="Available Account balance" icon='<svg class="w-6 h-6 text-primary-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 14h2m3 0h4m2 2h2m0 0h2m-2 0v2m0-2v-2m-5 4H4c-.55228 0-1-.4477-1-1V7c0-.55228.44772-1 1-1h16c.5523 0 1 .44772 1 1v4M3 10h18"/></svg>' />
-                <x-theme::stat title="{{ $activeSubscriptionsCount }} active subscriptions" description="{{ $totalSubscriptionsCount }} total subscriptions" icon='<svg class="w-6 h-6 text-primary-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>' />
-                <x-theme::stat title="{{ auth()->user()->payments()->whereStatus('paid')->count() }} paid payments" description="3 invoices in total" icon='<svg class="w-6 h-6 text-primary-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M8 7V6a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-1M3 18v-7a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Zm8-3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg>' />
+        </aside>
+
+        <div class="vh-dashboard-content min-w-0 space-y-6">
+            <x-theme::hosting-hero class="vh-dashboard-hero" eyebrow="Premium Performance Hosting" title="YOUR NEXT PROJECT." accent="STARTS WITH VADED." description="Build your community, launch a new server, or make room for your next idea." primary-label="Explore services" image="assets/common/img/vaded-archive-server.png" />
+
+            <div class="vh-dashboard-shortcuts grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <a href="{{ route('dashboard.payments') }}" wire:navigate class="vh-dashboard-panel flex items-center justify-between gap-3 rounded-lg border p-4"><span><strong>Manage billing</strong><small>Payments & invoices</small></span><span aria-hidden="true">&rarr;</span></a>
+                <a href="{{ route('subscriptions.index') }}" wire:navigate class="vh-dashboard-panel flex items-center justify-between gap-3 rounded-lg border p-4"><span><strong>Subscriptions</strong><small>Review your renewals</small></span><span aria-hidden="true">&rarr;</span></a>
+                <a href="{{ route('dashboard.email-inbox') }}" wire:navigate class="vh-dashboard-panel flex items-center justify-between gap-3 rounded-lg border p-4"><span><strong>Email inbox</strong><small>Your account updates</small></span><span aria-hidden="true">&rarr;</span></a>
             </div>
 
             @foreach(extensionElements(['client-dashboard-top-view']) as $element)
-                @includeIf($element['view'], ['user' => auth()->user()])
+                @includeIf($element['view'], ['user' => $dashboardUser])
             @endforeach
 
             @yield('container')
 
             @foreach(extensionElements(['client-dashboard-bottom-view']) as $element)
-                @includeIf($element['view'], ['user' => auth()->user()])
+                @includeIf($element['view'], ['user' => $dashboardUser])
             @endforeach
         </div>
     </div>
+    @livewire(client_view_path('dashboard.livewire.add-balance-drawer'))
 </div>
 @endsection

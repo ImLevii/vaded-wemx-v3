@@ -56,7 +56,8 @@
     -webkit-backdrop-filter: blur(24px) saturate(160%);
     backdrop-filter: blur(24px) saturate(160%);
 }
-.vh-topbar > .container-xl { display: flex; align-items: center; min-height: 66px; gap: 16px; }
+.vh-topbar > .container-xl { display: flex; align-items: center; min-height: 72px; gap: 16px; }
+.vh-topbar::after { content: ''; position: absolute; right: 0; bottom: -1px; left: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(239, 48, 56, .55), var(--vh-glass-highlight), transparent); pointer-events: none; }
 .vh-workspace-label { color: var(--vh-muted); font: 700 10px var(--vh-display); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
 .vh-workspace-label::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--vh-accent); color: var(--vh-accent); margin-right: 10px; }
 .vh-topbar .nav-link { color: var(--vh-muted); }

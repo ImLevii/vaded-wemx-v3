@@ -31,7 +31,7 @@ new class extends Component
             'log_user_in' => true,
         ]);
 
-        $this->redirect('/');
+        $this->redirect(route('dashboard'));
     }
 }
 

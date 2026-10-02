@@ -21,7 +21,7 @@ new class extends Component
             'remember' => $this->remember,
         ]);
 
-        $this->redirect('/');
+        $this->redirect(route('dashboard'));
     }
 }
 
