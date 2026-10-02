@@ -27,3 +27,6 @@ yarn-error.log
 
 # Re-allow everything inside common
 !/public/assets/common/**
+
+.vercel
+.env*
