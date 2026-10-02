@@ -29,6 +29,26 @@
         }
     };
 
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let revealObserver;
+
+    const revealSections = () => {
+        revealObserver?.disconnect();
+        if (motionPreference.matches || !('IntersectionObserver' in window)) return;
+
+        revealObserver = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                entry.target.dataset.vhReveal = 'visible';
+                revealObserver.unobserve(entry.target);
+            }
+        }, { threshold: .12 });
+
+        document.querySelectorAll('.vh-section-heading, .vh-service-card, .vh-pricing-card, .vh-spec-card, .vh-launch-cta').forEach((element) => {
+            if (!element.dataset.vhReveal) revealObserver.observe(element);
+        });
+    };
+
     window.WemxTheme = { apply };
     window.toggleDarkmode = () => {
         const theme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
@@ -41,8 +61,10 @@
     };
 
     apply();
-    document.addEventListener('DOMContentLoaded', () => apply());
-    document.addEventListener('livewire:navigated', () => apply());
+    document.addEventListener('DOMContentLoaded', () => { apply(); revealSections(); });
+    document.addEventListener('livewire:navigated', () => { apply(); revealSections(); });
+    document.addEventListener('livewire:navigating', () => revealObserver?.disconnect());
+    motionPreference.addEventListener('change', revealSections);
     window.addEventListener('storage', (event) => {
         if (event.key === 'wemx-theme') apply();
     });

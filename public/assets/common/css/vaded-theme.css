@@ -2,6 +2,8 @@
 
 :root {
     --vh-background: #f5f3f4;
+    --vh-backdrop-opacity: .045;
+    --vh-ambient-opacity: .45;
     --vh-surface: #ffffff;
     --vh-raised: #f0edef;
     --vh-input: #faf8f9;
@@ -26,6 +28,8 @@ html[data-bs-theme="dark"],
 body[data-bs-theme="dark"] {
     color-scheme: dark;
     --vh-background: #090b0f;
+    --vh-backdrop-opacity: .16;
+    --vh-ambient-opacity: .8;
     --vh-surface: #11141a;
     --vh-raised: #191d25;
     --vh-input: #0c0f14;
@@ -44,14 +48,33 @@ body[data-bs-theme="dark"] {
 }
 
 .vaded-theme {
+    position: relative;
+    isolation: isolate;
+    min-height: 100svh;
     color: var(--vh-text);
     background-color: var(--vh-background);
-    background-image: radial-gradient(ellipse at 45% 0%, rgba(220, 30, 35, .09), transparent 45%);
-    background-attachment: fixed;
+    background-image: radial-gradient(ellipse at 85% 10%, rgba(220, 30, 35, .08), transparent 55%);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-feature-settings: 'cv03', 'cv04', 'cv11';
     -webkit-font-smoothing: antialiased;
     scrollbar-color: #51444b var(--vh-background);
+}
+
+.vaded-theme::before,
+.vaded-theme::after { content: ''; position: fixed; inset: 0; pointer-events: none; }
+.vaded-theme::before { z-index: -2; opacity: var(--vh-backdrop-opacity); background: url('../img/vaded-archive-background.png') center / cover no-repeat; mask-image: linear-gradient(110deg,#000,transparent 55%,#000); }
+.vaded-theme::after { z-index: -1; opacity: var(--vh-ambient-opacity); background: radial-gradient(ellipse at 90% 20%,rgba(164,25,46,.22),transparent 52%),radial-gradient(ellipse at 8% 85%,rgba(120,35,59,.14),transparent 45%),linear-gradient(120deg,transparent 35%,rgba(227,54,68,.025) 50%,transparent 65%); }
+.vaded-theme.vaded-admin :is(.page, .page-wrapper, .page-body),
+.vaded-theme.vaded-client > main { background-color: transparent; }
+
+@media (prefers-reduced-motion: no-preference) {
+    @keyframes vh-ambient-drift { 50% { transform: translate3d(-2%,2%,0) scale(1.04); opacity: calc(var(--vh-ambient-opacity) * .65); } }
+    @keyframes vh-premium-enter { from { opacity: 0; transform: translate3d(0,18px,0); } to { opacity: 1; transform: none; } }
+    .vaded-theme::after { animation: vh-ambient-drift 22s ease-in-out infinite; }
+    .vaded-theme [data-vh-reveal="visible"] { animation: vh-premium-enter .7s cubic-bezier(.16,1,.3,1) backwards; }
+}
+@media print {
+    .vaded-theme::before, .vaded-theme::after { display: none; }
 }
 
 .vaded-theme ::selection { background: #8b2333; color: #fff; }

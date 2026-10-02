@@ -5,7 +5,13 @@
 @section('content')
 <div class="vh-store">
     <section class="vh-store-hero" aria-labelledby="hosting-title">
-        <div>
+        <div class="vh-hero-backdrop" aria-hidden="true">
+            <div class="vh-hero-backdrop-glow"></div>
+            <img src="{{ asset('assets/common/img/vaded-branded-server-rack.png') }}" alt="" width="1126" height="1397" fetchpriority="high" decoding="async">
+            <div class="vh-hero-backdrop-grid"></div>
+            <span class="vh-hero-scan"></span>
+        </div>
+        <div class="vh-store-hero-copy">
             <span class="vh-kicker"><span></span> VADED GAME INFRASTRUCTURE</span>
             <h1 id="hosting-title">YOUR SERVER.<br><em>AT FULL POWER.</em></h1>
             <p class="vh-hero-lead">Game server &amp; cloud hosting.<br>Built for the communities behind the screen.</p>
@@ -13,7 +19,7 @@
             <div class="vh-cta-row"><a class="vh-action" href="#services">Deploy Your Server <x-theme::icon name="arrow" /></a><a class="vh-action vh-action-secondary" href="#pricing">View Hosting Plans</a></div>
             <div class="vh-hero-footnote"><x-theme::icon name="sliders" /> Your plan. Your configuration. Clear pricing.</div>
         </div>
-        <x-theme::server-node />
+        <div class="vh-hero-signature" aria-hidden="true"><span>VADED / INFRASTRUCTURE</span><strong>BUILT FOR YOUR WORLD.</strong><span class="vh-hero-signature-line"></span></div>
     </section>
     <div class="vh-proof-strip" aria-label="Platform capabilities">
         @foreach(config('hosting.capabilities', []) as $capability)
