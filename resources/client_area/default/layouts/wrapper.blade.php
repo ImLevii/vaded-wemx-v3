@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-vaded-area="client">
 
 <head>
     <title>@yield('title')</title>
@@ -12,7 +12,7 @@
 
     <!-- Meta Description Tag: Affects click-through rates from search results -->
     <meta name="description" content="Manage your orders with an easy-to-use Dashboard">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#030405">
     <meta name="keywords" content="">
 
     <!-- Meta Robots Tag: Controls search engine crawling and indexing -->
@@ -23,6 +23,9 @@
     <meta property="og:description" content="Manage your orders with an easy-to-use Dashboard">
     <meta property="og:image" content="@settings('seo::image', '/static/wemx.png')">
 
+    <script src="{{ asset('assets/common/js/vaded-theme.js') }}?v={{ filemtime(public_path('assets/common/js/vaded-theme.js')) }}" data-navigate-once></script>
+    <link href="{{ asset('assets/common/css/vaded-theme.css') }}?v={{ filemtime(public_path('assets/common/css/vaded-theme.css')) }}" rel="stylesheet">
+
     <!-- Custom CSS -->
     @vite(['resources/client_area/default/assets/css/app.css','resources/client_area/default/assets/js/app.js'])
 
@@ -32,41 +35,12 @@
     <!-- Custom JS -->
     @yield('header')
 
-    <!-- Dark Mode -->
-    <script>
-        // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-        setTheme();
 
-        document.addEventListener('livewire:navigated', (event) => {
-            // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-            setTheme();
-        });
-
-        function toggleDarkmode() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('color-theme', 'light');
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('color-theme', 'dark');
-            }
-        }
-
-        function setTheme()
-        {
-            // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-            if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark')
-            }
-        }
-    </script>
 </head>
 
-<body class="min-h-screen antialiased bg-gray-50 dark:bg-gray-900 flex flex-col">
+<body class="vaded-theme vaded-client min-h-screen antialiased flex flex-col">
 @include('theme::layouts.header', ['activePage' => $activePage ?? ''])
-    <main class="dark:bg-gray-900 flex-1 p-4 space-y-4">
+    <main class="vh-client-main flex-1 space-y-4">
         @yield('content')
     </main>
 @include('theme::layouts.footer')

@@ -2,7 +2,7 @@
     'activePage' => '',
 ])
 
-<header>
+<header class="vh-client-header">
     <nav
         class="bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700"
     >
@@ -21,17 +21,68 @@
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
                     </svg>
                 </button>
-                <a href="/" class="flex mr-4 min-w-0 items-center">
+                <a href="/" class="vh-brand flex mr-4 min-w-0 items-center">
                     <img
                         src="{{ settings('app_logo', '/assets/common/img/app-logo.png') }}"
                         class="mr-2 h-10 shrink-0 rounded"
                         alt="Application Logo"
                     />
                     <span
-                        class="text-xl font-semibold truncate dark:text-white sm:text-2xl"
+                        class="font-semibold truncate dark:text-white"
                     >{{ settings('app_name', 'Application') }}</span
                     >
                 </a>
+            </div>
+            <div class="vh-client-navigation bg-gray-50 dark:bg-gray-900 lg:border-b lg:border-gray-200 dark:lg:border-gray-800">
+                <div
+                    id="client-main-navigation"
+                    class="hidden w-full border-t border-gray-200 dark:border-gray-700 lg:flex lg:flex-row lg:items-center lg:justify-center lg:border-t-0 lg:py-5"
+                >
+                    <nav
+                        class="w-full bg-gray-50 dark:bg-gray-900 lg:bg-transparent"
+                        aria-label="Main navigation"
+                    >
+                        <ul
+                            class="mt-0 flex w-full flex-col text-sm font-medium lg:flex-row lg:flex-wrap lg:justify-center"
+                        >
+                            <li
+                                class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
+                            >
+                                <a
+                                    href="/"
+                                    wire:navigate
+                                    class="block py-3 px-4 @if($activePage == 'dashboard') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
+                                >
+                                    Dashboard
+                                </a>
+                            </li>
+                            <li
+                                class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
+                            >
+                                <a
+                                    href="{{ route('categories.index') }}"
+                                    wire:navigate
+                                    class="block py-3 px-4 @if($activePage == 'categories') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
+                                    aria-current="page"
+                                >
+                                    Categories
+                                </a>
+                            </li>
+                            @foreach(extensionElements(['navigation-item']) as $element)
+                                <li
+                                    class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
+                                >
+                                    <a
+                                        href="{{ $element['attributes']['href'] ?? '#' }}" wire:navigate
+                                        class="block py-3 px-4 @if($activePage == $element['attributes']['active']) border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
+                                    >
+                                        {{ $element['attributes']['name'] ?? 'undefined' }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </nav>
+                </div>
             </div>
             <div class="flex items-center lg:order-2">
                 <button data-tooltip-target="tooltip-dark" type="button" onclick="toggleDarkmode()" class="inline-flex items-center p-2 mr-1 text-sm font-medium text-gray-500 rounded-lg dark:text-gray-400 hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800">
@@ -179,55 +230,3 @@
         </x-theme::alert.warning>
     </div>
 @endif
-
-<div class="bg-gray-50 dark:bg-gray-900 lg:border-b lg:border-gray-200 dark:lg:border-gray-800">
-    <div
-        id="client-main-navigation"
-        class="hidden w-full border-t border-gray-200 dark:border-gray-700 lg:flex lg:flex-row lg:items-center lg:justify-center lg:border-t-0 lg:py-5"
-    >
-        <nav
-            class="w-full bg-gray-50 dark:bg-gray-900 lg:bg-transparent"
-            aria-label="Main navigation"
-        >
-            <ul
-                class="mt-0 flex w-full flex-col text-sm font-medium lg:flex-row lg:flex-wrap lg:justify-center"
-            >
-                <li
-                    class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
-                >
-                    <a
-                        href="/"
-                        wire:navigate
-                        class="block py-3 px-4 @if($activePage == 'dashboard') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
-                    >
-                        Dashboard
-                    </a>
-                </li>
-                <li
-                    class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
-                >
-                    <a
-                        href="{{ route('categories.index') }}"
-                        wire:navigate
-                        class="block py-3 px-4 @if($activePage == 'categories') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
-                        aria-current="page"
-                    >
-                        Categories
-                    </a>
-                </li>
-                @foreach(extensionElements(['navigation-item']) as $element)
-                    <li
-                        class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
-                    >
-                        <a
-                            href="{{ $element['attributes']['href'] ?? '#' }}" wire:navigate
-                            class="block py-3 px-4 @if($activePage == $element['attributes']['active']) border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
-                        >
-                            {{ $element['attributes']['name'] ?? 'undefined' }}
-                        </a>
-                    </li>
-                @endforeach
-            </ul>
-        </nav>
-    </div>
-</div>

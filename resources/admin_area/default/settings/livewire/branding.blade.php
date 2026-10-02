@@ -46,7 +46,7 @@ new class extends Component
                         <x-admin::form.input wire:model.change="app_logo" name="app_logo" placeholder="Application Logo" />
                     </div>
                     <div class="col-auto">
-                        <a href="{{ route('admin.images.index') }}" target="_blank" class="btn btn-1">
+                        <a href="{{ route('admin.images.index') }}" target="_blank" rel="opener" onclick="window.imagePickerTarget = document.querySelector('[name=app_logo]')" class="btn btn-1">
                             Upload
                         </a>
                     </div>
@@ -73,7 +73,7 @@ new class extends Component
                         <x-admin::form.input wire:model.change="favicon" name="favicon" placeholder="Favicon" />
                     </div>
                     <div class="col-auto">
-                        <a href="{{ route('admin.images.index') }}" target="_blank" class="btn btn-1">
+                        <a href="{{ route('admin.images.index') }}" target="_blank" rel="opener" onclick="window.imagePickerTarget = document.querySelector('[name=favicon]')" class="btn btn-1">
                             Upload
                         </a>
                     </div>

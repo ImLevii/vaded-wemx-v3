@@ -7,3 +7,127 @@
 body {
     font-feature-settings: "cv03", "cv04", "cv11";
 }
+
+body:not([data-bs-theme="light"]) {
+    --tblr-primary: #eb4652;
+    --tblr-primary-rgb: 235, 70, 82;
+    --tblr-success: #35d08a;
+    --tblr-info: #45d7e8;
+    --tblr-warning: #f3b74f;
+    --tblr-body-bg: #08090b;
+    --tblr-body-color: #ecebed;
+    --tblr-body-color-rgb: 236, 235, 237;
+    --tblr-bg-surface: #111215;
+    --tblr-bg-surface-secondary: #151619;
+    --tblr-bg-surface-tertiary: #191a1e;
+    --tblr-bg-forms: #0d0e10;
+    --tblr-border-color: #302529;
+    --tblr-border-color-translucent: rgba(235, 70, 82, 0.17);
+    --tblr-border-dark-color: #3a2c30;
+    --tblr-border-color-active: #eb4652;
+    --tblr-navbar-bg: #0c0d0f;
+    --tblr-navbar-border-color: #292326;
+    --tblr-card-bg: #111215;
+    --tblr-active-bg: #191417;
+
+    color: var(--tblr-body-color);
+    background-color: var(--tblr-body-bg);
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+        linear-gradient(135deg, rgba(235, 70, 82, 0.06), transparent 34%);
+    background-size: 48px 48px, 48px 48px, auto;
+    background-attachment: fixed;
+}
+
+body:not([data-bs-theme="light"]) .page {
+    background: transparent;
+}
+
+body:not([data-bs-theme="light"]) .navbar-vertical,
+body:not([data-bs-theme="light"]) .navbar {
+    background-color: var(--tblr-navbar-bg);
+    border-color: var(--tblr-navbar-border-color);
+}
+
+body:not([data-bs-theme="light"]) .navbar-vertical {
+    box-shadow: inset -1px 0 0 var(--tblr-navbar-border-color);
+}
+
+body:not([data-bs-theme="light"]) .navbar-vertical .navbar-brand,
+body:not([data-bs-theme="light"]) .page-title,
+body:not([data-bs-theme="light"]) .card-title {
+    color: #f5f3f4;
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+}
+
+body:not([data-bs-theme="light"]) .page-title {
+    font-weight: 700;
+}
+
+body:not([data-bs-theme="light"]) .page-pretitle {
+    color: #eb4652;
+    font-family: Consolas, "Cascadia Code", "Courier New", monospace;
+}
+
+body:not([data-bs-theme="light"]) .page-header {
+    border-bottom: 1px solid var(--tblr-border-color-translucent);
+}
+
+body:not([data-bs-theme="light"]) .navbar-vertical .nav-link:hover,
+body:not([data-bs-theme="light"]) .navbar-vertical .nav-link.active {
+    color: #fff;
+    background-color: rgba(235, 70, 82, 0.09);
+}
+
+body:not([data-bs-theme="light"]) .navbar-vertical .nav-link.active {
+    box-shadow: inset 2px 0 #eb4652;
+}
+
+body:not([data-bs-theme="light"]) .card,
+body:not([data-bs-theme="light"]) .dropdown-menu,
+body:not([data-bs-theme="light"]) .modal-content {
+    background-color: var(--tblr-card-bg);
+    border-color: var(--tblr-border-color-translucent);
+}
+
+body:not([data-bs-theme="light"]) .form-control,
+body:not([data-bs-theme="light"]) .form-select {
+    color: var(--tblr-body-color);
+    background-color: var(--tblr-bg-forms);
+    border-color: var(--tblr-border-color);
+}
+
+body:not([data-bs-theme="light"]) .form-control:focus,
+body:not([data-bs-theme="light"]) .form-select:focus {
+    border-color: #eb4652;
+    box-shadow: 0 0 0 0.2rem rgba(235, 70, 82, 0.18);
+}
+
+body:not([data-bs-theme="light"]) .btn-primary {
+    --tblr-btn-bg: #eb4652;
+    --tblr-btn-hover-bg: #d93845;
+    --tblr-btn-active-bg: #c82e3b;
+    box-shadow: 0 0 16px rgba(235, 70, 82, 0.12);
+}
+
+body:not([data-bs-theme="light"]) a:not(.btn):not(.nav-link) {
+    color: #45d7e8;
+}
+
+body:not([data-bs-theme="light"]) a:not(.btn):not(.nav-link):hover {
+    color: #ff6974;
+}
+
+body:not([data-bs-theme="light"]) .footer {
+    border-top: 1px solid var(--tblr-border-color-translucent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    body:not([data-bs-theme="light"]) .btn,
+    body:not([data-bs-theme="light"]) .nav-link,
+    body:not([data-bs-theme="light"]) .form-control,
+    body:not([data-bs-theme="light"]) .form-select {
+        transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+    }
+}

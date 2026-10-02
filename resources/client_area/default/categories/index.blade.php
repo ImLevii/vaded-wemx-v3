@@ -24,6 +24,7 @@
     @endphp
 
     <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
+        <x-theme::hosting-hero eyebrow="Find your next service" title="BUILT FOR YOUR" accent="NEXT BIG IDEA." description="Explore available services and choose the right plan for your next project." />
         <div class="sm:flex sm:items-center sm:justify-between sm:gap-4">
             <h2 class="mt-3 text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">Categories</h2>
         </div>

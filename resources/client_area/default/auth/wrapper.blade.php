@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-vaded-area="client">
 
 <head>
     <title>@yield('title')</title>
@@ -12,7 +12,7 @@
 
     <!-- Meta Description Tag: Affects click-through rates from search results -->
     <meta name="description" content="Manage your orders with an easy-to-use Dashboard">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#030405">
     <meta name="keywords" content="">
 
     <!-- Meta Robots Tag: Controls search engine crawling and indexing -->
@@ -23,56 +23,43 @@
     <meta property="og:description" content="Manage your orders with an easy-to-use Dashboard">
     <meta property="og:image" content="@settings('seo::image', '/static/wemx.png')">
 
+    <script src="{{ asset('assets/common/js/vaded-theme.js') }}?v={{ filemtime(public_path('assets/common/js/vaded-theme.js')) }}" data-navigate-once></script>
+    <link href="{{ asset('assets/common/css/vaded-theme.css') }}?v={{ filemtime(public_path('assets/common/css/vaded-theme.css')) }}" rel="stylesheet">
+
     <!-- Custom CSS -->
     @vite(['resources/client_area/default/assets/css/app.css','resources/client_area/default/assets/js/app.js'])
 
     @yield('header')
 
-    <!-- Dark Mode -->
-    <script>
-        // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-        setTheme();
 
-        document.addEventListener('livewire:navigated', (event) => {
-            // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-            setTheme();
-        });
-
-        function toggleDarkmode() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('color-theme', 'light');
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('color-theme', 'dark');
-            }
-        }
-
-        function setTheme()
-        {
-            // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-            if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark')
-            }
-        }
-    </script>
 </head>
 
-<body class="dark:bg-gray-900 bg-white">
-    <section class="bg-gray-50 dark:bg-gray-900">
-        <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-            <a href="/" class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-                <img class="w-10 h-10 mr-2 rounded" src="{{ settings('app_logo', '/assets/common/img/app-logo.png') }}" alt="logo">
-                {{ settings('app_name', 'My Application') }}
-            </a>
-            <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-lg xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-                <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
-                    @yield('content')
+<body class="vaded-theme vaded-client">
+    <main class="vh-auth-shell">
+        <div class="vh-auth-layout">
+            <div class="vh-auth-intro">
+                <a href="/" class="vh-brand">
+                    <img src="{{ settings('app_logo', '/assets/common/img/app-logo.png') }}" alt="" width="30" height="30">
+                    {{ settings('app_name', 'My Application') }}
+                </a>
+                <span class="vh-eyebrow">Welcome to your hosting platform</span>
+                <h1>Your services.<br><span>Your rules.</span></h1>
+                <p>Manage your services, payments, and account from one place. Everything you need, within reach.</p>
+                <div class="vh-auth-line" aria-hidden="true"></div>
+            </div>
+            <div class="min-w-0">
+                <div class="vh-auth-card">
+                    <div class="vh-window-bar">Account access</div>
+                    <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+                        @yield('content')
+                    </div>
+                </div>
+                <div class="vh-auth-footer">
+                    <span>{{ settings('app_name', 'WemX') }} &copy; {{ now()->year }}</span>
+                    <button type="button" class="vh-auth-theme" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button>
                 </div>
             </div>
         </div>
-    </section>
+    </main>
 </body>
 </html>

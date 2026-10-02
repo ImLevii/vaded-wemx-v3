@@ -1,6 +1,6 @@
 {{-- resources/views/components/sidebar.blade.php --}}
 
-<aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
+<aside class="navbar navbar-vertical navbar-expand-lg">
     <div class="container-fluid">
         <!-- Toggle button and brand -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar-menu"
@@ -9,10 +9,8 @@
         </button>
 
         <a href="{{ route('admin.index') }}" class="navbar-brand navbar-brand-autodark">
-            @if(!empty(settings('logo', '')))
-                <img src="{{ asset(settings('logo')) }}" alt="{{ settings('site_name', 'WemX') }}"
-                     class="avatar rounded-5">
-            @endif
+            <img src="{{ asset(settings('logo') ?: settings('app_logo', '/assets/common/img/app-logo.png')) }}" alt=""
+                 class="avatar rounded">
             <span class="ms-2">{{ settings('app_name', 'WemX') }}</span>
         </a>
 

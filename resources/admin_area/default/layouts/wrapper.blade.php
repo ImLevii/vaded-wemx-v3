@@ -1,10 +1,11 @@
 <!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-vaded-area="admin">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
+    <script src="{{ asset('assets/common/js/vaded-theme.js') }}?v={{ filemtime(public_path('assets/common/js/vaded-theme.js')) }}" data-navigate-once></script>
 
     <title>{{ __('messages.admin') }} | @yield('title')</title>
     <link rel="icon" href="{{ asset(settings('favicon', 'images/favicon.png')) }}">
@@ -14,7 +15,8 @@
     <link href="{{ admin_asset('css/tabler-payments.min.css?1692870487') }}" rel="stylesheet"/>
     <link href="{{ admin_asset('css/tabler-vendors.min.css?1692870487') }}" rel="stylesheet"/>
     <link href="{{ admin_asset('css/demo.min.css?1692870487') }}" rel="stylesheet"/>
-    <link href="{{ admin_asset('css/admin.css') }}" rel="stylesheet"/>
+    <link href="{{ asset('assets/common/css/vaded-theme.css') }}?v={{ filemtime(public_path('assets/common/css/vaded-theme.css')) }}" rel="stylesheet"/>
+    <link href="{{ admin_asset('css/vaded.css') }}" rel="stylesheet"/>
 
     <!-- Tabler Core -->
     <script src="{{ admin_asset('js/tabler.min.js?1692870487') }}" defer></script>
@@ -24,14 +26,19 @@
     @livewireStyles
     @yield('styles')
 </head>
-<body class="layout-fluid">
+<body class="layout-fluid vaded-theme vaded-admin">
 
 <div class="page">
 
     <x-admin::navigation.sidebar :activePage="$activePage ?? ''"/>
 
     <div class="page-wrapper">
-        <x-admin::navigation.navbar />
+        <header class="vh-topbar d-print-none">
+            <div class="container-xl">
+                <span class="vh-workspace-label">Administration</span>
+                <x-admin::navigation.navbar />
+            </div>
+        </header>
         <!-- Page header -->
         <div class="page-header d-print-none">
             <div class="container-xl">
@@ -74,10 +81,6 @@
         button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span> ' + buttonName;
         button.disabled = true;
     }
-</script>
-
-<script>
-    !function(e){"function"==typeof define&&define.amd?define(e):e()}((function(){"use strict";var e,t="tablerTheme",a=new Proxy(new URLSearchParams(window.location.search),{get:function(e,t){return e.get(t)}});if(a.theme)localStorage.setItem(t,a.theme),e=a.theme;else{var n=localStorage.getItem(t);e=n||"light"}"dark"===e?document.body.setAttribute("data-bs-theme",e):document.body.removeAttribute("data-bs-theme")}));
 </script>
 
 <!-- Libs JS -->

@@ -1,3 +1,146 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.vaded-client > main,
+.vaded-client .vh-client-navigation,
+.vaded-client .vh-client-navigation nav { background: transparent; }
+.vh-client-header {
+    position: sticky;
+    top: 0;
+    z-index: 35;
+    background: linear-gradient(115deg, var(--vh-glass-highlight), transparent 45%), var(--vh-glass);
+    border-bottom: 1px solid var(--vh-glass-edge);
+    box-shadow: inset 0 1px var(--vh-glass-highlight), 0 12px 40px rgba(0, 0, 0, .18);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    backdrop-filter: blur(24px) saturate(160%);
+}
+.vaded-client .vh-client-header > nav { background: transparent; border: 0; padding: 0 32px; }
+.vh-client-header > nav > div { max-width: 1440px; margin: 0 auto; gap: 12px; }
+.vh-client-header .vh-brand { font-size: 16px; }
+.vh-client-header .vh-brand img { height: 32px; width: 32px; object-fit: contain; }
+.vh-client-navigation { border-bottom: 1px solid var(--vh-border); }
+.vh-client-navigation #client-main-navigation { padding-top: 0; padding-bottom: 0; }
+.vh-client-navigation a { font-family: var(--vh-display); font-size: 12px; font-weight: 600; letter-spacing: 0; padding: 20px 15px; }
+.vaded-client .vh-client-main { padding: 30px 24px; }
+.vaded-client :is(.bg-white.border, .dark\:bg-gray-800.border) { border-radius: 8px; box-shadow: var(--vh-shadow); }
+.vaded-client :is(h1, h2) { line-height: 1.4; }
+.vaded-client h3 { font-size: 15px; }
+.vaded-client.vaded-theme a[class*="text-blue-"] { color: var(--vh-accent); }
+.vaded-client :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea) { background-color: var(--vh-input); color: var(--vh-text); border-color: var(--vh-border); border-radius: 7px; }
+.vaded-client :is(input, select, textarea):focus { border-color: var(--vh-accent); --tw-ring-color: var(--vh-accent-soft); box-shadow: 0 0 0 3px var(--vh-accent-soft); outline: none; }
+.vaded-client input::placeholder, .vaded-client textarea::placeholder { color: var(--vh-muted); opacity: .75; }
+.vaded-client :is(a, button)[class*="bg-primary-"] { background: linear-gradient(#ef3038, #d41b25); border: 1px solid #ff5156; box-shadow: inset 0 1px rgba(255, 255, 255, .14), 0 3px 12px rgba(180, 30, 50, .14); color: #fff; border-radius: 7px; font-weight: 600; }
+.vaded-client :is(a, button)[class*="bg-primary-"]:hover { background: linear-gradient(#ff454d, #e52b35); }
+.vaded-client :is(a, button)[class*="bg-primary-"]:disabled { opacity: .5; cursor: not-allowed; }
+.vaded-client table { font-size: 13px; }
+.vaded-client thead { background: var(--vh-raised); color: var(--vh-muted); font: 600 10px var(--vh-display); letter-spacing: .06em; }
+.vaded-client :is(th, td) { border-color: var(--vh-border); }
+.vaded-client tbody tr { background: transparent; }
+.vaded-client tbody tr:hover { background: var(--vh-raised); }
+.vaded-client td { padding-top: 17px; padding-bottom: 17px; }
+.vaded-client footer { background: var(--vh-header); border-top: 1px solid var(--vh-border); margin: 0; border-radius: 0; box-shadow: none; }
+.vaded-client footer > div { max-width: 1440px; }
+.vaded-client footer a { font-size: 12px; }
+.vaded-client .vh-dashboard-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin: 0 8px 26px; padding-bottom: 24px; border-bottom: 1px solid var(--vh-border); }
+.vh-dashboard-heading h1 { font-family: var(--vh-display); font-size: clamp(23px, 2.5vw, 32px); font-weight: 600; }
+.vh-dashboard-heading p { margin-top: 10px; color: var(--vh-muted); font-size: 13px; }
+.vh-client-stat { position: relative; overflow: hidden; border-top-color: rgba(239, 48, 56, .3) !important; }
+.vh-client-stat::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at top right, var(--vh-accent-soft), transparent 75%); }
+.vh-client-stat > * { position: relative; }
+.vaded-client .vh-client-stat h2 { font-family: var(--vh-display); font-size: 19px; font-weight: 800; }
+.vaded-client .vh-account-card h2 { font-family: 'Inter', sans-serif; font-size: 19px; overflow-wrap: anywhere; }
+.vaded-client .vh-account-card dd { overflow-wrap: anywhere; }
+
+.vh-client-header > nav { padding-top: 0; padding-bottom: 0; }
+.vh-client-header > nav > div { min-height: 72px; }
+.vaded-client .vh-client-header .vh-client-navigation { flex: 1; border: 0; background: transparent; }
+.vh-client-header .vh-client-navigation #client-main-navigation { border: 0; }
+.vaded-client .vh-client-header .vh-client-navigation nav { display: flex; justify-content: center; background: transparent; }
+.vh-client-header .vh-client-navigation ul {
+    width: fit-content;
+    align-items: center;
+    gap: 5px;
+    padding: 4px;
+    border: 1px solid var(--vh-glass-edge);
+    border-radius: 12px;
+    background: var(--vh-glass-inset);
+    box-shadow: inset 0 1px var(--vh-glass-highlight), 0 4px 16px rgba(0, 0, 0, .08);
+}
+.vh-client-header .vh-client-navigation li { border: 0; }
+.vh-client-header .vh-client-navigation a {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 10px 15px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--vh-muted);
+    font-family: var(--vh-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0;
+    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+.vh-client-header .vh-client-navigation a:hover {
+    color: var(--vh-accent);
+    background: rgba(239, 48, 56, .09);
+    border-color: rgba(239, 48, 56, .18);
+}
+.vh-client-header .vh-client-navigation a[class~="text-primary-600"] {
+    color: var(--vh-accent);
+    background: rgba(239, 48, 56, 0.12);
+    border-color: rgba(239, 48, 56, .24);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.06), 0 2px 12px rgba(239, 48, 56, 0.08);
+}
+.vh-client-header .vh-client-navigation a[class~="text-primary-600"]::after {
+    position: absolute;
+    right: 12px;
+    bottom: -1px;
+    left: 12px;
+    height: 2px;
+    background: var(--vh-accent);
+    content: '';
+}
+.vh-client-header :is(#client-nav-toggle, button[data-tooltip-target], a[data-tooltip-target], #user-menu-button) {
+    border: 1px solid transparent;
+    border-radius: 5px;
+    transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
+}
+.vh-client-header :is(#client-nav-toggle, button[data-tooltip-target], a[data-tooltip-target], #user-menu-button):hover {
+    color: var(--vh-text);
+    background: var(--vh-glass-inset);
+    border-color: var(--vh-glass-edge);
+}
+.vh-client-header #user-menu-button { padding: 3px; border-color: rgba(255, 255, 255, 0.10); background: rgba(255, 255, 255, 0.035); }
+.vh-client-header #user-menu-button img { display: block; }
+.vh-client-header .vh-brand img { height: 28px; width: 28px; }
+.vaded-client footer { background: var(--vh-surface); }
+.vaded-client .vh-client-stat { background-image: linear-gradient(135deg, var(--vh-accent-soft), transparent 75%); }
+.vaded-client .vh-client-stat::before { display: none; }
+.vaded-client .vh-client-stat > div:first-child { width: 36px; height: 36px; background: var(--vh-accent-soft); color: var(--vh-accent); border: 1px solid rgba(239, 48, 56, .15); border-radius: 5px; }
+.vaded-client .vh-client-stat > div:first-child svg { width: 19px; height: 19px; color: var(--vh-accent); }
+.vaded-client .vh-client-stat p { font-size: 12px; line-height: 1.6; margin-top: 5px; }
+
+@media (max-width: 1023px) {
+    .vaded-client .vh-client-header > nav { padding: 14px 18px; }
+    .vh-client-header .vh-client-navigation a { width: 100%; min-height: 44px; padding: 12px 18px; border-radius: 8px; }
+    .vh-client-header .vh-client-navigation { order: 3; flex-basis: 100%; }
+    .vh-client-header .vh-client-navigation:has(#client-main-navigation.hidden) { display: none; }
+    .vh-client-header .vh-client-navigation ul {
+        width: 100%;
+        align-items: stretch;
+        gap: 4px;
+        padding: 6px;
+        border-radius: 12px;
+    }
+}
+@media (max-width: 639px) {
+    .vh-client-header .vh-brand { font-size: 16px; margin-right: 0; }
+    .vh-client-header .vh-brand img { height: 26px; width: 26px; }
+    .vh-client-header > nav > div { justify-content: center; }
+    .vh-client-header > nav > div > div:first-child { margin-right: auto; }
+    .vaded-client .vh-client-main { padding: 22px 8px; }
+    .vaded-client .vh-dashboard-heading { margin-left: 0; margin-right: 0; }
+}

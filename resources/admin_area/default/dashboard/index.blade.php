@@ -86,7 +86,7 @@
     @endperm
 
     <div class="row mb-3">
-        <div class="col-8">
+        <div class="col-12 col-xl-8">
             @include('admin::dashboard.partials.system-alerts')
             @perm('admin.dashboard.recent_orders')
             <div class="mb-3">
@@ -164,7 +164,7 @@
         @php
             $onlineUsers = \App\Models\User::where('last_seen_at', '>=', now()->subMinutes(5))->get();
         @endphp
-        <div class="col-4 flex-column">
+        <div class="col-12 col-xl-4 flex-column">
 
             @perm('admin.dashboard.online_users')
             <div class="card mb-3">
