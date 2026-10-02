@@ -16,7 +16,7 @@
     <link href="{{ admin_asset('css/tabler-vendors.min.css?1692870487') }}" rel="stylesheet"/>
     <link href="{{ admin_asset('css/demo.min.css?1692870487') }}" rel="stylesheet"/>
     <link href="{{ asset('assets/common/css/vaded-theme.css') }}?v={{ filemtime(public_path('assets/common/css/vaded-theme.css')) }}" rel="stylesheet"/>
-    <link href="{{ admin_asset('css/vaded.css') }}" rel="stylesheet"/>
+    <link href="{{ admin_asset('css/vaded.css') }}&updated={{ filemtime(public_path('assets/adminarea/'.config('app.theme', 'default').'/css/vaded.css')) }}" rel="stylesheet"/>
 
     <!-- Tabler Core -->
     <script src="{{ admin_asset('js/tabler.min.js?1692870487') }}" defer></script>

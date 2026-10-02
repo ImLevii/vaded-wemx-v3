@@ -21,6 +21,8 @@
         </div>
         <div class="vh-hero-signature" aria-hidden="true"><span>VADED / INFRASTRUCTURE</span><strong>BUILT FOR YOUR WORLD.</strong><span class="vh-hero-signature-line"></span></div>
     </section>
+    <x-theme::technology-carousel />
+
     <div class="vh-proof-strip" aria-label="Platform capabilities">
         @foreach(config('hosting.capabilities', []) as $capability)
             <div><x-theme::icon :name="$capability['icon']" /><span><strong>{{ $capability['title'] }}</strong><small>{{ $capability['description'] }}</small></span></div>
