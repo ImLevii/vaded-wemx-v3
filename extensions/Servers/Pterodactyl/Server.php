@@ -364,8 +364,10 @@ class Server extends ServerExtension
 
     /**
      * Make API request to Pterodactyl API
+     *
+     * @param  list<int>  $allowedFailureStatuses
      */
-    public static function makeRequest(array $credentials, string $endpoint, string $method = 'get', array $data = []): Response
+    public static function makeRequest(array $credentials, string $endpoint, string $method = 'get', array $data = [], array $allowedFailureStatuses = []): Response
     {
         $method = strtolower($method);
 
@@ -382,7 +384,7 @@ class Server extends ServerExtension
             'Content-Type' => 'application/json',
         ])->connectTimeout(5)->timeout(20)->$method($hostname.'/'.ltrim($endpoint, '/'), $data);
 
-        if ($response->failed()) {
+        if ($response->failed() && ! in_array($response->status(), $allowedFailureStatuses, true)) {
             throw new Exception("Failed to connect to Pterodactyl API at endpoint: $endpoint with status code: {$response->status()} and response: {$response->body()}");
         }
 
@@ -670,7 +672,35 @@ class Server extends ServerExtension
     {
         $serverId = $this->provisionedServerId($order);
 
-        Server::makeRequest($connection->config, "/api/application/servers/{$serverId}", 'delete');
+        $endpoint = "/api/application/servers/{$serverId}";
+        $response = Server::makeRequest($connection->config, $endpoint, 'delete', allowedFailureStatuses: [404]);
+
+        if (! $response->notFound()) {
+            return;
+        }
+
+        if (! $this->isMissingServerResponse($response)) {
+            throw new RuntimeException('Pterodactyl returned an unexpected 404 response. Termination could not be confirmed.');
+        }
+
+        $serverLookup = Server::makeRequest($connection->config, $endpoint, allowedFailureStatuses: [404]);
+
+        if (! $this->isMissingServerResponse($serverLookup)) {
+            throw new RuntimeException('Pterodactyl did not confirm that the server was deleted.');
+        }
+
+        $serverList = Server::makeRequest($connection->config, '/api/application/servers', data: ['per_page' => 1]);
+
+        if (! $serverList->ok() || ! is_array($serverList->json('data')) || ! is_array($serverList->json('meta.pagination'))) {
+            throw new RuntimeException('Pterodactyl Application API access could not be verified. Termination could not be confirmed.');
+        }
+    }
+
+    private function isMissingServerResponse(Response $response): bool
+    {
+        return $response->notFound()
+            && $response->json('errors.0.code') === 'NotFoundHttpException'
+            && $response->json('errors.0.detail') === 'The requested resource could not be found on the server.';
     }
 
     private function provisionedServerId(Order $order): string

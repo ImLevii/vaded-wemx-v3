@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\Orders\OrderTerminateServer;
 use App\Models\Category;
 use App\Models\Email;
 use App\Models\Extension;
@@ -452,6 +453,135 @@ class PterodactylServerTest extends TestCase
             ->assertSee('Failed to perform action "Unsuspend"', false)
             ->assertSee('Failed to perform action "Terminate"', false)
             ->assertDontSee('Resolved incident');
+    }
+
+    public function test_termination_retry_completes_when_the_panel_server_is_already_deleted(): void
+    {
+        $missingServer = $this->missingServerResponse();
+        Http::fake([
+            'https://panel.example.test/api/application/servers/101' => Http::response($missingServer, 404),
+            'https://panel.example.test/api/application/servers?*' => Http::response([
+                'object' => 'list', 'data' => [], 'meta' => ['pagination' => ['total' => 0]],
+            ]),
+        ]);
+        $order = $this->provisionedOrder();
+        $order->update(['status' => 'failed']);
+        $incident = $order->exceptions()->create(['action' => 'terminate', 'message' => 'Server already deleted']);
+        $role = Role::query()->create(['name' => 'Termination tester', 'super_admin' => true]);
+        DB::table('role_user')->insert([
+            'user_id' => $this->customer->id, 'role_id' => $role->id,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $this->actingAs($this->customer);
+        Queue::fake()->except([OrderTerminateServer::class]);
+
+        Volt::test('admin_area.default.orders.livewire.edit.incident-logs', ['order' => $order])
+            ->call('tryAgain', $incident->id)
+            ->assertRedirect(route('admin.orders.edit', ['order' => $order->id, 'orderEditPage' => 'incident-logs']));
+
+        $this->assertSame('terminated', $order->fresh()->status);
+        $this->assertTrue($incident->fresh()->isResolved());
+        Http::assertSentCount(3);
+        Http::assertSent(fn (Request $request): bool => $request->method() === 'DELETE' && str_ends_with($request->url(), '/servers/101'));
+        Http::assertSent(fn (Request $request): bool => $request->method() === 'GET' && str_ends_with($request->url(), '/servers/101'));
+    }
+
+    #[DataProvider('unverifiedMissingServers')]
+    public function test_termination_does_not_succeed_when_a_missing_server_cannot_be_verified(array $deleteBody, int $lookupStatus, array $lookupBody, int $listStatus, array|string $listBody, int $expectedRequests): void
+    {
+        Http::fake([
+            'https://panel.example.test/api/application/servers/101' => fn (Request $request) => $request->method() === 'DELETE'
+                ? Http::response($deleteBody, 404) : Http::response($lookupBody, $lookupStatus),
+            'https://panel.example.test/api/application/servers?*' => Http::response($listBody, $listStatus),
+        ]);
+        $order = $this->provisionedOrder();
+
+        try {
+            (new Server)->terminate($order, $this->connection);
+            $this->fail('An unverified panel response must not complete termination.');
+        } catch (\Exception $exception) {
+            $this->assertSame('pending', $order->fresh()->status);
+            Http::assertSentCount($expectedRequests);
+        }
+    }
+
+    /** @return array<string, array{0: array<string, mixed>, 1: int, 2: array<string, mixed>, 3: int, 4: array|string, 5: int}> */
+    public static function unverifiedMissingServers(): array
+    {
+        $missingServer = self::missingServerResponse();
+
+        return [
+            'unknown delete route' => [['errors' => [['code' => 'NotFoundHttpException', 'detail' => 'Route not found.']]], 404, $missingServer, 200, [], 1],
+            'malformed delete response' => [[], 404, $missingServer, 200, [], 1],
+            'server still exists' => [$missingServer, 200, ['attributes' => ['id' => 101]], 200, [], 2],
+            'lookup route missing' => [$missingServer, 404, [], 200, [], 2],
+            'lookup unauthorized' => [$missingServer, 401, [], 200, [], 2],
+            'lookup forbidden' => [$missingServer, 403, [], 200, [], 2],
+            'lookup server error' => [$missingServer, 500, [], 200, [], 2],
+            'list unauthorized' => [$missingServer, 404, $missingServer, 401, [], 3],
+            'list forbidden' => [$missingServer, 404, $missingServer, 403, [], 3],
+            'list route missing' => [$missingServer, 404, $missingServer, 404, [], 3],
+            'list server error' => [$missingServer, 404, $missingServer, 500, [], 3],
+            'HTML response' => [$missingServer, 404, $missingServer, 200, '<html>Login</html>', 3],
+            'malformed collection' => [$missingServer, 404, $missingServer, 200, ['data' => []], 3],
+        ];
+    }
+
+    #[DataProvider('terminationErrors')]
+    public function test_termination_keeps_other_api_errors_as_failures(int $status): void
+    {
+        Http::fake(['*' => Http::response([], $status)]);
+
+        try {
+            (new Server)->terminate($this->provisionedOrder(), $this->connection);
+            $this->fail('A failed delete request must not complete termination.');
+        } catch (\Exception $exception) {
+            $this->assertStringContainsString('status code: '.$status, $exception->getMessage());
+            Http::assertSentCount(1);
+        }
+    }
+
+    /** @return array<string, array{0: int}> */
+    public static function terminationErrors(): array
+    {
+        return [
+            'unauthorized' => [401],
+            'forbidden' => [403],
+            'wrong method' => [405],
+            'server error' => [500],
+        ];
+    }
+
+    public function test_termination_connection_failures_are_propagated(): void
+    {
+        Http::fake(['*' => Http::failedConnection()]);
+        $this->expectException(ConnectionException::class);
+
+        (new Server)->terminate($this->provisionedOrder(), $this->connection);
+    }
+
+    public function test_suspension_and_unsuspension_do_not_accept_missing_servers(): void
+    {
+        Http::fake(['*' => Http::response(self::missingServerResponse(), 404)]);
+        $order = $this->provisionedOrder();
+        $server = new Server;
+
+        foreach (['suspend', 'unsuspend'] as $action) {
+            try {
+                $server->{$action}($order, $this->connection);
+                $this->fail('A missing server must not report a successful suspension action.');
+            } catch (\Exception $exception) {
+                $this->assertStringContainsString('status code: 404', $exception->getMessage());
+            }
+        }
+
+        Http::assertSentCount(2);
+    }
+
+    /** @return array{errors: list<array{code: string, detail: string}>} */
+    private static function missingServerResponse(): array
+    {
+        return ['errors' => [['code' => 'NotFoundHttpException', 'detail' => 'The requested resource could not be found on the server.']]];
     }
 
     public function test_password_changes_resolve_the_user_from_the_correct_panel(): void
