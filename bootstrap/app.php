@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\QueueWorkerController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AdminPathMiddleware;
 use App\Http\Middleware\CheckActiveUserBan;
@@ -24,6 +25,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function () {
+            Route::post('/internal/queue/work', QueueWorkerController::class)->name('queue.work');
+
             Route::middleware(['web', 'auth', 'admin', RequireAdminReauthentication::class])
                 ->prefix('admin')->name('admin.')
                 ->group(base_path('routes/admin.php'));

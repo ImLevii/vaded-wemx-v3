@@ -15,6 +15,10 @@ return [
 
     'default' => env('QUEUE_CONNECTION', 'database'),
 
+    'worker' => [
+        'secret' => env('QUEUE_WORKER_SECRET'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Queue Connections

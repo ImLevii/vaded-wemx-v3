@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class AppTaskLog extends Model
 {
@@ -42,17 +44,24 @@ class AppTaskLog extends Model
 
     public static function isQueueWorkerRunning(): bool
     {
+        if (config('queue.worker.secret')) {
+            $lastCompletedAt = Cache::store('database')->get('queue:worker:last_completed_at');
+
+            return is_numeric($lastCompletedAt) && (int) $lastCompletedAt >= now()->subMinutes(15)->timestamp;
+        }
+
         // retrieve latest job from the jobs
         $latestJob = \DB::table('jobs')
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$latestJob) {
+        if (! $latestJob) {
             return true; // No jobs found, assume worker is running
         }
 
         // check if this job is older than 10 minutes
-        $jobCreatedAt = \Carbon\Carbon::parse($latestJob->created_at);
+        $jobCreatedAt = Carbon::createFromTimestamp($latestJob->created_at);
+
         return $jobCreatedAt->greaterThanOrEqualTo(now()->subMinutes(5));
     }
 

@@ -1,0 +1,33 @@
+name: Process production queue
+
+on:
+  schedule:
+    - cron: '2-57/5 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: production-queue-worker
+  cancel-in-progress: false
+
+jobs:
+  process:
+    if: github.repository == 'ImLevii/vaded-wemx-v3'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Process queued jobs on Vercel
+        env:
+          QUEUE_WORKER_URL: ${{ secrets.QUEUE_WORKER_URL }}
+          QUEUE_WORKER_SECRET: ${{ secrets.QUEUE_WORKER_SECRET }}
+        run: |
+          test -n "$QUEUE_WORKER_URL"
+          test -n "$QUEUE_WORKER_SECRET"
+          curl --fail --silent --show-error \
+            --connect-timeout 10 \
+            --max-time 70 \
+            --request POST \
+            --header "Authorization: Bearer $QUEUE_WORKER_SECRET" \
+            --header "Accept: application/json" \
+            "$QUEUE_WORKER_URL"
