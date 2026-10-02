@@ -1,4 +1,6 @@
 @import './hosting.css';
+@import './vps.css';
+@import './vps-checkout.css';
 
 @tailwind base;
 @tailwind components;

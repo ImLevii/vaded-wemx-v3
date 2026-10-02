@@ -3,6 +3,9 @@
 @section('description', $selectedCategory?->description ?: 'Game server and cloud hosting for communities, server owners, and developers. Compare plans, configure your resources, and manage everything with Vaded Hosting.')
 
 @section('content')
+@if(request()->has('category') && $selectedCategory && Str::contains(Str::lower($selectedCategory->slug), 'vps'))
+    @include('theme::categories.vps')
+@else
 <div class="vh-store">
     <section class="vh-store-hero" aria-labelledby="hosting-title">
         <div class="vh-hero-backdrop" aria-hidden="true">
@@ -148,4 +151,5 @@
     </section>
     <section class="vh-launch-cta"><div><span class="vh-kicker">YOUR COMMUNITY STARTS HERE</span><h2>Ready to launch?</h2><p>Find the server that fits. Make it yours.</p></div><div class="vh-cta-row"><a href="#services" class="vh-action">Choose Your Server <x-theme::icon name="arrow" /></a><a href="#pricing" class="vh-action vh-action-secondary">View Plans</a></div></section>
 </div>
+@endif
 @endsection

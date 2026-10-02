@@ -1,0 +1,69 @@
+.vaded-client:has(.vh-vps-checkout) { --vh-backdrop-opacity: 0; --vh-ambient-opacity: 0; background-image: none; }
+.vaded-client[data-bs-theme="dark"]:has(.vh-vps-checkout) { --vh-background: #090909; --vh-surface: #0d0d0d; --vh-input: #0a0a0a; --vh-raised: #151515; --vh-border: #1b1b1b; --vh-text: #f8f8f8; --vh-muted: #a4afbc; --vh-accent: #db2148; }
+.vh-vps-checkout { padding-top: 34px; padding-bottom: 70px; }
+.vh-vps-checkout-heading { margin-bottom: 32px; }
+.vaded-client .vh-vps-checkout-heading h1 { margin: 0 0 9px; font-size: 30px; font-weight: 650; line-height: 1.3; letter-spacing: -.025em; }
+.vh-vps-checkout-heading p { color: var(--vh-muted); font-size: 15px; line-height: 1.7; }
+.vh-vps-checkout-panel { padding: 25px; border: 1px solid var(--vh-border); border-radius: 17px; background: var(--vh-surface); }
+.vaded-client .vh-vps-checkout-panel h2 { margin: 0 0 20px; color: var(--vh-text); font-size: 18px; font-weight: 600; line-height: 1.5; letter-spacing: -.015em; }
+.vh-vps-checkout-plan { padding: 20px 17px; }
+.vaded-client .vh-vps-checkout-plan h2 { margin-bottom: 10px; font-size: 19px; }
+.vh-vps-checkout-plan ul, .vh-vps-checkout-plan p { margin: 0; color: var(--vh-muted); font-size: 13px; line-height: 1.6; }
+.vh-vps-config-field { min-width: 0; }
+.vh-vps-config-field > label { display: block; margin-bottom: 9px; color: var(--vh-text); font-size: 13px; font-weight: 500; line-height: 1.6; }
+.vh-vps-required { color: var(--vh-accent); }
+.vaded-client.vaded-theme .vh-vps-checkout .vh-vps-checkout-main .vh-vps-config-field :is(input:not([type="radio"]), select, textarea) { width: 100%; min-height: 49px; padding: 13px 16px; border: 1px solid var(--vh-border); border-radius: 16px; background-color: var(--vh-input); color: var(--vh-text); font-size: 14px; line-height: 1.6; box-shadow: none; }
+.vh-vps-config-field input::placeholder, .vh-vps-config-field textarea::placeholder { color: var(--vh-muted); opacity: .7; }
+.vaded-client .vh-vps-checkout .vh-vps-config-field :is(input, select, textarea):focus { border-color: var(--vh-accent); outline: 2px solid var(--vh-accent-soft); outline-offset: 2px; }
+.vaded-client .vh-vps-checkout .vh-vps-config-field select { padding-right: 40px; }
+.vaded-client .vh-vps-os-section h2, .vaded-client .vh-vps-ip-section h2 { margin: 0 0 4px; color: var(--vh-text); font-size: 20px; font-weight: 500; line-height: 1.5; letter-spacing: -.015em; }
+.vh-vps-os-section > p { margin-bottom: 16px; color: var(--vh-muted); font-size: 13px; line-height: 1.7; }
+.vh-vps-os-tabs { width: fit-content; max-width: 100%; margin-bottom: 16px; padding: 5px; border: 1px solid var(--vh-border); border-radius: 12px; background: var(--vh-surface); }
+.vh-vps-os-tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 7px 12px; border: 1px solid transparent; border-radius: 8px; color: var(--vh-muted); font-size: 13px; line-height: 1.5; cursor: pointer; }
+.vh-vps-os-tabs button:hover { color: var(--vh-text); background: var(--vh-raised); }
+.vh-vps-os-tabs button[aria-pressed="true"] { border-color: var(--vh-accent); color: var(--vh-text); background: var(--vh-input); box-shadow: inset 0 0 0 1px var(--vh-accent); }
+.vh-vps-os-tabs :is(img, .vh-icon) { width: 19px; height: 19px; flex-shrink: 0; object-fit: contain; }
+.vh-vps-os-card { position: relative; height: 100%; min-height: 124px; overflow: hidden; padding: 18px 22px; border: 2px solid var(--vh-border); border-radius: 16px; background: var(--vh-surface); cursor: pointer; transition: border-color 150ms, background-color 150ms; }
+.vh-vps-os-card > :is(img, .vh-icon) { width: 36px; height: 42px; flex-shrink: 0; object-fit: contain; }
+.vh-vps-os-card > span:not(.vh-vps-os-check) { display: block; min-width: 0; }
+.vh-vps-os-card strong { display: block; margin-bottom: 4px; color: var(--vh-text); font-size: 14px; font-weight: 500; line-height: 1.5; }
+.vh-vps-os-description { display: block; color: var(--vh-muted); font-size: 11px; line-height: 1.45; }
+.vh-vps-os-card small { display: block; margin-top: 8px; color: var(--vh-muted); font-size: 11px; }
+.vh-vps-os-card:hover { border-color: color-mix(in srgb, var(--vh-accent) 50%, var(--vh-border)); }
+.vh-vps-os-versions input:checked + label { border-color: var(--vh-accent); }
+.vh-vps-os-versions input:focus-visible + label { outline: 2px solid var(--vh-accent); outline-offset: 4px; }
+.vh-vps-os-check { position: absolute; top: 0; right: 0; display: none; width: 44px; height: 44px; color: #fff; background: #ad1d36; clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.vh-vps-os-check .vh-icon { position: absolute; top: 6px; right: 5px; width: 15px; height: 15px; }
+.vh-vps-os-versions input:checked + label .vh-vps-os-check { display: block; }
+.vh-vps-ip-section > div { margin-top: 14px; }
+.vh-vps-checkout .vh-package-summary .vh-purchase-panel { border-color: var(--vh-border); border-radius: 17px; background: var(--vh-surface); box-shadow: none; }
+.vh-vps-checkout .vh-summary-product img { display: none; }
+.vh-vps-checkout .vh-package-summary .vh-package-eyebrow { color: var(--vh-muted); }
+.vh-vps-checkout .vh-package-submit { border-radius: 12px; }
+.vh-vps-checkout-cycles label { display: flex; align-items: center; justify-content: space-between; gap: 15px; height: 100%; padding: 15px; border: 1px solid var(--vh-border); border-radius: 12px; background: var(--vh-input); color: var(--vh-text); cursor: pointer; font-size: 13px; }
+.vh-vps-checkout-cycles label small { display: block; margin-top: 4px; color: var(--vh-muted); font-size: 11px; }
+.vh-vps-checkout-cycles label strong { font-size: 17px; font-weight: 650; }
+.vh-vps-checkout-cycles input:checked + label { border-color: var(--vh-accent); }
+.vh-vps-checkout-cycles input:focus-visible + label { outline: 2px solid var(--vh-accent); outline-offset: 4px; }
+.vh-vps-review { display: flex; justify-content: center; }
+.vh-vps-review a { display: inline-flex; align-items: center; gap: 5px; padding: 13px 16px; border: 1px solid #a9d5c1; border-radius: 8px; background: #fff; color: #111; font-size: 14px; }
+.vh-vps-review a span { color: #00b67a; font-size: 23px; }
+.vh-vps-review a strong { font-size: 12px; }
+@media (max-width: 767px) {
+    .vh-vps-checkout { padding-top: 25px; }
+    .vh-vps-checkout-heading { margin-bottom: 24px; }
+    .vh-vps-checkout-heading p { font-size: 13px; }
+    .vh-vps-checkout-panel { padding: 20px; }
+    .vh-vps-os-tabs { width: 100%; }
+    .vh-vps-os-tabs button { flex: 1 0 auto; padding-inline: 9px; font-size: 12px; }
+    .vh-vps-os-card { padding: 18px; }
+    .vh-vps-checkout .vh-summary-toggle { display: none; }
+    .vh-vps-checkout #package-price-breakdown.vh-mobile-collapsed { display: block; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .vh-vps-os-card { transition: none; }
+}
+@media (max-width: 359px) {
+    .vaded-client:has(.vh-vps-checkout) .vh-header-auth { padding-left: 0; gap: 2px; }
+    .vaded-client:has(.vh-vps-checkout) .vh-header-auth > a:last-child { margin-right: 0; padding-inline: 8px; }
+}

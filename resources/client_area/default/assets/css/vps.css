@@ -1,0 +1,136 @@
+.vaded-client:has(.vh-vps-store) { --vh-backdrop-opacity: .025; --vh-ambient-opacity: .35; }
+.vh-vps-store { padding-bottom: 72px; }
+.vh-vps-hero { position: relative; isolation: isolate; padding: 66px 20px 46px; text-align: center; }
+.vh-vps-hero::before { content: ''; position: absolute; z-index: -1; inset: -30px 5% -15px; pointer-events: none; background: radial-gradient(ellipse at 50% 15%, var(--vh-accent-soft), transparent 65%); }
+.vh-vps-hero > .vh-kicker { color: var(--vh-accent); font-size: 11px; letter-spacing: .17em; }
+.vh-vps-hero > .vh-kicker .vh-icon { width: 18px; height: 18px; }
+.vaded-client .vh-vps-hero h1 { margin: 20px 0 18px; color: var(--vh-text); font: 750 clamp(34px, 4vw, 56px)/1.14 var(--vh-display); letter-spacing: -.055em; }
+.vh-vps-hero p { max-width: 690px; margin: 0 auto; color: var(--vh-muted); font-size: 16px; line-height: 1.8; text-wrap: pretty; }
+.vh-vps-hero-note { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 22px; color: var(--vh-muted); font: 500 9px/1.7 var(--vh-mono); letter-spacing: .08em; }
+.vh-vps-hero-note > span { width: 5px; height: 5px; border-radius: 50%; background: var(--vh-accent); box-shadow: 0 0 12px var(--vh-accent-soft); }
+.vh-vps-catalog { scroll-margin-top: 100px; }
+.vh-vps-settings { position: sticky; top: 104px; padding: 2px 0 12px; }
+.vh-vps-store .vh-vps-control-label { display: block; margin: 0 0 12px; color: var(--vh-muted); font: 550 10px/1.4 var(--vh-mono); letter-spacing: .12em; }
+.vh-vps-platform { padding: 16px 12px; border: 1px solid color-mix(in srgb, var(--vh-accent) 55%, var(--vh-border)); border-radius: 12px; background: linear-gradient(115deg, var(--vh-accent-soft), transparent), var(--vh-surface); }
+.vh-vps-platform strong, .vh-vps-region strong { display: block; color: var(--vh-text); font-size: 13px; font-weight: 650; }
+.vh-vps-chip { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border: 1px solid var(--vh-border); border-radius: 7px; background: var(--vh-raised); color: var(--vh-accent); }
+.vh-vps-chip .vh-icon { width: 26px; height: 26px; }
+.vh-vps-platform-tag { display: block; margin-top: 6px; color: var(--vh-muted); font: 500 8px/1.5 var(--vh-mono); letter-spacing: .06em; }
+.vh-vps-selected { display: grid; place-items: center; width: 17px; height: 17px; flex-shrink: 0; border-radius: 50%; background: var(--vh-accent); color: #fff; }
+.vh-vps-selected .vh-icon { width: 12px; height: 12px; }
+.vh-vps-setting-note { margin-top: 12px; color: var(--vh-muted); font-size: 11px; line-height: 1.8; }
+.vh-vps-region { padding: 14px 12px; border: 1px solid var(--vh-border); border-radius: 10px; background: var(--vh-surface); }
+.vh-vps-region > .vh-icon:first-child { width: 18px; height: 18px; color: var(--vh-accent); }
+.vh-vps-region > .vh-icon:last-child { width: 14px; height: 14px; margin-left: auto; color: var(--vh-muted); }
+.vh-vps-region span { display: block; margin-top: 3px; color: var(--vh-muted); font-size: 10px; }
+.vh-vps-cycles { padding: 5px; border: 1px solid var(--vh-border); border-radius: 10px; background: var(--vh-surface); }
+.vh-vps-cycles label { position: relative; flex: 1 0 auto; }
+.vh-vps-cycles input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.vh-vps-cycles span { display: block; padding: 10px 9px; border-radius: 6px; color: var(--vh-muted); text-align: center; font-size: 11px; font-weight: 550; cursor: pointer; transition: color 150ms, background-color 150ms; }
+.vh-vps-cycles input:checked + span { background: var(--vh-accent); color: #fff; box-shadow: 0 2px 10px var(--vh-accent-soft); }
+.vh-vps-cycles input:focus-visible + span { outline: 2px solid var(--vh-accent); outline-offset: 3px; }
+.vh-vps-sidebar-foot { display: flex; align-items: flex-start; gap: 10px; padding-top: 22px; border-top: 1px solid var(--vh-border); color: var(--vh-muted); }
+.vh-vps-sidebar-foot > .vh-icon { width: 16px; height: 16px; margin-top: 3px; }
+.vh-vps-sidebar-foot p { font-size: 11px; line-height: 1.8; }
+.vh-vps-sidebar-foot .vh-text-link { margin-top: 7px; font-size: 11px; }
+.vh-vps-sidebar-foot .vh-text-link .vh-icon { width: 13px; height: 13px; }
+.vh-vps-back-link { display: inline-flex; align-items: center; gap: 8px; width: fit-content; color: var(--vh-muted); font-size: 11px; }
+.vh-vps-back-link:hover { color: var(--vh-text); }
+.vh-vps-back-link .vh-icon { width: 13px; height: 13px; }
+.vh-vps-plan-card { position: relative; padding: 25px 22px 22px; border: 1px solid var(--vh-border); border-radius: 14px; background: var(--vh-surface); box-shadow: 0 4px 24px #00000006; transition: border-color 180ms, box-shadow 180ms; }
+.vh-vps-plan-card:hover { border-color: color-mix(in srgb, var(--vh-accent) 45%, var(--vh-border)); box-shadow: 0 8px 28px var(--vh-accent-soft); }
+.vaded-client .vh-vps-plan-heading h3 { color: var(--vh-text); font-size: 13px; font-weight: 650; line-height: 1.6; overflow-wrap: anywhere; }
+.vh-vps-plan-heading > .vh-icon { width: 19px; height: 19px; margin-top: 1px; color: var(--vh-muted); }
+.vh-vps-plan-description { margin-top: 9px; color: var(--vh-muted); font-size: 11px; line-height: 1.7; }
+.vh-vps-plan-price { padding: 23px 0 24px; border-bottom: 1px solid var(--vh-border); }
+.vh-vps-plan-price > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 5px; }
+.vh-vps-plan-price strong { color: var(--vh-text); font-size: clamp(30px, 2.5vw, 38px); font-weight: 700; line-height: 1.2; letter-spacing: -.055em; }
+.vh-vps-plan-price span { color: var(--vh-muted); font-size: 11px; }
+.vh-vps-plan-price small { display: block; margin-top: 8px; color: var(--vh-muted); font-size: 10px; }
+.vh-vps-plan-price .vh-vps-unavailable { font-size: 18px; letter-spacing: -.025em; }
+.vh-vps-cycle-unavailable { padding: 22px 0; color: var(--vh-muted); font-size: 12px; line-height: 1.8; }
+.vh-vps-resources { padding: 24px 0; border-bottom: 1px solid var(--vh-border); }
+.vh-vps-resources dt { flex-shrink: 0; color: var(--vh-muted); font-size: 11px; line-height: 1.65; }
+.vh-vps-resources dt .vh-icon { width: 14px; height: 14px; color: var(--vh-accent); }
+.vh-vps-resources dd { max-width: 65%; color: var(--vh-text); text-align: right; font: 550 10px/1.8 var(--vh-mono); overflow-wrap: anywhere; }
+.vh-vps-features { padding: 24px 0; color: var(--vh-muted); font-size: 11px; line-height: 1.65; }
+.vh-vps-features .vh-icon { width: 14px; height: 14px; margin-top: 2px; color: var(--vh-accent); }
+.vh-vps-plan-footer { margin-top: auto; padding-top: 7px; }
+.vh-vps-config-note { margin-bottom: 14px; color: var(--vh-muted); font-size: 10px; }
+.vh-vps-config-note .vh-icon { width: 13px; height: 13px; }
+.vh-vps-deploy { justify-content: space-between; width: 100%; min-height: 44px; padding: 12px 15px; border-radius: 8px; font-size: 11px; }
+.vh-vps-deploy .vh-icon { width: 16px; height: 16px; }
+.vh-vps-catalog-note { margin-top: 22px; color: var(--vh-muted); font-size: 10px; line-height: 1.8; text-align: center; }
+.vh-vps-grid[data-single-plan] { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.vh-vps-grid[data-single-plan] .vh-vps-plan-card { padding: 30px; }
+.vh-vps-grid[data-single-plan] .vh-vps-plan-heading h3 { font-size: 15px; }
+.vh-vps-grid[data-single-plan] .vh-vps-resources dt { font-size: 12px; }
+.vh-vps-grid[data-single-plan] .vh-vps-resources dd { font-size: 11px; }
+.vh-vps-build-panel { position: relative; isolation: isolate; min-height: 420px; overflow: hidden; padding: 34px; border: 1px solid var(--vh-border); border-radius: 14px; background: radial-gradient(ellipse at 80% 45%, var(--vh-accent-soft), transparent 65%), var(--vh-glass-inset); }
+.vh-vps-build-panel::before { content: ''; position: absolute; z-index: -1; inset: 0; opacity: .5; background-image: linear-gradient(var(--vh-border) 1px, transparent 1px), linear-gradient(90deg, var(--vh-border) 1px, transparent 1px); background-size: 32px 32px; mask-image: linear-gradient(180deg, transparent 15%, #000 80%); }
+.vh-vps-build-panel .vh-kicker { font-size: 9px; }
+.vaded-client .vh-vps-build-panel h3 { margin: 17px 0 16px; font-size: clamp(24px, 2.4vw, 32px); font-weight: 650; line-height: 1.25; letter-spacing: -.045em; }
+.vh-vps-build-panel p { max-width: 280px; color: var(--vh-muted); font-size: 12px; line-height: 1.8; }
+.vh-vps-server-art { width: min(100%, 220px); margin: 28px auto; transform: perspective(800px) rotateY(-18deg) rotateX(8deg); }
+.vh-vps-server-art > div { display: flex; align-items: center; gap: 10px; height: 42px; margin-bottom: 6px; padding: 8px 15px; border: 1px solid var(--vh-border); border-left: 2px solid var(--vh-accent); border-radius: 5px; background: var(--vh-raised); box-shadow: 8px 8px 0 var(--vh-accent-soft); }
+.vh-vps-server-art .vh-icon { width: 19px; height: 19px; color: var(--vh-muted); }
+.vh-vps-server-art > div > span { width: 40%; height: 3px; margin-left: auto; background: var(--vh-border); }
+.vh-vps-server-art > div > span:last-child { width: 4px; height: 4px; margin-left: 3px; border-radius: 50%; background: var(--vh-accent); }
+.vh-vps-art-label { display: block; margin-top: 18px; color: var(--vh-muted); text-align: center; font: 500 7px/1.8 var(--vh-mono); letter-spacing: .14em; }
+.vh-vps-build-note { color: var(--vh-muted); font-size: 10px; }
+.vh-vps-benefits { margin-top: 46px; padding: 32px 0; border-block: 1px solid var(--vh-border); }
+.vh-vps-benefit > .vh-icon { width: 20px; height: 20px; margin-top: 2px; color: var(--vh-accent); }
+.vh-vps-benefit h2 { margin: 0 0 7px; font-size: 12px; font-weight: 650; line-height: 1.6; }
+.vh-vps-benefit p { max-width: 310px; color: var(--vh-muted); font-size: 11px; line-height: 1.8; }
+.vh-vps-workload { padding: 30px; border: 1px solid var(--vh-border); border-radius: 12px; background: var(--vh-surface); }
+.vh-vps-workload .vh-icon { width: 26px; height: 26px; color: var(--vh-accent); }
+.vh-vps-workload > div > span { color: var(--vh-muted); font: 10px var(--vh-mono); }
+.vaded-client .vh-vps-workload h3 { margin: 26px 0 12px; font-size: 17px; font-weight: 650; letter-spacing: -.025em; }
+.vh-vps-workload p { color: var(--vh-muted); font-size: 12px; line-height: 1.9; }
+.vaded-client .vh-vps-faq h2 { margin-top: 20px; font-size: clamp(30px, 3vw, 40px); font-weight: 650; line-height: 1.2; letter-spacing: -.05em; }
+.vh-vps-faq > div > p { margin-top: 16px; color: var(--vh-muted); font-size: 13px; line-height: 1.8; }
+.vh-vps-question { border-bottom: 1px solid var(--vh-border); }
+.vh-vps-question:first-child { border-top: 1px solid var(--vh-border); }
+.vh-vps-question summary { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 22px 0; color: var(--vh-text); list-style: none; cursor: pointer; font-size: 13px; font-weight: 550; }
+.vh-vps-question summary::-webkit-details-marker { display: none; }
+.vh-vps-question summary > span { flex-shrink: 0; color: var(--vh-accent); font-size: 22px; font-weight: 400; transition: transform 150ms; }
+.vh-vps-question[open] summary > span { transform: rotate(45deg); }
+.vh-vps-question p { padding: 0 30px 24px 0; color: var(--vh-muted); font-size: 12px; line-height: 1.9; }
+.vh-vps-cta { padding: 38px; border: 1px solid var(--vh-border); border-radius: 14px; background: radial-gradient(ellipse at 5% 0%, var(--vh-accent-soft), transparent 70%), var(--vh-surface); }
+.vh-vps-cta h2 { margin: 14px 0 10px; font-size: clamp(26px, 3vw, 36px); font-weight: 650; letter-spacing: -.045em; }
+.vh-vps-cta p { color: var(--vh-muted); font-size: 12px; line-height: 1.8; }
+.vh-vps-store :is(a, button, summary):focus-visible { outline: 2px solid var(--vh-accent); outline-offset: 5px; }
+@media (max-width: 1023px) {
+    .vh-vps-layout .vh-vps-settings { position: static; display: grid; grid-template-columns: 1fr 1fr; }
+    .vh-vps-sidebar-foot, .vh-vps-back-link { display: none; }
+    .vh-vps-billing { grid-column: 1 / -1; }
+    .vh-vps-billing .vh-vps-cycles { width: fit-content; min-width: 260px; }
+    .vh-vps-hero { padding-top: 44px; }
+}
+@media (max-width: 639px) {
+    .vh-vps-store { padding-bottom: 40px; }
+    .vh-vps-hero { padding: 36px 0 32px; }
+    .vh-vps-hero p { font-size: 13px; line-height: 1.8; }
+    .vh-vps-hero-note { font-size: 8px; letter-spacing: .03em; }
+    .vh-vps-settings { gap: 20px; }
+    .vh-vps-platform, .vh-vps-region { padding: 12px; }
+    .vh-vps-chip { display: none; }
+    .vh-vps-platform strong, .vh-vps-region strong { font-size: 12px; }
+    .vh-vps-platform-tag { font-size: 7px; }
+    .vh-vps-region > .vh-icon:last-child { display: none; }
+    .vh-vps-setting-note { font-size: 10px; }
+    .vh-vps-grid[data-single-plan] { grid-template-columns: 1fr; }
+    .vh-vps-grid .vh-vps-build-panel { display: none; }
+    .vh-vps-plan-card, .vh-vps-grid[data-single-plan] .vh-vps-plan-card { padding: 26px; }
+    .vh-vps-plan-price strong { font-size: 38px; }
+    .vh-vps-benefits { margin-top: 30px; padding: 26px 0; }
+    .vh-vps-workload { padding: 25px; }
+    .vh-vps-cta { padding: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .vh-vps-plan-card, .vh-vps-cycles span, .vh-vps-question summary > span { transition: none; }
+}
+@media (max-width: 359px) {
+    .vaded-client:has(.vh-vps-store) .vh-header-auth { padding-left: 0; gap: 2px; }
+    .vaded-client:has(.vh-vps-store) .vh-header-auth > a:last-child { margin-right: 0; padding-inline: 8px; }
+}

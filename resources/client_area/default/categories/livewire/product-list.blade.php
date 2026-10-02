@@ -4,6 +4,7 @@ use Livewire\Volt\Component;
 use Livewire\Attributes\Locked;
 use App\Models\Category;
 use App\Models\Package;
+use Illuminate\Support\Collection;
 
 new class extends Component
 {
@@ -12,7 +13,10 @@ new class extends Component
 
     public $packages;
 
-    public function mount(string $category): void
+    #[Locked]
+    public bool $vpsLayout = false;
+
+    public function mount(string $category, bool $vpsLayout = false): void
     {
         $category = Category::whereSlug($category)->firstOrFail();
         $canViewCategory = match ($category->status) {
@@ -24,6 +28,7 @@ new class extends Component
         abort_unless($canViewCategory, 404);
 
         $this->category = $category;
+        $this->vpsLayout = $vpsLayout;
         $this->packages = Package::query()
             ->where('category_id', $category->id)
             ->visibleToUser(auth()->user(), includeUnlisted: false)
@@ -31,8 +36,67 @@ new class extends Component
             ->orderBy('sort_order')->orderBy('id')
             ->get();
     }
+
+    /**
+     * @return array{vpsPlans?: Collection, vpsBillingCycles?: Collection, defaultVpsPeriod?: string}
+     */
+    public function with(): array
+    {
+        if (! $this->vpsLayout) {
+            return [];
+        }
+
+        $billingCycles = $this->packages->flatMap->prices->sortBy('period_in_days')->unique('period_in_days')->values();
+        $plans = $this->packages->map(function (Package $package): array {
+            $resources = [];
+            $features = [];
+
+            foreach ($package->features as $feature) {
+                $resource = $this->resourceType($feature->description);
+
+                if ($resource !== null) {
+                    $resources[$resource][] = $feature->description;
+                } else {
+                    $features[] = $feature->description;
+                }
+            }
+
+            return [
+                'package' => $package,
+                'prices' => $package->prices->sortBy('price')->unique('period_in_days')->values(),
+                'resources' => $resources,
+                'features' => $features,
+            ];
+        });
+
+        return [
+            'vpsPlans' => $plans,
+            'vpsBillingCycles' => $billingCycles,
+            'defaultVpsPeriod' => (string) ($billingCycles->firstWhere('period_in_days', 30)?->period_in_days ?? $billingCycles->first()?->period_in_days ?? 'all'),
+        ];
+    }
+
+    private function resourceType(string $description): ?string
+    {
+        foreach ([
+            'cpu' => '/\b(v?cores?|vcpus?|cpu|processors?)\b/i',
+            'memory' => '/\b(ram|ddr[345]|memory)\b/i',
+            'storage' => '/\b(storage|ssd|nvme|disk)\b/i',
+            'network' => '/\b(bandwidth|traffic|gbps|mbps|transfer)\b/i',
+        ] as $resource => $pattern) {
+            if (preg_match($pattern, $description)) {
+                return $resource;
+            }
+        }
+
+        return null;
+    }
 };
 ?>
+<div>
+@if($vpsLayout)
+    @include('theme::categories.vps-plans')
+@else
 <section class="vh-plans" x-data="{ period: 'all', comparison: false, plan: '{{ $packages->count() > 4 ? $packages->first()->id : 'all' }}' }" aria-label="{{ $category->name }} plans">
     @php($billingCycles = $packages->flatMap->prices->sortBy('period_in_days')->unique('period_in_days'))
     <div class="vh-plans-toolbar">
@@ -105,3 +169,5 @@ new class extends Component
         </div>
     @endif
 </section>
+@endif
+</div>
