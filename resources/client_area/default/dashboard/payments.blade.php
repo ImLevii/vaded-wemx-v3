@@ -4,8 +4,8 @@
     <header class="vh-service-heading"><div><span class="vh-kicker">BILLING CENTER</span><h1>Payments &amp; invoices</h1><p>Review payment history, open an invoice, and track your hosting costs.</p></div><a class="vh-text-link" href="{{ route('subscriptions.index') }}" wire:navigate>Subscriptions <x-theme::icon name="arrow" /></a></header>
     <div class="mb-4">
         @livewire(client_view_path('livewire.table'), [
-            'title' => 'Payments',
-            'description' => 'View your recent successful payments.',
+            'title' => 'Payment history',
+            'description' => 'Invoices, pending payments, and completed transactions.',
             'columns' => [
                 'Description',
                 'Amount',
@@ -16,9 +16,9 @@
                 'Actions',
             ],
             'rows' =>
-                auth()->user()->payments->where('status', 'paid')->map(function($payment) {
+                $billingPayments->map(function($payment) {
                     return [
-                        $payment->description,
+                        e($payment->description),
                         priceIn($payment->total(), $payment->currency),
                         $payment->currency,
                         ucfirst($payment->status),

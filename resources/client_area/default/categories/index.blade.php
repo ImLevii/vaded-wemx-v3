@@ -28,7 +28,7 @@
                 @php($startingPrice = $category->packages->flatMap->prices->sortBy('price')->first())
                 <a href="{{ route('categories.index', ['category' => $category->slug]) }}#pricing" wire:navigate class="vh-service-card" @if($selectedCategory?->is($category)) aria-current="true" @endif>
                     <div class="vh-service-art">
-                        @if($category->icon && ! str_contains($category->icon, 'placeholder'))
+                        @if($category->icon && ! Str::contains($category->icon, ['placeholder', 'vaded-branded-server-rack', 'vaded-archive-server', 'default.png']))
                             <img src="{{ $category->icon() }}" alt="" width="480" height="240" loading="lazy" decoding="async">
                         @else
                             <x-theme::icon :name="str_contains($category->slug, 'minecraft') ? 'cube' : (str_contains($category->slug, 'bot') ? 'bot' : (str_contains($category->slug, 'vps') ? 'cloud' : 'server'))" />
@@ -83,7 +83,7 @@
     <section id="features" class="vh-section vh-control-section" aria-labelledby="control-heading">
         <div><span class="vh-kicker">04 / YOUR COMMAND CENTER</span><h2 id="control-heading">Control everything.<br><em>Keep it simple.</em></h2><p>Manage your services, payments, team, and account from one connected workspace.</p><a href="{{ route('dashboard') }}" wire:navigate class="vh-action vh-action-secondary">Explore the Client Area <x-theme::icon name="arrow" /></a></div>
         <div class="vh-workspace-preview" x-data="{ tab: 'services' }">
-            <div class="vh-workspace-bar"><img src="{{ settings('app_logo', '/assets/common/img/vaded-logo.png') }}" alt="" width="28" height="28"><strong>VADED WORKSPACE</strong><span>Feature tour</span></div>
+            <div class="vh-workspace-bar"><x-theme::brand-logo /><strong>VADED WORKSPACE</strong><span>Feature tour</span></div>
             <div class="vh-workspace-tabs" aria-label="Workspace features">
                 @foreach(['services' => 'Services', 'billing' => 'Billing', 'team' => 'Team', 'account' => 'Account'] as $key => $label)
                     <button type="button" @click="tab = '{{ $key }}'" :aria-pressed="tab === '{{ $key }}'">{{ $label }}</button>

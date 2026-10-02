@@ -13,15 +13,20 @@ class HostingCatalog
     private ?Collection $categories = null;
 
     /** @return Collection<int, Category> */
-    public function categories(): Collection
+    public function categories(bool $withPrices = false): Collection
     {
-        return $this->categories ??= Category::query()
+        $this->categories ??= Category::query()
             ->when(auth()->user()?->isAdmin(),
                 fn (Builder $query): Builder => $query->whereNotIn('status', ['disabled', 'unlisted']),
                 fn (Builder $query): Builder => $query->where('status', 'active'))
-            ->with(['packages' => fn (HasMany $query): HasMany => $query
-                ->visibleToUser(auth()->user(), includeUnlisted: false)->with('prices')])
             ->orderBy('sort_order')->orderBy('id')->get();
+
+        if ($withPrices) {
+            $this->categories->loadMissing(['packages' => fn (HasMany $query): HasMany => $query
+                ->visibleToUser(auth()->user(), includeUnlisted: false)->with('prices')]);
+        }
+
+        return $this->categories;
     }
 
     public function selectedCategory(): ?Category

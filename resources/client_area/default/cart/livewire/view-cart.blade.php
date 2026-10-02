@@ -146,17 +146,18 @@ new class extends Component {
 
 <section class="vh-cart-page">
     <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
-        <x-theme::purchase-steps :current="3" /><h1>Review your server.</h1><p>Confirm your configuration and billing details before payment.</p>
+        <x-theme::purchase-steps :current="3" /><h1>{{ cart()?->items->isNotEmpty() ? 'Review your server.' : 'Your cart' }}</h1><p>Confirm your configuration and billing details before payment.</p>
 
+        @if(!cart() || cart()->items->isEmpty())
+            <x-theme::empty-state class="mt-8" title="Your cart is empty." description="Find a server and start building." action-text="Browse Hosting" :action-href="route('categories.index')" />
+        @else
         <div class="vh-cart-layout mt-6 sm:mt-8">
             <div class="min-w-0 space-y-6">
                 <div class="space-y-6">
 
                     @if(cart())
                         @if(cart()->items->isEmpty())
-                            <x-theme::card>
-                                <x-theme::text.p text="You currently don't have any items in your cart" />
-                            </x-theme::card>
+                            <x-theme::empty-state title="Your cart is empty." description="Find a server and start building." action-text="Browse Hosting" :action-href="route('categories.index')" />
                         @endif
 
                         @error('cart_id')
@@ -172,8 +173,8 @@ new class extends Component {
                                     <div class="shrink-0 md:order-1">
                                         <img class="h-20 w-20"
                                              src="{{ $item->getIcon() }}"
-                                             alt="Image"/>
-                                    </a>
+                                             alt="" width="80" height="80"/>
+                                    </div>
 
                                     <label for="counter-input-{{ $item->id }}" class="sr-only">Choose quantity:</label>
                                     <div class="flex items-center justify-between md:order-3 md:justify-end">
@@ -210,8 +211,11 @@ new class extends Component {
                                     </div>
 
                                     <div class="w-full min-w-0 flex-1 space-y-4 md:order-2 md:max-w-md">
-                                        <a href="#"
-                                           class="text-base font-medium text-gray-900 hover:underline dark:text-white">{{ $item->getName() }} {{ price($item->total()) }}</a>
+                                        <h2 class="text-base font-semibold">{{ $item->getName() }}</h2>
+                                        @if($item->cartable instanceof \App\Models\PackagePrice)
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">{{ price($item->cartable->price) }} / {{ $item->cartable->cycle() }} per server @if($item->cartable->setup_fee > 0) &middot; {{ price($item->cartable->setup_fee) }} setup @endif</p>
+                                            <a href="{{ route('packages.view', ['package' => $item->cartable->package->slug, 'cartItemId' => $item->id]) }}" wire:navigate class="vh-text-link">Edit configuration <x-theme::icon name="sliders" /></a>
+                                        @endif
 
                                         @if($item->options->isNotEmpty())
                                         <div class="flex items-center gap-2">
@@ -349,10 +353,11 @@ new class extends Component {
                     class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
                     <p class="text-xl font-semibold text-gray-900 dark:text-white">Order summary</p>
 
+                    <button type="button" class="vh-summary-toggle" @click="expanded = !expanded" :aria-expanded="expanded" aria-controls="cart-breakdown">Price breakdown <span x-text="expanded ? 'Hide −' : 'Show +'">Show +</span></button>
                     <div class="space-y-4">
-                        <div class="space-y-2">
+                        <div id="cart-breakdown" class="space-y-2" :class="{ 'vh-mobile-collapsed': !expanded }">
                             <dl class="flex items-center justify-between gap-4">
-                                <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Total</dt>
+                                <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Subtotal</dt>
                                 <dd class="text-base font-medium text-gray-900 dark:text-white">{{ price(cart()->total()) }}</dd>
                             </dl>
 
@@ -391,5 +396,6 @@ new class extends Component {
 
             </div>
         </div>
+        @endif
     </div>
 </section>

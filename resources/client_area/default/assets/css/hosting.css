@@ -324,3 +324,42 @@
     .vh-responsive-table caption > div > div { width: 100%; }
     .vh-responsive-table caption input { width: 100%; }
 }
+
+@media (max-width: 767px) {
+    .vaded-client .vh-orders-table th[scope="row"] { flex-basis: calc(100% - 56px); min-width: 0; max-width: none; order: -1; }
+    .vaded-client .vh-orders-table td[data-label] { width: calc(50% - 6px); white-space: normal !important; }
+    .vaded-client .vh-orders-table td[data-label]::before { content: attr(data-label); display: block; color: var(--vh-muted); font: 10px var(--vh-mono); margin-bottom: 8px; }
+    .vaded-client .vh-orders-table td:last-child { width: 100%; }
+    .vaded-client .vh-orders-table td:last-child > a { width: 100%; }
+}
+
+@media (max-width: 767px) {
+    .vaded-client .vh-orders-table tbody > tr:first-child > td:first-child { width: 40px; flex: 0 0 40px; padding: 4px; }
+    .vaded-client .vh-dashboard-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+    .vaded-client .vh-dashboard .vh-client-stat { padding: 17px; gap: 8px; }
+    .vaded-client .vh-dashboard .vh-client-stat > div:first-child { display: none; }
+    .vaded-client .vh-dashboard .vh-client-stat h2 { font-size: 24px; }
+    .vaded-client .vh-dashboard-shortcuts { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .vaded-client .vh-dashboard-shortcuts a { padding: 12px; }
+    .vaded-client .vh-dashboard-shortcuts a > span:last-child, .vaded-client .vh-dashboard-shortcuts small { display: none; }
+    .vaded-client .vh-dashboard-shortcuts strong { font-size: 11px; }
+}
+
+@media (min-width: 1024px) {
+    .vh-client-header .vh-client-navigation .vh-client-area-link { display: none; }
+    .vaded-client .vh-client-header .vh-header-inner { flex-wrap: nowrap; }
+}
+
+@media (min-width: 768px) and (max-width: 1279px) {
+    .vaded-client .vh-orders-table, .vaded-client .vh-orders-table tbody { display: block; width: 100%; }
+    .vaded-client .vh-orders-table thead { display: none; }
+    .vaded-client .vh-orders-table tbody { padding: 16px; border-bottom: 1px solid var(--vh-border); }
+    .vaded-client .vh-orders-table tr { display: flex; flex-wrap: wrap; gap: 10px 14px; border: 0; }
+    .vaded-client .vh-orders-table th[scope="row"] { flex: 1 1 calc(100% - 60px); max-width: none; min-width: 0; padding: 8px; order: -1; }
+    .vaded-client .vh-orders-table td { padding: 8px; }
+    .vaded-client .vh-orders-table tbody > tr:first-child > td:first-child { width: 40px; flex: 0 0 40px; padding: 4px; }
+    .vaded-client .vh-orders-table td[data-label] { width: calc(50% - 7px); white-space: normal; font-size: 13px; }
+    .vaded-client .vh-orders-table td[data-label]::before { content: attr(data-label); display: block; color: var(--vh-muted); font: 10px var(--vh-mono); margin-bottom: 8px; }
+    .vaded-client .vh-orders-table td:last-child { width: 100%; }
+    .vaded-client .vh-orders-table td:last-child > a { width: 100%; }
+}

@@ -2,8 +2,8 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-vaded-area="client">
 
 <head>
-    <title>{{ settings('app_name', config('app.name')) }}@hasSection('title') | @yield('title')@endif</title>
-    <link rel="icon" href="@settings('favicon', '/assets/common/img/vaded-logo.png')">
+    <title>{{ settings('app_name', config('app.name')) }}@hasSection('title') | {{ html_entity_decode(trim($__env->yieldContent('title')), ENT_QUOTES, 'UTF-8') }}@endif</title>
+    <link rel="icon" href="@settings('favicon', '/assets/common/img/vaded-favicon.svg')">
 
     {{-- meta tags --}}
     <meta charset="utf-8">
@@ -11,7 +11,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Meta Description Tag: Affects click-through rates from search results -->
-    <meta name="description" content="{{ trim($__env->yieldContent('description', 'Game server and cloud hosting. Compare plans, configure your server, and manage your community with Vaded Hosting.')) }}">
+    <meta name="description" content="{{ html_entity_decode(trim($__env->yieldContent('description', 'Game server and cloud hosting. Compare plans, configure your server, and manage your community with Vaded Hosting.')), ENT_QUOTES, 'UTF-8') }}">
     <meta name="theme-color" content="#030405">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
@@ -20,8 +20,8 @@
     <meta name="robots" content="@settings('seo::robots', 'index, follow')">
 
     <!-- Open Graph Tags: Enhances visibility and engagement on social media platforms -->
-    <meta property="og:title" content="{{ trim($__env->yieldContent('title')) }} - @settings('seo::title', 'Vaded Hosting')">
-    <meta property="og:description" content="{{ trim($__env->yieldContent('description', 'Game server and cloud hosting. Compare plans, configure your server, and manage your community with Vaded Hosting.')) }}">
+    <meta property="og:title" content="{{ html_entity_decode(trim($__env->yieldContent('title')), ENT_QUOTES, 'UTF-8') }} - @settings('seo::title', 'Vaded Hosting')">
+    <meta property="og:description" content="{{ html_entity_decode(trim($__env->yieldContent('description', 'Game server and cloud hosting. Compare plans, configure your server, and manage your community with Vaded Hosting.')), ENT_QUOTES, 'UTF-8') }}">
     <meta property="og:image" content="@settings('seo::image', '/assets/common/img/vaded-social.png')">
 
     <script src="{{ asset('assets/common/js/vaded-theme.js') }}?v={{ filemtime(public_path('assets/common/js/vaded-theme.js')) }}" data-navigate-once></script>

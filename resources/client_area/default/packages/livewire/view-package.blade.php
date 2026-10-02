@@ -60,6 +60,7 @@ new class extends Component {
 
     public function addToCart(): void
     {
+        abort_unless($this->package->isVisibleToUser(auth()->user()), 404);
         $editingItem = $this->cartItemId ? $this->editableCartItem() : null;
 
         if (! $this->packagePrice) {
@@ -146,6 +147,9 @@ new class extends Component {
     }
 };
 ?>
+
+@section('title', $package->name.' Hosting')
+@section('description', $package->short_description ?: 'Configure '.$package->name.' with Vaded Hosting. Review included features, billing cycles, and available server options before checkout.')
 
 <section class="vh-package-page mx-auto max-w-screen-xl px-4 2xl:px-0">
     <div class="vh-package-topline">
@@ -278,12 +282,13 @@ new class extends Component {
 
         <aside class="vh-package-summary" aria-labelledby="package-summary-heading" x-data="{ expanded: false }">
             <div class="vh-purchase-panel">
-                <button type="button" class="vh-summary-toggle" @click="expanded = !expanded" :aria-expanded="expanded" aria-controls="package-price-breakdown">Order summary <span x-text="expanded ? 'Hide details −' : 'Show details +'">Show details +</span></button>
+                <button type="button" class="vh-summary-toggle" @click="expanded = !expanded" :aria-expanded="expanded" aria-controls="package-price-breakdown">Price breakdown <span x-text="expanded ? 'Hide details −' : 'Show details +'">Show details +</span></button>
                 <span class="vh-package-eyebrow">Your configuration</span>
                 <h2 id="package-summary-heading">Order summary</h2>
                 <div class="vh-summary-product"><img src="{{ $package->icon() }}" alt="" width="44" height="44"><div><strong>{{ $package->name }}</strong><span>{{ $this->packagePrice?->cycle() ?? 'Unavailable' }}</span></div></div>
                 @if ($this->packagePrice)
-                    <div id="package-price-breakdown" class="vh-summary-breakdown" :class="{ 'vh-mobile-collapsed': !expanded }" aria-live="polite" aria-atomic="true">
+                    <div class="vh-summary-breakdown" aria-live="polite" aria-atomic="true">
+                        <div id="package-price-breakdown" :class="{ 'vh-mobile-collapsed': !expanded }">
                         <dl><dt>Billing cycle</dt><dd>{{ price($this->packagePrice->price) }} <small>/ {{ $this->packagePrice->cycle() }}</small></dd></dl>
                         <dl><dt>Setup fee</dt><dd>{{ price($this->packagePrice->setup_fee) }}</dd></dl>
                         @if ($this->calculateConfigOptionCost()['total'] > 0)
@@ -292,6 +297,7 @@ new class extends Component {
                                 <dl><dt>{{ $option['label'] }}</dt><dd>{{ price($option['total']) }}</dd></dl>
                             @endforeach
                         @endif
+                        </div>
                         <div class="vh-summary-total"><span>Plan total</span><div><strong>{{ price($this->calculateConfigOptionCost()['total'] + $this->packagePrice->price) }}</strong><small>{{ $this->packagePrice->cycle() }}</small></div></div>
                         @if ($this->packagePrice->setup_fee > 0)<p class="vh-summary-note">Plus {{ price($this->packagePrice->setup_fee) }} one-time setup fee.</p>@endif
                     </div>

@@ -38,7 +38,7 @@ new class extends Component
     <div class="vh-plans-toolbar">
         <h3>{{ $category->name }} plans</h3>
         @if($billingCycles->count() > 1)
-            <fieldset class="vh-cycle-picker"><legend class="sr-only">Billing cycle</legend>
+            <fieldset class="vh-cycle-picker" @change="plan = 'all'"><legend class="sr-only">Billing cycle</legend>
                 <label><input type="radio" value="all" x-model="period" name="catalog-cycle"><span>All cycles</span></label>
                 @foreach($billingCycles as $billingCycle)
                     <label><input type="radio" value="{{ $billingCycle->period_in_days }}" x-model="period" name="catalog-cycle"><span>{{ $billingCycle->cycle() }}</span></label>

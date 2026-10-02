@@ -42,21 +42,21 @@ new class extends Component
         <div class="grid grid-cols-6 gap-6">
             <div class="col-span-6 sm:col-span-3">
                 <x-theme::form.label for="current-password" text="Current Password" class="mb-2" />
-                <x-theme::form.input type="password" wire:model="current_password" name="current_password" id="current-password" placeholder="••••••••" required class="block w-full" />
+                <x-theme::form.password wire:model="current_password" name="current_password" id="current-password" placeholder="••••••••" required class="block w-full" />
                 @error('current_password')
                     <x-theme::form.error :text="$message"/>
                 @enderror
             </div>
             <div class="col-span-6 sm:col-span-3">
                 <x-theme::form.label for="new-password" text="New Password" class="mb-2" />
-                <x-theme::form.input type="password" wire:model="new_password" name="new_password" id="new-password" placeholder="••••••••" required class="block w-full" />
+                <x-theme::form.password autocomplete="new-password" wire:model="new_password" name="new_password" id="new-password" placeholder="••••••••" required class="block w-full" />
                 @error('new_password')
                     <x-theme::form.error :text="$message"/>
                 @enderror
             </div>
             <div class="col-span-6 sm:col-span-3">
                 <x-theme::form.label for="new-password-confirmation" text="Confirm New Password" class="mb-2" />
-                <x-theme::form.input type="password" wire:model="new_password_confirmation" name="new_password_confirmation" id="new-password-confirmation" placeholder="••••••••" required class="block w-full" />
+                <x-theme::form.password autocomplete="new-password" wire:model="new_password_confirmation" name="new_password_confirmation" id="new-password-confirmation" placeholder="••••••••" required class="block w-full" />
                 @error('new_password_confirmation')
                     <x-theme::form.error :text="$message"/>
                 @enderror

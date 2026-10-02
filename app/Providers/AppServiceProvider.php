@@ -4,8 +4,7 @@ namespace App\Providers;
 
 use App\Extensions\ExtensionServiceProvider;
 use App\Install\InstallServiceProvider;
-use App\Models\Category;
-use Illuminate\Database\Eloquent\Builder;
+use App\Support\HostingCatalog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
@@ -83,16 +82,20 @@ class AppServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(resource_path('client_area/'.config('app.theme', 'default')), 'theme');
 
-        $this->app->scoped(\App\Support\HostingCatalog::class);
+        $this->app->scoped(HostingCatalog::class);
 
         View::composer('theme::dashboard.dashboard-layout', function (ViewInstance $view): void {
-            $view->with('nextRenewal', auth()->user()?->orders()->where('status', 'active')
+            $view->with('nextRenewal', auth()->user()?->orders()->with(['package', 'prices'])->where('status', 'active')
                 ->whereNotNull('due_date')->orderBy('due_date')->first());
         });
 
+        View::composer('theme::dashboard.payments', function (ViewInstance $view): void {
+            $view->with('billingPayments', auth()->user()->payments()->with('gatewayConfig')->latest()->get());
+        });
+
         View::composer(['theme::categories.index', 'theme::layouts.footer'], function (ViewInstance $view): void {
-            $catalog = app(\App\Support\HostingCatalog::class);
-            $view->with('hostingCategories', $catalog->categories());
+            $catalog = app(HostingCatalog::class);
+            $view->with('hostingCategories', $catalog->categories(withPrices: $view->name() === 'theme::categories.index'));
 
             if ($view->name() === 'theme::categories.index') {
                 $view->with('selectedCategory', $catalog->selectedCategory());
@@ -100,14 +103,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         View::composer('theme::layouts.header', function (ViewInstance $view): void {
-            $isAdmin = auth()->user()?->isAdmin() ?? false;
-
-            $navigationCategories = Category::query()
-                ->when($isAdmin, fn (Builder $query): Builder => $query->whereNotIn('status', ['disabled', 'unlisted']))
-                ->when(! $isAdmin, fn (Builder $query): Builder => $query->where('status', 'active'))
-                ->orderBy('sort_order')
-                ->orderBy('id')
-                ->get(['id', 'name', 'slug', 'icon', 'description']);
+            $navigationCategories = app(HostingCatalog::class)->categories();
 
             $navigationGroups = collect();
             $remainingCategories = $navigationCategories;

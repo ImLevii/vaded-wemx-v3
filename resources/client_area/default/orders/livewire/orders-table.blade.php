@@ -123,7 +123,7 @@ new class extends Component
                             Due Date
                         </th>
                         <th scope="col" class="px-4 py-3">
-                            Next Payment
+                            Manage
                         </th>
                     </tr>
                     </thead>
@@ -147,7 +147,7 @@ new class extends Component
                                 </span>
                             </div>
                         </th>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3" data-label="Billing">
                             <div class="flex items-center text-gray-500 dark:text-gray-400">
                         <span class="mr-1 font-bold text-gray-500 dark:text-white">
                             {{ price($order->price) }}
@@ -155,12 +155,10 @@ new class extends Component
                                 / {{ $order->cycle() }}
                             </div>
                         </td>
-                        <td class="px-4 py-3">
-                            <div class="relative mt-0.5 inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-gray-500 bg-gray-100 dark:bg-gray-600">
-                                <span class="font-medium text-gray-600 dark:text-gray-300">Mu</span>
-                            </div>
+                        <td class="px-4 py-3" data-label="Team">
+                            <a href="{{ route('orders.view.members', $order->id) }}" wire:navigate @click.stop class="vh-text-link">Manage team</a>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap">
+                        <td class="px-4 py-3 whitespace-nowrap" data-label="Service status">
                             @if($order->status == 'active')
                                 <x-theme::badge.success text="Active" />
                             @elseif($order->status == 'suspended')
@@ -175,7 +173,7 @@ new class extends Component
                                 <x-theme::badge.warning text="{{ ucfirst($order->status) }}" />
                             @endif
                         </td>
-                        <td class="px-4 py-3">
+                        <td class="px-4 py-3" data-label="Renews">
                             @if($order->due_date)
                                 {{ $order->due_date->format('d M Y') }}
                             @else
@@ -183,11 +181,7 @@ new class extends Component
                             @endif
                         </td>
                         <td class="px-4 py-3">
-                            @if($order->due_date)
-                                {{ $order->due_date->diffForHumans() }}
-                            @else
-                                Never
-                            @endif
+                            <a href="{{ route('orders.view', $order->id) }}" wire:navigate @click.stop class="vh-action vh-action-secondary">Manage <x-theme::icon name="arrow" /></a>
                         </td>
                     </tr>
                     <tr x-cloak x-show="expanded" id="table-column-body-{{ $order->id }}" aria-labelledby="table-column-header-{{ $order->id }}">

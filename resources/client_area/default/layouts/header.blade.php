@@ -22,11 +22,7 @@
                     </svg>
                 </button>
                 <a href="{{ route('categories.index') }}" class="vh-brand flex mr-4 min-w-0 items-center" aria-label="{{ settings('app_name', config('app.name')) }} home">
-                    <img
-                        src="{{ settings('app_logo', '/assets/common/img/vaded-logo.png') }}"
-                        class="mr-2 h-10 shrink-0 rounded"
-                        alt=""
-                    />
+                    <img src="{{ asset('assets/common/img/vaded-logo.png') }}" width="48" height="48" class="shrink-0" alt="" />
                     <span
                         class="font-semibold truncate dark:text-white"
                     >@foreach (preg_split('/(\bhosting\b)/i', settings('app_name', config('app.name')), -1, PREG_SPLIT_DELIM_CAPTURE) as $brandPart)<span @class(['vh-brand-hosting' => strtolower($brandPart) === 'hosting'])>{{ $brandPart }}</span>@endforeach</span
@@ -82,9 +78,7 @@
                             </li>
                             @endforeach
 
-                            <li
-                                class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
-                            >
+                            <li class="vh-client-area-link block border-b dark:border-gray-700 lg:inline lg:border-b-0">
                                 <a
                                     href="{{ route('dashboard') }}"
                                     wire:navigate
@@ -178,6 +172,7 @@
                         class="py-1 text-gray-700 dark:text-gray-300"
                         aria-labelledby="dropdown"
                     >
+                        <li><a href="{{ route('dashboard') }}" wire:navigate class="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600">Client dashboard</a></li>
                         <li>
                             <a
                                 href="{{ route('account.settings') }}" wire:navigate
