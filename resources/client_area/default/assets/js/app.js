@@ -1,4 +1,5 @@
 import './bootstrap';
+import './technology-carousel';
 import { initFlowbite } from 'flowbite';
 
 import toastr from "toastr";
