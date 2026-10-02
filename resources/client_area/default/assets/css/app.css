@@ -4,6 +4,62 @@
 @tailwind components;
 @tailwind utilities;
 
+.vh-payment-shell {
+    min-height: 100svh;
+    display: grid;
+    align-items: center;
+    padding: 48px 20px;
+}
+.vh-payment-layout { width: 100%; max-width: 520px; margin: auto; }
+.vh-payment-brand { display: flex; align-items: center; justify-content: center; gap: 12px; width: fit-content; margin: 0 auto 32px; color: var(--vh-text); font-size: 18px; font-weight: 700; text-decoration: none; }
+.vh-payment-brand img { width: 48px; height: 48px; object-fit: contain; }
+.vh-payment-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 44px 36px 32px;
+    border: 1px solid var(--vh-border);
+    border-top-color: rgba(34, 197, 94, .45);
+    border-radius: 20px;
+    background: radial-gradient(ellipse at top, rgba(34, 197, 94, .08), transparent 60%), var(--vh-surface);
+    box-shadow: var(--vh-shadow), 0 0 80px rgba(34, 197, 94, .04);
+    text-align: center;
+}
+.vh-payment-check { position: relative; display: grid; place-items: center; width: 112px; height: 112px; margin-bottom: 26px; border-radius: 50%; background: rgba(34, 197, 94, .08); color: #16a34a; }
+.vh-payment-check svg { position: relative; overflow: visible; }
+.vh-payment-check-ring { stroke: currentColor; stroke-width: 2; transform: rotate(-90deg); transform-origin: 48px 48px; }
+.vh-payment-check-tick { stroke: currentColor; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; }
+.vh-payment-ripple { position: absolute; inset: 0; border: 1px solid currentColor; border-radius: 50%; opacity: 0; }
+.vh-payment-status { padding: 6px 12px; border: 1px solid rgba(34, 197, 94, .2); border-radius: 999px; background: rgba(34, 197, 94, .08); color: #15803d; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+.vaded-client .vh-payment-card h1 { margin: 18px 0 12px; color: var(--vh-text); font-size: clamp(32px, 6vw, 40px); font-weight: 750; line-height: 1.15; letter-spacing: -.045em; }
+.vh-payment-message { max-width: 350px; color: var(--vh-muted); font-size: 14px; line-height: 1.8; }
+.vh-payment-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 30px; }
+.vh-payment-primary, .vh-payment-secondary { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 12px 20px; border: 1px solid transparent; border-radius: 10px; font-size: 13px; font-weight: 650; text-decoration: none; transition: background-color 180ms, border-color 180ms; }
+.vh-payment-primary { background: #15803d; color: #fff; box-shadow: 0 4px 16px rgba(22, 163, 74, .15); }
+.vh-payment-primary:hover { background: #166534; color: #fff; }
+.vh-payment-secondary { border-color: var(--vh-border); background: var(--vh-surface); color: var(--vh-text); }
+.vh-payment-secondary:hover { background: var(--vh-raised); border-color: var(--vh-muted); }
+.vh-payment-layout a:focus-visible { outline: 2px solid #16a34a; outline-offset: 4px; }
+.vh-payment-note { width: 100%; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--vh-border); color: var(--vh-muted); font-size: 11px; line-height: 1.7; }
+:is(html.dark, html[data-bs-theme="dark"], body[data-bs-theme="dark"]) :is(.vh-payment-check, .vh-payment-status) { color: #4ade80; }
+@media (prefers-reduced-motion: no-preference) {
+    .vh-payment-check { animation: vh-payment-appear 500ms ease-out both; }
+    .vh-payment-check-ring { stroke-dasharray: 1; animation: vh-payment-draw 650ms 150ms ease-out both; }
+    .vh-payment-check-tick { stroke-dasharray: 1; animation: vh-payment-draw 450ms 650ms ease-out both; }
+    .vh-payment-ripple { animation: vh-payment-ripple 1100ms 900ms ease-out both; }
+    @keyframes vh-payment-appear { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: scale(1); } }
+    @keyframes vh-payment-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+    @keyframes vh-payment-ripple { from { opacity: .3; transform: scale(1); } to { opacity: 0; transform: scale(1.5); } }
+}
+@media (prefers-reduced-motion: reduce) {
+    .vh-payment-primary, .vh-payment-secondary { transition: none; }
+}
+@media (max-width: 479px) {
+    .vh-payment-shell { padding: 32px 16px; }
+    .vh-payment-brand { margin-bottom: 24px; font-size: 16px; }
+    .vh-payment-card { padding: 32px 22px 26px; border-radius: 16px; }
+}
+
 .vaded-client > main,
 .vaded-client .vh-client-navigation,
 .vaded-client .vh-client-navigation nav { background: transparent; }

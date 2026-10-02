@@ -36,6 +36,9 @@
 </head>
 
 <body class="vaded-theme vaded-client">
+    @hasSection('standalone-content')
+        @yield('standalone-content')
+    @else
     <main class="vh-auth-shell">
         <div class="vh-auth-layout">
             <div class="vh-auth-intro">
@@ -62,5 +65,6 @@
             </div>
         </div>
     </main>
+    @endif
 </body>
 </html>
