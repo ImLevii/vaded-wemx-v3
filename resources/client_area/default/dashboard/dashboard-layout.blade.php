@@ -20,7 +20,7 @@
 <div class="vh-dashboard mx-auto w-full min-w-0 max-w-screen-2xl">
     <div class="vh-dashboard-welcome flex flex-wrap items-center justify-between gap-4">
         <div class="min-w-0">
-            <span class="vh-portal-eyebrow">Client area / Overview</span>
+            <span class="vh-kicker">Client area / Overview</span>
             <h1>Welcome back, {{ $dashboardUser->first_name }}.</h1>
             <p>Your services, billing, and account. All under control.</p>
         </div>
@@ -33,7 +33,7 @@
         <x-theme::stat label="Active services" :title="$dashboardUser->orders()->whereStatus('active')->count()" description="{{ $dashboardUser->orders()->whereStatus('suspended')->count() }} suspended · {{ $dashboardUser->orders()->whereStatus('terminated')->count() }} terminated" icon='<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 4h16v6H4z M4 14h16v6H4z M7 7h2 M7 17h2 M12 7h5 M12 17h5" /></svg>' />
         <x-theme::stat label="Account balance" :title="price($dashboardUser->balance)" description="Available for your next payment" icon='<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 5h16v15H4z M4 5V3h13v2 M15 10h5v5h-5z M17 12.5h1" /></svg>' />
         <x-theme::stat label="Active subscriptions" :title="$activeSubscriptionsCount" description="{{ $totalSubscriptionsCount }} subscriptions in total" icon='<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 7v5h-5 M4 17v-5h5 M6 7a7 7 0 0 1 12-1l2 3 M4 15l2 3a7 7 0 0 0 12-1" /></svg>' />
-        <x-theme::stat label="Completed payments" :title="$dashboardUser->payments()->whereStatus('paid')->count()" description="View invoices in your payment history" icon='<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3z M9 7h6 M9 11h6 M9 15h3" /></svg>' />
+        <x-theme::stat label="Next renewal" :title="$nextRenewal ? price($nextRenewal->price) : 'No renewal due'" :description="$nextRenewal ? $nextRenewal->due_date->format('d M Y').' · '.$nextRenewal->name : 'Upcoming service renewals appear here'" icon='<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 5h16v16H4z M8 2v6 M16 2v6 M4 11h16 M8 15h3" /></svg>' />
     </div>
 
     <div class="vh-dashboard-grid grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -89,7 +89,6 @@
         </aside>
 
         <div class="vh-dashboard-content min-w-0 space-y-6">
-            <x-theme::hosting-hero class="vh-dashboard-hero" eyebrow="Premium Performance Hosting" title="YOUR NEXT PROJECT." accent="STARTS WITH VADED." description="Build your community, launch a new server, or make room for your next idea." primary-label="Explore services" image="assets/common/img/vaded-archive-server.png" />
 
             <div class="vh-dashboard-shortcuts grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <a href="{{ route('dashboard.payments') }}" wire:navigate class="vh-dashboard-panel flex items-center justify-between gap-3 rounded-lg border p-4"><span><strong>Manage billing</strong><small>Payments & invoices</small></span><span aria-hidden="true">&rarr;</span></a>

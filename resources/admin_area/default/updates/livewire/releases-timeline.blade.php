@@ -57,7 +57,7 @@ new class extends Component
         $this->dispatch(
             'show-install-release-modal',
             tag: (string) ($release['tag_name'] ?? ''),
-            build: (string) ($release['app_build_asset']['name'] ?? 'WemX build'),
+            build: (string) ($release['app_build_asset']['name'] ?? 'Vaded Hosting build'),
             prerelease: (bool) ($release['prerelease'] ?? false),
         );
     }
@@ -290,7 +290,7 @@ new class extends Component
                         @endif
                     </div>
                     <div class="text-secondary small">
-                        Repository: <a href="{{ WemxGitHubReleases::RELEASES_PAGE_URL }}" target="_blank" rel="noopener noreferrer">{{ WemxGitHubReleases::REPOSITORY }}</a>
+                        <a href="{{ WemxGitHubReleases::RELEASES_PAGE_URL }}" target="_blank" rel="noopener noreferrer">Upstream release notes</a>
                     </div>
                 </div>
             </div>

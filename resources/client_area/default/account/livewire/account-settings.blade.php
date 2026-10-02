@@ -9,11 +9,11 @@ new class extends Component
 ?>
 
 
-<div class="grid grid-cols-1 px-4 pt-6 dark:bg-gray-900 xl:grid-cols-3 xl:gap-4">
+<div class="vh-account-settings grid grid-cols-1 gap-5 xl:grid-cols-3">
 
     <!-- Right Content -->
     <div class="col-span-full xl:col-auto">
-        <div class="mb-4 rounded-lg bg-white p-4 shadow dark:bg-gray-800 sm:p-6 xl:p-8">
+        <div class="mb-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:p-6 xl:p-8">
             <div class="items-center sm:flex sm:space-x-4 xl:block xl:space-x-0 2xl:flex 2xl:space-x-4"
                  style="display: flex;justify-content: space-evenly;">
                 @if (auth()->user()->avatar !== null)

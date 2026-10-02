@@ -2,8 +2,8 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-vaded-area="client">
 
 <head>
-    <title>@yield('title')</title>
-    <link rel="icon" href="@settings('favicon', '/assets/core/img/logo.png')">
+    <title>{{ settings('app_name', config('app.name')) }}@hasSection('title') | @yield('title')@endif</title>
+    <link rel="icon" href="@settings('favicon', '/assets/common/img/vaded-logo.png')">
 
     {{-- meta tags --}}
     <meta charset="utf-8">
@@ -11,17 +11,18 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Meta Description Tag: Affects click-through rates from search results -->
-    <meta name="description" content="Manage your orders with an easy-to-use Dashboard">
+    <meta name="description" content="{{ trim($__env->yieldContent('description', 'Game server and cloud hosting. Compare plans, configure your server, and manage your community with Vaded Hosting.')) }}">
     <meta name="theme-color" content="#030405">
-    <meta name="keywords" content="">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
 
     <!-- Meta Robots Tag: Controls search engine crawling and indexing -->
     <meta name="robots" content="@settings('seo::robots', 'index, follow')">
 
     <!-- Open Graph Tags: Enhances visibility and engagement on social media platforms -->
-    <meta property="og:title" content="{{ trim($__env->yieldContent('title')) }} - @settings('seo::title', 'WemX')">
-    <meta property="og:description" content="Manage your orders with an easy-to-use Dashboard">
-    <meta property="og:image" content="@settings('seo::image', '/static/wemx.png')">
+    <meta property="og:title" content="{{ trim($__env->yieldContent('title')) }} - @settings('seo::title', 'Vaded Hosting')">
+    <meta property="og:description" content="{{ trim($__env->yieldContent('description', 'Game server and cloud hosting. Compare plans, configure your server, and manage your community with Vaded Hosting.')) }}">
+    <meta property="og:image" content="@settings('seo::image', '/assets/common/img/vaded-social.png')">
 
     <script src="{{ asset('assets/common/js/vaded-theme.js') }}?v={{ filemtime(public_path('assets/common/js/vaded-theme.js')) }}" data-navigate-once></script>
     <link href="{{ asset('assets/common/css/vaded-theme.css') }}?v={{ filemtime(public_path('assets/common/css/vaded-theme.css')) }}" rel="stylesheet">
@@ -39,13 +40,13 @@
         <div class="vh-auth-layout">
             <div class="vh-auth-intro">
                 <a href="/" class="vh-brand">
-                    <img src="{{ settings('app_logo', '/assets/common/img/app-logo.png') }}" alt="" width="30" height="30">
-                    {{ settings('app_name', 'My Application') }}
+                    <img src="{{ settings('app_logo', '/assets/common/img/vaded-logo.png') }}" alt="" width="30" height="30">
+                    {{ settings('app_name', config('app.name')) }}
                 </a>
-                <span class="vh-eyebrow">Welcome to your hosting platform</span>
-                <h1>Your services.<br><span>Your rules.</span></h1>
-                <p>Manage your services, payments, and account from one place. Everything you need, within reach.</p>
-                <div class="vh-auth-line" aria-hidden="true"></div>
+                <span class="vh-eyebrow">Vaded game infrastructure</span>
+                <h2 class="vh-auth-headline">Your community.<br><span>Your command center.</span></h2>
+                <p>From the first configuration to your next renewal. Keep your hosting under control.</p>
+                <x-theme::server-node />
             </div>
             <div class="min-w-0">
                 <div class="vh-auth-card">
@@ -55,7 +56,7 @@
                     </div>
                 </div>
                 <div class="vh-auth-footer">
-                    <span>{{ settings('app_name', 'WemX') }} &copy; {{ now()->year }}</span>
+                    <span>{{ settings('app_name', config('app.name')) }} &copy; {{ now()->year }}</span>
                     <button type="button" class="vh-auth-theme" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button>
                 </div>
             </div>

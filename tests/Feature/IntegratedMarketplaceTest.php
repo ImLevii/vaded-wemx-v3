@@ -273,7 +273,7 @@ class IntegratedMarketplaceTest extends TestCase
         ]);
 
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('This version requires WemX 9.9.9.');
+        $this->expectExceptionMessage('This version requires Vaded Hosting 9.9.9.');
 
         app(IntegratedMarketplaceInstaller::class)->install('one-click-demo', 9);
     }
@@ -322,14 +322,14 @@ class IntegratedMarketplaceTest extends TestCase
             ->assertSee('Install 1.0.0')
             ->call('openInstall', 9)
             ->assertSee('resources/email_templates/welcome')
-            ->assertSee('WemX then adds it to the list of email themes.');
+            ->assertSee('Vaded Hosting then adds it to the list of email themes.');
 
         Volt::test('admin_area.default.integrated-marketplace.livewire.resource', ['slug' => 'accent-invoice'])
             ->assertSee('Install 1.0.0')
             ->call('openInstall', 9)
             ->assertSee('resources/invoices')
             ->assertSee('The folder name comes from the archive.')
-            ->assertSee('WemX then adds it to the list of invoice themes.');
+            ->assertSee('Vaded Hosting then adds it to the list of invoice themes.');
     }
 
     public function test_one_click_install_rejects_a_version_that_is_not_on_the_integrated_marketplace(): void
@@ -394,7 +394,7 @@ class IntegratedMarketplaceTest extends TestCase
             ->assertSee('This resource is already installed. Version 0.9.0 is currently on this site.')
             ->assertSee('How this will be installed')
             ->assertSee('extensions/Modules/DemoModule')
-            ->assertSee('WemX then enables the module and runs its migrations.');
+            ->assertSee('Vaded Hosting then enables the module and runs its migrations.');
     }
 
     public function test_removed_installations_are_not_shown_as_installed(): void

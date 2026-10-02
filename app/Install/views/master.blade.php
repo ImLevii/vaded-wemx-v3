@@ -6,8 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
 
-    <title>WemX | Installer</title>
-    <link rel="icon" href="{{ asset(settings('favicon', 'images/favicon.png')) }}">
+    <title>Vaded Hosting | Installer</title>
+    <link rel="icon" href="{{ asset(settings('favicon', '/assets/common/img/vaded-logo.png')) }}">
     <!-- CSS files -->
     <link href="{{ admin_asset('css/tabler.min.css?1692870487') }}" rel="stylesheet"/>
     <link href="{{ admin_asset('css/tabler-flags.min.css?1692870487') }}" rel="stylesheet">

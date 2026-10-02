@@ -2,7 +2,7 @@
     'activePage' => 'dashboard',
 ])
 
-@section('title', 'View Order')
+@section('title', $order->package->name.' | Service')
 
 @if(in_array($order->status, ['pending', 'processing', 'failed']))
     @section('content')
@@ -11,9 +11,9 @@
 
 @else
     @section('content')
-        <div class="mx-auto max-w-screen-2xl px-4 2xl:px-0">
+        <div class="vh-service-shell"><a href="{{ route('dashboard') }}" wire:navigate class="vh-text-link">&larr; Your services</a><header class="vh-service-heading"><div><span class="vh-kicker">SERVICE #{{ $order->id }}</span><h1>{{ $order->package->name }}</h1><p>Manage your service, renewal, and team access.</p></div><span class="vh-service-status">{{ ucfirst($order->status) }}</span></header>
             <div class="flex flex-wrap">
-                <div class="w-full pl-4 pl-4 pl-4 pr-4 pr-4 pr-4 sm:w-1/2 md:w-1/3 lg:w-1/4">
+                <div class="w-full px-0 sm:px-3 lg:w-1/4">
                     <x-theme::card class="mb-4 p-2">
                         <x-theme::navlist.list>
                             <x-theme::navlist.item wire:navigate text="General" href="{{ route('orders.view', $order->id) }}" :active="$activeTab == 'general'">
@@ -69,11 +69,11 @@
                         @includeIf($element['view'], ['order' => $order])
                     @endforeach
                 </div>
-                <div class="w-full pl-4 pl-4 pl-4 pr-4 pr-4 pr-4 sm:w-1/2 md:w-2/3 lg:w-3/4">
+                <div class="w-full px-0 sm:px-3 lg:w-3/4">
                     @yield('container')
                 </div>
             </div>
 
-        @livewire(client_view_path('orders.livewire.renew-order-drawer'), ['order' => $order])
+        </div>
     @endsection
 @endif

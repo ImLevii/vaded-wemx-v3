@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Vaded Hosting'),
 
     'theme' => env('APP_THEME', 'default'),
 
@@ -22,6 +22,8 @@ return [
     'license_key' => env('LICENSE_KEY', ''),
 
     'license_bypass' => (bool) env('LICENSE_BYPASS', false),
+
+    'demo_mode' => (bool) env('APP_DEMO_MODE', false),
 
     'installed' => env('APP_INSTALLED', false),
 

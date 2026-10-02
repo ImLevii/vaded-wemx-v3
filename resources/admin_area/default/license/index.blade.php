@@ -11,6 +11,16 @@
         </div>
     @endif
 
+    @if ($licenseBypassed)
+        <div class="card">
+            <div class="card-body">
+                <span class="badge bg-green-lt mb-3">Demo mode active</span>
+                <h2 class="card-title">License bypass is enabled</h2>
+                <p class="text-secondary">This development environment does not require a license key. You can continue using the dashboard.</p>
+                <a href="{{ route('admin.index') }}" class="btn btn-primary">Open dashboard</a>
+            </div>
+        </div>
+    @else
     <div class="row g-3 mb-3">
         <div class="col-md-3">
             <div class="card">
@@ -160,5 +170,6 @@
             </div>
         </div>
     </div>
+    @endif
 @endsection
 

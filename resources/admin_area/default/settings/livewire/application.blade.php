@@ -26,7 +26,7 @@ new class extends Component
 
     public function mount()
     {
-        $this->app_name = settings('app_name', 'Application');
+        $this->app_name = settings('app_name', config('app.name'));
         $this->company_address = settings('company_address');
         $this->language = settings('language', 'en');
         $this->timezone = settings('timezone', 'UTC');

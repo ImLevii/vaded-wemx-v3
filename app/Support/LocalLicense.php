@@ -6,6 +6,7 @@ final class LocalLicense
 {
     public static function isBypassed(): bool
     {
-        return app()->environment('local') && config('app.license_bypass', false) === true;
+        return config('app.license_bypass', false) === true
+            && (app()->environment('local') || config('app.demo_mode', false) === true);
     }
 }

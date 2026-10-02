@@ -39,7 +39,7 @@ new class extends Component
 
 
 <div>
-    <x-theme::text.h5 class="mb-6">Create an account</x-theme::text.h5>
+    <div class="vh-form-heading"><h1>Build your next server.</h1><p>Create your Vaded account to configure, deploy, and manage your hosting.</p></div>
 
     @foreach(extensionElements(['client-register-top-view']) as $element)
         @includeIf($element['view'])
@@ -84,21 +84,21 @@ new class extends Component
         <div class="my-2 grid gap-5 sm:grid-cols-2 mb-4">
             <div class="mb-4">
                 <x-theme::form.label for="password" text="Password"/>
-                <x-theme::form.input type="password" placeholder="Password" wire:model="password" id="password"/>
+                <x-theme::form.password autocomplete="new-password" placeholder="Password" wire:model="password" id="password"/>
                 @error('password')
                 <x-theme::form.error :text="$message"/>
                 @enderror
             </div>
             <div class="mb-4">
                 <x-theme::form.label for="password_confirmation" text="Confirm Password"/>
-                <x-theme::form.input type="password" placeholder="Confirm Password" wire:model="password_confirmation"
+                <x-theme::form.password autocomplete="new-password" placeholder="Confirm Password" wire:model="password_confirmation"
                                      id="password_confirmation"/>
                 @error('password_confirmation')
                 <x-theme::form.error :text="$message"/>
                 @enderror
             </div>
         </div>
-        <x-theme::button.primary type="submit" text="Next: Email Verification" class="w-full justify-content-center mb-4"/>
+        <x-theme::button.primary type="submit" text="Create account" wire:loading.attr="disabled" class="w-full justify-content-center mb-4"/>
 
         @foreach(extensionElements(['client-register-bottom-view']) as $element)
             @includeIf($element['view'])

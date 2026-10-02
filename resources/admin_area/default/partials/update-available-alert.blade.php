@@ -10,7 +10,7 @@
             variant="info"
             :title="__('Update available')"
             :message="__(
-                'A new version of WemX is available. You are running <code>:current</code> and <code>:latest</code> is available.',
+                'A new version of Vaded Hosting is available. You are running <code>:current</code> and <code>:latest</code> is available.',
                 [
                     'current' => $updateStatus['installed_version'],
                     'latest' => $updateStatus['latest_tag'] ?? __('unknown'),

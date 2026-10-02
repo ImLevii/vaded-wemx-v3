@@ -49,7 +49,9 @@ class ReportLicenseActiveCheckCommand extends Command
     public function handle(): int
     {
         if (LocalLicense::isBypassed()) {
-            $this->info('Skipping active license check in local development mode.');
+            $this->info(config('app.demo_mode')
+                ? 'Skipping active license check in development demo mode.'
+                : 'Skipping active license check in local development mode.');
 
             return self::SUCCESS;
         }

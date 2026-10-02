@@ -41,7 +41,7 @@
                 {{ $payment->user->full_name }}
             </td>
             <td>
-                {{ settings('app_name', 'Application') }}
+                {{ settings('app_name', config('app.name')) }}
             </td>
         </tr>
         @if($billingFromDetails !== '')
@@ -161,7 +161,7 @@
 
     <div class="footer">
         <div class="footer-info">
-            <span>{{ settings('app_name', 'Application') }}</span>
+            <span>{{ settings('app_name', config('app.name')) }}</span>
         </div>
         <div class="footer-thanks">
             <img src="https://github.com/anvilco/html-pdf-invoice-template/raw/main/img/heart.png" alt="heart">

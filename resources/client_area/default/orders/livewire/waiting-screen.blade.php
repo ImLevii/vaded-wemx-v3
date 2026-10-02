@@ -1,96 +1,37 @@
 <?php
 
+use App\Models\Order;
 use Livewire\Volt\Component;
+use Livewire\Attributes\Locked;
 
 new class extends Component
 {
-    public $order;
+    #[Locked]
+    public Order $order;
 
-    public function mount($order)
+    public function refreshStatus(): void
     {
-        $this->order = $order;
+        $this->order->refresh();
     }
-}
-
+};
 ?>
-<div>
-
-    @if($order->status == 'pending')
-    <div class="py-8 lg:py-16 px-4 mx-auto max-w-screen-xl" wire:poll>
-        <div class="grid gap-8 items-center lg:gap-12 lg:grid-cols-12">
-            <div class="col-span-6 text-center sm:mb-6 lg:text-left lg:mb-0">
-                <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-3xl xl:text-4xl dark:text-white">
-                    Your order is pending
-                </h1>
-                <p class="mx-auto max-w-xl font-light text-gray-500 lg:mx-0 xl:mb-8 md:text-lg xl:text-xl dark:text-gray-400">
-                    Your order is currently in queue and will be processed shortly. Stay on this page to get the latest updates.
-                </p>
-            </div>
-            <div class="hidden col-span-6 lg:flex">
-                <img src="https://tabler.io/_next/image?url=%2Fillustrations%2Fdark%2Floading.png&w=800&q=75" alt="illustration">
-            </div>
+<section class="vh-service-shell" @if(in_array($order->status, ['pending', 'processing'])) wire:poll.10s="refreshStatus" @endif>
+    <header class="vh-service-heading"><div><span class="vh-kicker">SERVICE #{{ $order->id }}</span><h1>{{ $order->package->name }}</h1><p>Deployment status</p></div><a href="{{ route('dashboard') }}" wire:navigate class="vh-text-link">Your services <x-theme::icon name="arrow" /></a></header>
+    <div class="vh-control-section vh-section">
+        <div aria-live="polite">
+            <span class="vh-kicker">{{ strtoupper($order->status) }}</span>
+            @if($order->status === 'pending')
+                <h2 class="text-3xl font-bold mt-4">Your server is in the queue.</h2><p>Your order is pending. This page checks for updates while your service is prepared.</p>
+            @elseif($order->status === 'processing')
+                <h2 class="text-3xl font-bold mt-4">Preparing your server.</h2><p>Your service is being provisioned. This page updates when its status changes.</p>
+            @elseif($order->status === 'active')
+                <h2 class="text-3xl font-bold mt-4">Your service is ready.</h2><p>Open your service to access its available controls and configuration.</p><a href="{{ route('orders.view', $order->id) }}" wire:navigate class="vh-action">Open Server <x-theme::icon name="arrow" /></a>
+            @elseif($order->status === 'failed')
+                <h2 class="text-3xl font-bold mt-4">Deployment needs attention.</h2><p>We could not complete this deployment. Contact support with service #{{ $order->id }} so we can investigate.</p>@if(config('hosting.resources.Contact support'))<a href="{{ config('hosting.resources.Contact support') }}" class="vh-action">Contact support</a>@endif
+            @else
+                <h2 class="text-3xl font-bold mt-4">Service status updated.</h2><p>Open your service for the latest details.</p><a href="{{ route('orders.view', $order->id) }}" wire:navigate class="vh-action">View service</a>
+            @endif
         </div>
+        <x-theme::server-node />
     </div>
-    @endif
-
-    @if($order->status == 'processing')
-        <div class="py-8 lg:py-16 px-4 mx-auto max-w-screen-xl" wire:poll>
-            <div class="grid gap-8 items-center lg:gap-12 lg:grid-cols-12">
-                <div class="col-span-6 text-center sm:mb-6 lg:text-left lg:mb-0">
-                    <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-3xl xl:text-4xl dark:text-white">
-                        Your order is processing
-                    </h1>
-                    <p class="mx-auto max-w-xl font-light text-gray-500 lg:mx-0 xl:mb-8 md:text-lg xl:text-xl dark:text-gray-400">
-                        Your order is currently being processed. We are getting everything ready for you in the background. Stay on this page to get the latest updates.
-                    </p>
-                </div>
-                <div class="hidden col-span-6 lg:flex">
-                    <img src="https://tabler.io/_next/image?url=%2Fillustrations%2Fdark%2Fbuilding.png&w=800&q=75" alt="illustration">
-                </div>
-            </div>
-        </div>
-    @endif
-
-    @if($order->status == 'failed')
-        <div class="py-8 lg:py-16 px-4 mx-auto max-w-screen-xl">
-            <div class="grid gap-8 items-center lg:gap-12 lg:grid-cols-12">
-                <div class="col-span-6 text-center sm:mb-6 lg:text-left lg:mb-0">
-                    <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-3xl xl:text-4xl dark:text-white">
-                        Something went wrong
-                    </h1>
-                    <p class="mx-auto max-w-xl font-light text-gray-500 lg:mx-0 xl:mb-8 md:text-lg xl:text-xl dark:text-gray-400">
-                        We were unable to process your order. Please contact support for further assistance. We apologize for the inconvenience.
-                    </p>
-                    <a href="" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                        Contact support
-                    </a>
-                </div>
-                <div class="hidden col-span-6 lg:flex">
-                    <img src="https://tabler.io/_next/image?url=%2Fillustrations%2Fdark%2Ferror.png&w=800&q=75" alt="illustration">
-                </div>
-            </div>
-        </div>
-    @endif
-
-    @if($order->status == 'active')
-        <div class="py-8 lg:py-16 px-4 mx-auto max-w-screen-xl">
-            <div class="grid gap-8 items-center lg:gap-12 lg:grid-cols-12">
-                <div class="col-span-6 text-center sm:mb-6 lg:text-left lg:mb-0">
-                    <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-3xl xl:text-4xl dark:text-white">
-                        Your order was successfully activated
-                    </h1>
-                    <p class="mx-auto max-w-xl font-light text-gray-500 lg:mx-0 xl:mb-8 md:text-lg xl:text-xl dark:text-gray-400">
-                        Your order was successfully activated. Please press the button below to or refresh the page.
-                    </p>
-                    <a href="" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                        Refresh
-                    </a>
-                </div>
-                <div class="hidden col-span-6 lg:flex">
-                    <img src="https://tabler.io/_next/image?url=%2Fillustrations%2Fdark%2Felectric-scooter.png&w=800&q=75" alt="illustration">
-                </div>
-            </div>
-        </div>
-    @endif
-
-</div>
+</section>

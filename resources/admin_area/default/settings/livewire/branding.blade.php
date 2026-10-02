@@ -12,8 +12,8 @@ new class extends Component
 
     public function mount()
     {
-        $this->app_logo = settings('app_logo', '/assets/common/img/wemx.png');
-        $this->favicon = settings('favicon', '/assets/common/img/wemx.png');
+        $this->app_logo = settings('app_logo', '/assets/common/img/vaded-logo.png');
+        $this->favicon = settings('favicon', '/assets/common/img/vaded-logo.png');
     }
 
     public function saveChanges()

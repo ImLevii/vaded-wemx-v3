@@ -33,7 +33,7 @@
 <body bgcolor="#11111d">
 <div class="page-bg"></div>
 @php
-    $companyName = settings('app_name', 'Application');
+    $companyName = settings('app_name', config('app.name'));
     $companyAddress = settings('company_address', '');
     $billingFromDetails = trim((string) settings('billing_from_details', ''));
     $billingFromBlock = $billingFromDetails !== '' ? $billingFromDetails : trim((string) $companyAddress);

@@ -22,7 +22,7 @@ new class extends Component {
             $secretKey = auth()->user()->generateTwoFactorSecret();
 
             $QRCodeUrl = $google2fa->getQRCodeUrl(
-                settings('app_name', 'My Application'),
+                settings('app_name', config('app.name')),
                 auth()->user()->email,
                 $secretKey
             );

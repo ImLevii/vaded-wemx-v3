@@ -1,21 +1,9 @@
-<footer class="mt-auto w-full border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-    <div class="w-full max-w-screen-xl mx-auto p-4 md:py-8">
-        <div class="sm:flex sm:items-center sm:justify-between">
-            <a href="{{ route('categories.index') }}" class="flex items-center mb-4 sm:mb-0 space-x-3 rtl:space-x-reverse" wire:navigate>
-                <img src="{{ settings('app_logo', '/assets/common/img/app-logo.png') }}" class="h-7 rounded" alt="{{ settings('app_name', 'WemX') }} Logo" />
-                <span class="self-center whitespace-nowrap text-2xl font-semibold text-gray-900 dark:text-white">{{ settings('app_name', 'WemX') }}</span>
-            </a>
-            <ul class="mb-6 flex flex-wrap items-center text-sm font-medium text-gray-500 dark:text-gray-400 sm:mb-0">
-                @foreach(extensionElements(['footer-item']) as $element)
-                <li>
-                    <a href="{{ $element['attributes']['href'] ?? '#' }}" class="me-4 hover:underline md:me-6" wire:navigate>{{ $element['attributes']['name'] ?? 'undefined' }}</a>
-                </li>
-                @endforeach
-            </ul>
-        </div>
-        <hr class="my-6 border-gray-200 dark:border-gray-700 sm:mx-auto lg:my-8" />
-        <div class="flex flex-col gap-2 text-sm text-gray-500 dark:text-gray-400 sm:flex-row sm:items-center sm:justify-between">
-            <span>© {{ now()->year }} {{ settings('app_name', 'WemX') }}. All rights reserved.</span>
-        </div>
+<footer class="vh-footer">
+    <div class="vh-footer-grid">
+        <div><a href="{{ route('categories.index') }}" wire:navigate class="vh-footer-brand"><img src="{{ settings('app_logo', '/assets/common/img/vaded-logo.png') }}" alt="" width="32" height="32">{{ settings('app_name', config('app.name')) }}</a><p>Game servers. Cloud workloads.<br>A home for your community.</p></div>
+        <div><h2>HOSTING</h2><ul>@foreach($hostingCategories as $category)<li><a href="{{ route('categories.index', ['category' => $category->slug]) }}#pricing" wire:navigate>{{ $category->name }}</a></li>@endforeach<li><a href="{{ route('categories.index') }}#services">All hosting services</a></li></ul></div>
+        <div><h2>EXPLORE</h2><ul><li><a href="{{ route('categories.index') }}#infrastructure">Infrastructure</a></li><li><a href="{{ route('categories.index') }}#locations">Deployment locations</a></li><li><a href="{{ route('categories.index') }}#features">Client area tour</a></li><li><a href="{{ route('categories.index') }}#faq">Frequently asked questions</a></li>@foreach(config('hosting.resources', []) as $label => $href)<li><a href="{{ $href }}">{{ $label }}</a></li>@endforeach</ul></div>
+        <div><h2>YOUR ACCOUNT</h2><ul><li><a href="{{ route('dashboard') }}" wire:navigate>Client dashboard</a></li><li><a href="{{ route('dashboard.payments') }}" wire:navigate>Payments &amp; invoices</a></li><li><a href="{{ route('account.settings') }}" wire:navigate>Account &amp; security</a></li><li><a href="{{ route('cart') }}" wire:navigate>Review your cart</a></li>@foreach(extensionElements(['footer-item']) as $element)<li><a href="{{ $element['attributes']['href'] ?? '#' }}">{{ $element['attributes']['name'] ?? 'Resource' }}</a></li>@endforeach</ul></div>
     </div>
+    <div class="vh-footer-bottom"><span>&copy; {{ now()->year }} {{ settings('app_name', config('app.name')) }}. All rights reserved.</span><div>@foreach(config('hosting.legal', []) as $label => $href)<a href="{{ $href }}">{{ $label }}</a>@endforeach<button type="button" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button></div></div>
 </footer>

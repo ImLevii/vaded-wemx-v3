@@ -116,7 +116,7 @@ new class extends Component
         $user = auth()->user();
 
         $variables = [
-            'app_name' => settings('app_name', 'My Application'),
+            'app_name' => settings('app_name', config('app.name')),
             'user_name' => $user?->first_name ?: 'Alex',
             'user_username' => $user?->username ?: 'alex',
             'user_email' => $user?->email ?: 'alex@example.com',

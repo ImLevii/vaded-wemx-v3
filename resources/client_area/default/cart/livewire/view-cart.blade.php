@@ -144,12 +144,12 @@ new class extends Component {
 }
 ?>
 
-<section>
+<section class="vh-cart-page">
     <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">Shopping Cart</h2>
+        <x-theme::purchase-steps :current="3" /><h1>Review your server.</h1><p>Confirm your configuration and billing details before payment.</p>
 
-        <div class="mt-6 sm:mt-8 md:gap-6 lg:flex lg:items-start xl:gap-8">
-            <div class="mx-auto w-full flex-none lg:max-w-2xl xl:max-w-4xl">
+        <div class="vh-cart-layout mt-6 sm:mt-8">
+            <div class="min-w-0 space-y-6">
                 <div class="space-y-6">
 
                     @if(cart())
@@ -167,21 +167,21 @@ new class extends Component {
 
                         @foreach(cart()->items as $item)
                             <div
-                                class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:p-6">
+                                class="vh-cart-row rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 md:p-6" wire:key="cart-item-{{ $item->id }}">
                                 <div class="space-y-4 md:flex md:items-center md:justify-between md:gap-6 md:space-y-0">
-                                    <a href="#" class="shrink-0 md:order-1">
+                                    <div class="shrink-0 md:order-1">
                                         <img class="h-20 w-20"
                                              src="{{ $item->getIcon() }}"
                                              alt="Image"/>
                                     </a>
 
-                                    <label for="counter-input" class="sr-only">Choose quantity:</label>
+                                    <label for="counter-input-{{ $item->id }}" class="sr-only">Choose quantity:</label>
                                     <div class="flex items-center justify-between md:order-3 md:justify-end">
                                         <div class="flex items-center">
                                             <button
                                                 @if($item->quantity <= 1) wire:confirm="Are you sure you want to remove this item?"
                                                 @endif wire:click="decrementQuantity('{{ $item->id }}')" type="button"
-                                                id="decrement-button" data-input-counter-decrement="counter-input"
+                                                aria-label="Decrease quantity for {{ $item->getName() }}" wire:loading.attr="disabled"
                                                 class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700">
                                                 <svg class="h-2.5 w-2.5 text-gray-900 dark:text-white"
                                                      aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -190,11 +190,11 @@ new class extends Component {
                                                           stroke-linejoin="round" stroke-width="2" d="M1 1h16"/>
                                                 </svg>
                                             </button>
-                                            <input type="text" disabled id="counter-input" data-input-counter
+                                            <input type="text" disabled id="counter-input-{{ $item->id }}"
                                                    class="w-10 shrink-0 border-0 bg-transparent text-center text-sm font-medium text-gray-900 focus:outline-none focus:ring-0 dark:text-white"
                                                    placeholder="" value="{{ $item->quantity }}" required/>
                                             <button wire:click="incrementQuantity('{{ $item->id }}')" type="button"
-                                                    id="increment-button" data-input-counter-increment="counter-input"
+                                                    aria-label="Increase quantity for {{ $item->getName() }}" wire:loading.attr="disabled"
                                                     class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 dark:focus:ring-gray-700">
                                                 <svg class="h-2.5 w-2.5 text-gray-900 dark:text-white"
                                                      aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -323,14 +323,14 @@ new class extends Component {
                         <div class="my-2 grid gap-5 sm:grid-cols-2 mb-4">
                             <div class="mb-4">
                                 <x-theme::form.label for="password" text="Password" />
-                                <x-theme::form.input type="password" placeholder="Password" wire:model="password" id="password"/>
+                                <x-theme::form.password autocomplete="new-password" placeholder="Password" wire:model="password" id="password"/>
                                 @error('password')
                                 <x-theme::form.error :text="$message" />
                                 @enderror
                             </div>
                             <div class="mb-4">
                                 <x-theme::form.label for="password_confirmation" text="Confirm Password" />
-                                <x-theme::form.input type="password" placeholder="Confirm Password" wire:model="password_confirmation" id="password_confirmation"/>
+                                <x-theme::form.password autocomplete="new-password" placeholder="Confirm Password" wire:model="password_confirmation" id="password_confirmation"/>
                                 @error('password_confirmation')
                                 <x-theme::form.error :text="$message" />
                                 @enderror
@@ -344,7 +344,7 @@ new class extends Component {
                 @endif
             </div>
 
-            <div class="mx-auto mt-6 max-w-4xl flex-1 space-y-6 lg:mt-0 lg:w-full">
+            <div class="vh-cart-summary" x-data="{ expanded: false }">
                 <div
                     class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
                     <p class="text-xl font-semibold text-gray-900 dark:text-white">Order summary</p>
@@ -370,9 +370,9 @@ new class extends Component {
                         </dl>
                     </div>
 
-                    <button type="button" wire:click="completeCheckout()"
+                    <button type="button" wire:click="completeCheckout()" wire:loading.attr="disabled" @disabled(!cart() || cart()->items->isEmpty())
                             class="flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        Proceed to Checkout
+                        <span wire:loading.remove wire:target="completeCheckout">Continue to Checkout</span><span wire:loading wire:target="completeCheckout" role="status">Preparing payment&hellip;</span>
                     </button>
 
                     <div class="flex items-center justify-center gap-2">

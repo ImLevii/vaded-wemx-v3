@@ -4,7 +4,7 @@
 
 @if(! empty($account['mock']))
     <div class="alert alert-info" role="status">
-        <strong>Local mock marketplace</strong> — Sample resources only. No connection to the WemX marketplace.
+        <strong>Local mock marketplace</strong> — Sample resources only. No connection to an external marketplace.
     </div>
 @elseif(! empty($account['error']))
     <div class="alert alert-warning" role="alert">{{ $account['error'] }}</div>

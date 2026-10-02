@@ -143,12 +143,12 @@ new class extends Component
             'location' => $extractPath === '' ? null : ($folderIsNamed ? $extractPath.'/'.$folder : $extractPath),
             'uses_archive_folder' => $extractPath !== '' && ! $folderIsNamed,
             'outcome' => match ($category) {
-                'payment-gateway' => 'WemX then enables the gateway and runs its migrations.',
-                'server' => 'WemX then enables the server and runs its migrations.',
-                'module' => 'WemX then enables the module and runs its migrations.',
-                'email-theme' => 'WemX then adds it to the list of email themes.',
-                'invoice-theme' => 'WemX then adds it to the list of invoice themes.',
-                default => 'WemX then adds it to this site.',
+                'payment-gateway' => 'Vaded Hosting then enables the gateway and runs its migrations.',
+                'server' => 'Vaded Hosting then enables the server and runs its migrations.',
+                'module' => 'Vaded Hosting then enables the module and runs its migrations.',
+                'email-theme' => 'Vaded Hosting then adds it to the list of email themes.',
+                'invoice-theme' => 'Vaded Hosting then adds it to the list of invoice themes.',
+                default => 'Vaded Hosting then adds it to this site.',
             },
         ];
     }
@@ -291,11 +291,11 @@ new class extends Component
                                                     @endif
                                                 </div>
                                                 @if($canInstall && ! empty($version['integrated_marketplace']) && ! app(IntegratedMarketplaceInstaller::class)->supportsCurrentVersion((string) ($version['wemx_version'] ?? '')))
-                                                    <div class="alert alert-warning mt-3 mb-0" role="alert">This version requires WemX {{ $version['wemx_version'] }}. This site is running {{ config('app.version') }}.</div>
+                                                    <div class="alert alert-warning mt-3 mb-0" role="alert">This version requires Vaded Hosting {{ $version['wemx_version'] }}. This site is running {{ config('app.version') }}.</div>
                                                 @endif
                                                 <div class="text-secondary small mt-1">
                                                     {{ $version['created_at'] ? Carbon::parse($version['created_at'])->timezone(config('app.timezone'))->format('M j, Y g:i A') : '' }}
-                                                    · WemX {{ $version['wemx_version'] }}
+                                                    · Vaded Hosting {{ $version['wemx_version'] }}
                                                     · {{ $version['size_label'] ?? '' }}
                                                 </div>
                                                 <div class="markdown mt-3">{!! $this->renderMarkdown($version['changelog'] ?? '') !!}</div>
@@ -424,7 +424,7 @@ new class extends Component
                         </div>
                         <div class="modal-body">
                             @if(! $installCompatible)
-                                <div class="alert alert-warning" role="alert">This version requires WemX {{ $installVersion['wemx_version'] }}. This site is running {{ config('app.version') }}, so it may not work.</div>
+                                <div class="alert alert-warning" role="alert">This version requires Vaded Hosting {{ $installVersion['wemx_version'] }}. This site is running {{ config('app.version') }}, so it may not work.</div>
                             @endif
                             @if($installation)
                                 <div class="alert alert-warning" role="alert">This resource is already installed. Version {{ filled($installation->version) ? $installation->version : 'unknown' }} is currently on this site.</div>

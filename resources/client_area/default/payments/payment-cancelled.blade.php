@@ -8,12 +8,12 @@
             <path d="M10.5 14.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"/>
         </svg>
 
-        <x-theme::text.h4 class="mb-4 text-center">Payment Cancelled</x-theme::text.h4>
+        <h1 class="text-2xl font-bold mb-4 text-center">Payment cancelled.</h1>
         <x-theme::text.p class="mb-8 text-center">
-            Your payment has been cancelled. If this was a mistake, please try again or contact support.
+            Checkout was interrupted. Review your payment history before trying again, or return to your cart to check your configuration.
         </x-theme::text.p>
         <div class="w-full text-center">
-            <x-theme::button.primary href="{{ route('dashboard') }}" text="Return to Dashboard" confirm class="w-full sm:py-3.5 mb-4" />
+            <x-theme::button.primary href="{{ route('dashboard.payments') }}" text="Review payments" confirm class="w-full sm:py-3.5 mb-4" />
         </div>
     </div>
 @endsection

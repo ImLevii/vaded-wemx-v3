@@ -2,8 +2,8 @@
     <div class="row container container-xl py-8 mx-auto">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="d-flex align-items-center">
-                <span class="avatar avatar-lg me-2" style="background-image: url(/assets/common/img/wemx.png)"></span>
-                <h1 class="mb-0">WemX</h1>
+                <span class="avatar avatar-lg me-2" style="background-image: url(/assets/common/img/vaded-logo.png)"></span>
+                <h1 class="mb-0">Vaded Hosting</h1>
             </div>
             <div>
                 <div class="d-flex d-block">
@@ -54,7 +54,7 @@
                         <li class="step-item @if($step == 'activation') active @endif">
                             <div class="h4 m-0">License Activation</div>
                             <div class="text-secondary">
-                                Enter your license key to activate the application. You can obtain a license key at <a href="https://app.wemx.net" target="_blank" rel="noopener noreferrer">app.wemx.net</a>.
+                                Enter the license key supplied by your application administrator to activate the application.
                             </div>
                         </li>
                         <li class="step-item @if($step == 'database') active @endif">
@@ -90,9 +90,9 @@
             <div class="card card-md">
                 <div class="card-body py-4 p-sm-5">
                     <div class="text-center">
-                        <h1>WemX Application Installer</h1>
+                        <h1>Vaded Hosting Application Installer</h1>
                         <p class="text-secondary">
-                            This installer will help you set up your WemX application. Please follow the steps carefully to ensure a successful installation.
+                            This installer will help you set up your Vaded Hosting application. Please follow the steps carefully to ensure a successful installation.
                         </p>
                     </div>
                 </div>
@@ -116,7 +116,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-1 text-success icon-2">
                                     <path d="M5 12l5 5l10 -10"></path>
                                 </svg>
-                                Installed WemX Version {{ config('app.version') }}
+                                Installed Vaded Hosting Version {{ config('app.version') }}
                             </li>
                             <li>
                                 @if(version_compare(PHP_VERSION, $minPhpVersion, '>='))
@@ -229,12 +229,12 @@
                 <div class="card card-md">
                     <div class="card-body py-4 p-sm-5">
                         <div class="text-center">
-                            <h1>{{ \App\Support\LocalLicense::isBypassed() ? 'Local Development' : 'Activate License Key' }}</h1>
+                            <h1>{{ \App\Support\LocalLicense::isBypassed() ? (config('app.demo_mode') ? 'Development Demo' : 'Local Development') : 'Activate License Key' }}</h1>
                             <p class="text-secondary">
                                 @if(\App\Support\LocalLicense::isBypassed())
-                                    License checks are bypassed for this local development environment. Continue to configure the database.
+                                    License checks are bypassed for this development environment. Continue to configure the database.
                                 @else
-                                Please enter your license key to activate the application. You can obtain a license key at <a href="https://app.wemx.net" target="_blank" rel="noopener noreferrer">app.wemx.net</a>.
+                                Enter the license key supplied by your application administrator to activate the application.
                                 @endif
                             </p>
                         </div>
@@ -262,7 +262,7 @@
                             </div>
                             @else
                             <div class="form-hint">
-                                Enter your license key to activate the application. You can obtain a license key at <a href="https://app.wemx.net" target="_blank" rel="noopener noreferrer">app.wemx.net</a>.
+                                Enter the license key supplied by your application administrator to activate the application.
                             </div>
                             @enderror
                             <div class="mt-2">
@@ -426,7 +426,7 @@
                         <div class="mb-3">
                             <label class="form-label">Database Name</label>
                             <div class="input-group">
-                                <input type="text" class="form-control" wire:model="database_name" placeholder="wemx">
+                                <input type="text" class="form-control" wire:model="database_name" placeholder="vaded_hosting">
                             </div>
                             <div class="form-hint">
                                 The name of the database to migrate.
@@ -766,7 +766,7 @@
                 <div class="card card-md">
                     <div class="card-body py-4 p-sm-5">
                         <div class="text-center">
-                            <h1>WemX was installed successfully</h1>
+                            <h1>Vaded Hosting was installed successfully</h1>
                             <p class="text-secondary">
                                 Your application is ready to use! You can now log in with the administrator account you created. If you have any questions or need assistance, please refer to our documentation or contact support.
                             </p>

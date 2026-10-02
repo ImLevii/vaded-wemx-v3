@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Helpers\EnvironmentWriter;
 use App\Http\Controllers\Controller;
+use App\Support\LocalLicense;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -119,6 +120,7 @@ class LicenseController extends Controller
         $licenseData['last_checked_at_human'] = $this->humanDate($licenseData['last_checked_at'] ?? null);
 
         return view('admin::license.index', [
+            'licenseBypassed' => LocalLicense::isBypassed(),
             'licenseData' => $licenseData,
             'licenseKey' => config('app.license_key', ''),
             'limitStaffAccounts' => $this->humanLimit(data_get($licenseData, 'limits.staff_accounts_limit')),
@@ -131,6 +133,10 @@ class LicenseController extends Controller
 
     public function verify(Request $request): RedirectResponse
     {
+        if (LocalLicense::isBypassed()) {
+            return back()->with('status', 'License checks are bypassed for this development environment.');
+        }
+
         $validated = $request->validate([
             'license_key' => ['required', 'string', 'max:255', 'starts_with:WMX-'],
         ]);
@@ -154,6 +160,10 @@ class LicenseController extends Controller
 
     public function update(Request $request): RedirectResponse
     {
+        if (LocalLicense::isBypassed()) {
+            return back()->with('status', 'License checks are bypassed for this development environment.');
+        }
+
         $validated = $request->validate([
             'license_key' => ['required', 'string', 'max:255', 'not_in:test'],
         ]);
@@ -175,7 +185,7 @@ class LicenseController extends Controller
         EnvironmentWriter::write([
             'LICENSE_KEY' => (string) $result['data']['license_key'],
         ]);
-        
+
         Artisan::call('config:clear');
 
         return back()->with('status', 'License key saved, validated, and cached successfully.');

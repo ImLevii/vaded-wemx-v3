@@ -110,7 +110,7 @@ class IntegratedMarketplaceInstaller
         }
 
         throw new RuntimeException(sprintf(
-            'This version requires WemX %s. This site is running %s.',
+            'This version requires Vaded Hosting %s. This site is running %s.',
             trim($constraint),
             config('app.version'),
         ));

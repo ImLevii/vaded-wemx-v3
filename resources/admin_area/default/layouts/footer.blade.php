@@ -3,21 +3,15 @@
         <div class="row text-center align-items-center flex-row-reverse">
             <div class="col-lg-auto ms-lg-auto">
                 <ul class="list-inline list-inline-dots mb-0">
-                    <li class="list-inline-item"><a href="https://v3.wemx.net/docs" target="_blank"
-                                                    class="link-secondary" rel="noopener">Documentation</a></li>
-                    <li class="list-inline-item"><a href="https://github.com/wemxnet/wemx/blob/main/LICENSE.md" class="link-secondary">License</a>
-                    </li>
-                    <li class="list-inline-item"><a href="https://github.com/wemxnet/wemx/blob/main/EULA.md" class="link-secondary">EULA</a>
-                    </li>
-                    <li class="list-inline-item"><a href="https://github.com/wemxnet/wemx" target="_blank"
-                                                    class="link-secondary" rel="noopener">Source code</a></li>
+                    <li class="list-inline-item"><a href="{{ route('categories.index') }}" class="link-secondary">Hosting</a></li>
+                    <li class="list-inline-item"><a href="{{ route('admin.index') }}" class="link-secondary">Dashboard</a></li>
                 </ul>
             </div>
             <div class="col-12 col-lg-auto mt-3 mt-lg-0">
                 <ul class="list-inline list-inline-dots mb-0">
                     <li class="list-inline-item">
                         Copyright &copy; {{ date('Y') }}
-                        <a href="https://wemx.net" class="link-secondary">WemX</a>.
+                        <a href="{{ route('categories.index') }}" class="link-secondary">{{ settings('app_name', config('app.name')) }}</a>.
                         All rights reserved.
                     </li>
                     <li class="list-inline-item">

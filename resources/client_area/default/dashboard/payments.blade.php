@@ -1,6 +1,7 @@
 @extends('theme::dashboard.dashboard-layout')
 
 @section('container')
+    <header class="vh-service-heading"><div><span class="vh-kicker">BILLING CENTER</span><h1>Payments &amp; invoices</h1><p>Review payment history, open an invoice, and track your hosting costs.</p></div><a class="vh-text-link" href="{{ route('subscriptions.index') }}" wire:navigate>Subscriptions <x-theme::icon name="arrow" /></a></header>
     <div class="mb-4">
         @livewire(client_view_path('livewire.table'), [
             'title' => 'Payments',

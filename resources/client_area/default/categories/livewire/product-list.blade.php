@@ -1,23 +1,23 @@
 <?php
 
 use Livewire\Volt\Component;
-use Illuminate\View\View;
+use Livewire\Attributes\Locked;
 use App\Models\Category;
 use App\Models\Package;
 
 new class extends Component
 {
-    public $category;
+    #[Locked]
+    public Category|string $category;
 
     public $packages;
 
-    public function mount($category)
+    public function mount(string $category): void
     {
         $category = Category::whereSlug($category)->firstOrFail();
-        $isAdmin = auth()->check() && auth()->user()->isAdmin();
         $canViewCategory = match ($category->status) {
             'active', 'unlisted' => true,
-            'restricted' => $isAdmin,
+            'restricted' => auth()->user()?->isAdmin() ?? false,
             default => false,
         };
 
@@ -28,57 +28,80 @@ new class extends Component
             ->where('category_id', $category->id)
             ->visibleToUser(auth()->user(), includeUnlisted: false)
             ->with(['prices', 'features'])
+            ->orderBy('sort_order')->orderBy('id')
             ->get();
     }
-}
-
+};
 ?>
-
-<section class="vh-portal-plans antialiased">
-    <div class="mx-auto max-w-screen-xl">
-        <!-- Heading & Filters -->
-        <div class="vh-portal-heading">
-            <div>
-                <span class="vh-portal-eyebrow">Find your perfect fit</span>
-                <h2>{{ $category->name }} plans</h2>
-                <p>{{ $category->description }}</p>
-            </div>
-        </div>
-
-        <div @class(['vh-plan-grid grid grid-cols-1 gap-5', 'max-w-xl' => $packages->count() === 1, 'sm:grid-cols-2' => $packages->count() > 1, 'xl:grid-cols-3' => $packages->count() > 2])>
-            @forelse($packages as $package)
-            <!-- Pricing Card -->
-            <div wire:key="package-{{ $package->id }}" class="vh-portal-plan vh-plan-card flex flex-col rounded-xl border p-7 text-left">
-                <img class="mb-5 aspect-video w-full rounded-lg object-cover" src="{{ $package->icon() }}" alt="" loading="lazy" decoding="async" width="640" height="360">
-                <div class="vh-plan-heading min-w-0 !pr-0">
-                <span class="vh-portal-eyebrow">{{ $category->name }}</span>
-                <h3 class="mb-4 text-2xl font-semibold">{{ $package->name }}</h3>
-                <p class="text-gray-500 text-light sm:text-lg dark:text-gray-400">{{ Str::limit($package->short_description, 70) }}</p>
-                </div>
-                <div class="vh-portal-price my-8 flex flex-wrap items-baseline gap-2">
-                    <span class="mr-2 text-5xl font-extrabold">{{ price($package->prices->first()->price) }}</span>
-                    <span class="text-gray-500">/{{ $package->prices->first()->cycle() }}</span>
-                </div>
-                <!-- List -->
-                <ul role="list" class="mb-8 space-y-4 text-left">
-                    @foreach($package->features as $feature)
-                    <li class="flex items-center space-x-3">
-                        <!-- Icon -->
-                        <svg class="flex-shrink-0 w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                        <span>{{ $feature->description }}</span>
-                    </li>
-                    @endforeach
-                </ul>
-                <a href="{{ route('packages.view', $package->slug) }}" wire:navigate class="vh-action mt-auto" aria-label="Order {{ $package->name }}">Order now <span aria-hidden="true">&rarr;</span></a>
-            </div>
-            @empty
-                <div class="vh-portal-empty col-span-full rounded-xl border p-8 text-center">
-                    <h3>More plans are on the way.</h3>
-                    <p>No plans are currently available for this service. Explore another service or check back soon.</p>
-                    <a href="{{ route('categories.index') }}#services" class="vh-action vh-action-secondary mt-6">Explore other services</a>
-                </div>
-            @endforelse
-        </div>
-
+<section class="vh-plans" x-data="{ period: 'all', comparison: false, plan: '{{ $packages->count() > 4 ? $packages->first()->id : 'all' }}' }" aria-label="{{ $category->name }} plans">
+    @php($billingCycles = $packages->flatMap->prices->sortBy('period_in_days')->unique('period_in_days'))
+    <div class="vh-plans-toolbar">
+        <h3>{{ $category->name }} plans</h3>
+        @if($billingCycles->count() > 1)
+            <fieldset class="vh-cycle-picker"><legend class="sr-only">Billing cycle</legend>
+                <label><input type="radio" value="all" x-model="period" name="catalog-cycle"><span>All cycles</span></label>
+                @foreach($billingCycles as $billingCycle)
+                    <label><input type="radio" value="{{ $billingCycle->period_in_days }}" x-model="period" name="catalog-cycle"><span>{{ $billingCycle->cycle() }}</span></label>
+                @endforeach
+            </fieldset>
+        @endif
+        @if($packages->count() > 1)
+            <button class="vh-text-link" type="button" @click="comparison = !comparison" :aria-expanded="comparison" aria-controls="plan-comparison"><x-theme::icon name="sliders" /> Compare features</button>
+        @endif
     </div>
+    @if($packages->count() > 4)
+        <div class="vh-plan-picker" aria-label="Select a plan">
+            @foreach($packages as $package)<button type="button" @click="plan = '{{ $package->id }}'; period = 'all'" :aria-pressed="plan === '{{ $package->id }}'">{{ $package->name }}</button>@endforeach
+            <button type="button" @click="plan = 'all'" :aria-pressed="plan === 'all'">Show all plans</button>
+        </div>
+    @endif
+    <div class="vh-pricing-grid" :class="{ 'is-focused': plan !== 'all' }">
+        @forelse($packages as $package)
+            @php($prices = $package->prices->sortBy('price')->unique('period_in_days')->values())
+            <article class="vh-pricing-card" wire:key="package-{{ $package->id }}" x-show="(plan === 'all' || plan === '{{ $package->id }}') && (period === 'all' || @js($prices->pluck('period_in_days')->map(fn ($days) => (string) $days)->values()).includes(period))">
+                <div class="vh-plan-name"><x-theme::icon name="server" /><span class="vh-kicker">{{ $category->name }}</span></div>
+                <h4>{{ $package->name }}</h4>
+                <p class="vh-plan-description">{{ $package->short_description ?: 'Configure this plan for your hosting workload.' }}</p>
+                @forelse($prices as $planPrice)
+                    <div class="vh-plan-rate" x-show="period === '{{ $planPrice->period_in_days }}' || (period === 'all' && {{ $loop->first ? 'true' : 'false' }})" @unless($loop->first) x-cloak @endunless>
+                        <strong>{{ price($planPrice->price) }}</strong><span>/ {{ $planPrice->cycle() }}</span>
+                        <small>{{ $planPrice->setup_fee > 0 ? price($planPrice->setup_fee).' one-time setup' : 'No setup fee' }}</small>
+                    </div>
+                @empty
+                    <div class="vh-plan-rate"><span>Currently unavailable</span></div>
+                @endforelse
+                <ul class="vh-plan-features">
+                    @forelse($package->features as $feature)
+                        <li><x-theme::icon name="check" /><span>{{ $feature->description }}</span></li>
+                    @empty
+                        <li><x-theme::icon name="sliders" /><span>Review full plan details and available configuration.</span></li>
+                    @endforelse
+                </ul>
+                @foreach($prices as $planPrice)
+                    <a href="{{ route('packages.view', ['package' => $package->slug, 'packagePriceId' => $planPrice->id]) }}" wire:navigate class="vh-action" aria-label="Configure {{ $package->name }}, {{ $planPrice->cycle() }}" x-show="period === '{{ $planPrice->period_in_days }}' || (period === 'all' && {{ $loop->first ? 'true' : 'false' }})" @unless($loop->first) x-cloak @endunless>Configure Server <x-theme::icon name="arrow" /></a>
+                @endforeach
+            </article>
+        @empty
+            <x-theme::empty-state title="More plans are on the way." description="No plans are currently available for this service. Explore another service or check back soon." action-text="Explore other services" :action-href="route('categories.index').'#services'" />
+        @endforelse
+    </div>
+    @if($packages->count() > 1)
+        <div id="plan-comparison" class="vh-comparison" x-show="comparison" x-cloak>
+            <h4>Compare what’s included</h4>
+            <p>Prices are per billing cycle. Setup fees and configurable extras are shown before checkout.</p>
+            <div class="vh-comparison-grid">
+                @foreach($packages as $package)
+                    @php($prices = $package->prices->sortBy('price')->unique('period_in_days')->values())
+                    <article x-show="period === 'all' || @js($prices->pluck('period_in_days')->map(fn ($days) => (string) $days)->values()).includes(period)">
+                        <h5>{{ $package->name }}</h5>
+                        @foreach($prices as $planPrice)
+                            <p x-show="period === '{{ $planPrice->period_in_days }}' || (period === 'all' && {{ $loop->first ? 'true' : 'false' }})">{{ price($planPrice->price) }} / {{ $planPrice->cycle() }}</p>
+                        @endforeach
+                        <ul>@foreach($package->features as $feature)<li>{{ $feature->description }}</li>@endforeach</ul>
+                        @if($prices->isNotEmpty())<a class="vh-text-link" href="{{ route('packages.view', $package->slug) }}" wire:navigate>Full configuration <x-theme::icon name="arrow" /></a>@endif
+                    </article>
+                @endforeach
+            </div>
+        </div>
+    @endif
 </section>

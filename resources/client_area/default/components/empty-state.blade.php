@@ -7,7 +7,8 @@
     'actionNavigate' => false,
 ])
 
-<div {{ $attributes->class('p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 flex flex-col items-center text-center') }}>
+<div {{ $attributes->class('vh-empty-state p-6 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700 flex flex-col items-center text-center') }}>
+    @unless($icon)<x-theme::icon name="server" />@endunless
     @if($icon)
         <div class="mb-3">
             {!! $icon !!}

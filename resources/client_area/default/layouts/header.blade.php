@@ -21,15 +21,15 @@
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
                     </svg>
                 </button>
-                <a href="{{ route('categories.index') }}" class="vh-brand flex mr-4 min-w-0 items-center" aria-label="{{ settings('app_name', 'Application') }} home">
+                <a href="{{ route('categories.index') }}" class="vh-brand flex mr-4 min-w-0 items-center" aria-label="{{ settings('app_name', config('app.name')) }} home">
                     <img
-                        src="{{ settings('app_logo', '/assets/common/img/app-logo.png') }}"
+                        src="{{ settings('app_logo', '/assets/common/img/vaded-logo.png') }}"
                         class="mr-2 h-10 shrink-0 rounded"
                         alt=""
                     />
                     <span
                         class="font-semibold truncate dark:text-white"
-                    >@foreach (preg_split('/(\bhosting\b)/i', settings('app_name', 'Application'), -1, PREG_SPLIT_DELIM_CAPTURE) as $brandPart)<span @class(['vh-brand-hosting' => strtolower($brandPart) === 'hosting'])>{{ $brandPart }}</span>@endforeach</span
+                    >@foreach (preg_split('/(\bhosting\b)/i', settings('app_name', config('app.name')), -1, PREG_SPLIT_DELIM_CAPTURE) as $brandPart)<span @class(['vh-brand-hosting' => strtolower($brandPart) === 'hosting'])>{{ $brandPart }}</span>@endforeach</span
                     >
                 </a>
             </div>
@@ -70,7 +70,7 @@
                                                 class="vh-mega-card"
                                                 @if(request()->routeIs('categories.index') && request()->query('category') === $navigationCategory->slug) aria-current="page" @endif>
                                                 <img src="{{ $navigationCategory->icon() }}" alt="" width="240" height="150" loading="lazy">
-                                                <span class="vh-mega-card-copy"><strong>{{ $navigationCategory->name }}</strong><small>{{ $navigationCategory->description ?: 'Find your next plan. Make room for your next idea.' }}</small></span>
+                                                <span class="vh-mega-card-copy"><strong>{{ $navigationCategory->name }}</strong><small>{{ $navigationCategory->description ?: 'Compare resources. Configure your server.' }}</small></span>
                                                 <span class="vh-mega-card-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="{{ $navigationGroup['icon'] }}" /></svg></span>
                                             </a>
                                         @empty
@@ -94,6 +94,15 @@
                                     <svg class="vh-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z" /></svg>
                                     Client area
                                 </a>
+                            </li>
+                            <li x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false; $refs.resources.focus()">
+                                <button type="button" class="vh-nav-trigger" x-ref="resources" @click="open = !open" :aria-expanded="open" aria-controls="resources-menu">Resources <svg class="vh-nav-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg></button>
+                                <div id="resources-menu" class="vh-mega-panel vh-mega-panel-compact vh-resource-links" x-show="open" x-cloak>
+                                    <a href="{{ route('categories.index') }}#infrastructure"><x-theme::icon name="cpu" /> Infrastructure</a>
+                                    <a href="{{ route('categories.index') }}#locations"><x-theme::icon name="pin" /> Deployment locations</a>
+                                    <a href="{{ route('categories.index') }}#faq"><x-theme::icon name="console" /> Hosting questions</a>
+                                    @foreach(config('hosting.resources', []) as $label => $href)<a href="{{ $href }}"><x-theme::icon name="arrow" /> {{ $label }}</a>@endforeach
+                                </div>
                             </li>
                             @foreach(extensionElements(['navigation-item']) as $element)
                                 <li
@@ -238,7 +247,7 @@
                 <div class="vh-header-auth flex items-center gap-2">
                     <a href="{{ route('login') }}" class="mr-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-800 lg:py-2.5">Login</a>
                     @if(settings('enable_registrations', true))
-                        <a href="{{ route('register') }}" class="bg-primary-700 hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 mr-2 rounded-lg px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-4 lg:py-2.5">Sign up</a>
+                        <a href="{{ route('categories.index') }}#services" class="bg-primary-700 hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 mr-2 rounded-lg px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-4 lg:py-2.5">Get Started</a>
                     @endif
                 </div>
                 @endguest

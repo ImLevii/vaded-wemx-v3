@@ -9,9 +9,9 @@
         </button>
 
         <a href="{{ route('admin.index') }}" class="navbar-brand navbar-brand-autodark">
-            <img src="{{ asset(settings('logo') ?: settings('app_logo', '/assets/common/img/app-logo.png')) }}" alt=""
+            <img src="{{ asset(settings('app_logo', '/assets/common/img/vaded-logo.png')) }}" alt="{{ settings('app_name', config('app.name')) }}"
                  class="avatar rounded">
-            <span class="ms-2">{{ settings('app_name', 'WemX') }}</span>
+            <span class="ms-2">{{ settings('app_name', config('app.name')) }}</span>
         </a>
 
         <!-- Sidebar menu -->

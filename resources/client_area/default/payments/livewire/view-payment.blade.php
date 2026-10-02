@@ -89,9 +89,9 @@ new class extends Component {
 ?>
 
 <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
-    <div class="mx-auto max-w-6xl">
+    <div class="mx-auto max-w-6xl">@if($payment->isNotPaid())<div class="mb-8"><x-theme::purchase-steps :current="4" /></div>@endif
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">Payment</h2>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">Payment review</h2>
             @if(settings('allow_client_pdf_invoices', false))
                 <a href="{{ route('payments.view.invoice-pdf', ['payment' => $payment->token]) }}"
                    class="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700">
@@ -115,9 +115,9 @@ new class extends Component {
 
                 <x-theme::checkout.billing-fields :company-name="$company_name" :country="$country" />
 
-                <button type="submit"
+                <button type="submit" wire:loading.attr="disabled"
                         class="flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4  focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                    Pay now
+                    <span wire:loading.remove wire:target="payPayment">Continue to payment</span><span wire:loading wire:target="payPayment" role="status">Opening payment&hellip;</span>
                 </button>
             </form>
 

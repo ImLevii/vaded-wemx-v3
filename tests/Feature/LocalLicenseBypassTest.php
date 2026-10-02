@@ -27,6 +27,7 @@ class LocalLicenseBypassTest extends TestCase
             'app.installed' => false,
             'app.license_key' => '',
             'app.license_bypass' => true,
+            'app.demo_mode' => false,
             'cache.default' => 'array',
             'session.driver' => 'array',
         ]);
@@ -73,11 +74,12 @@ class LocalLicenseBypassTest extends TestCase
     }
 
     #[DataProvider('enforcedEnvironments')]
-    public function test_installer_enforces_license_when_bypass_is_unavailable(string $environment, bool $enabled): void
+    public function test_installer_enforces_license_when_bypass_is_unavailable(string $environment, bool $enabled, bool $demoMode = false): void
     {
         $this->app->instance('env', $environment);
         config([
             'app.license_bypass' => $enabled,
+            'app.demo_mode' => $demoMode,
             'app.license_key' => 'WMX-INVALID',
         ]);
 
@@ -134,11 +136,12 @@ class LocalLicenseBypassTest extends TestCase
     }
 
     #[DataProvider('enforcedEnvironments')]
-    public function test_runtime_enforces_license_when_bypass_is_unavailable(string $environment, bool $enabled): void
+    public function test_runtime_enforces_license_when_bypass_is_unavailable(string $environment, bool $enabled, bool $demoMode = false): void
     {
         $this->app->instance('env', $environment);
         config([
             'app.license_bypass' => $enabled,
+            'app.demo_mode' => $demoMode,
             'app.license_key' => 'WMX-INVALID',
         ]);
 
@@ -168,8 +171,115 @@ class LocalLicenseBypassTest extends TestCase
         $this->assertFalse(Cache::has('last_license_check_reported_at'));
     }
 
+    public function test_production_demo_installer_continues_without_persisting_license_activation(): void
+    {
+        $this->app->instance('env', 'production');
+        config(['app.demo_mode' => true]);
+        $environment = file_get_contents(base_path('.env'));
+
+        Livewire::test(InstallWizard::class, ['step' => 'activation'])
+            ->assertSee('Development Demo')
+            ->assertDontSee('Check License')
+            ->call('checkLicenseAndContinue')
+            ->assertHasNoErrors()
+            ->assertSet('step', 'database');
+
+        Http::assertNothingSent();
+        $this->assertFalse(session()->has('installer.license_active'));
+        $this->assertFalse(Cache::has('lcs_checked_at'));
+        $this->assertSame($environment, file_get_contents(base_path('.env')));
+    }
+
+    public function test_production_demo_runtime_bypasses_checks_and_reenforces_them_when_disabled(): void
+    {
+        $this->app->instance('env', 'production');
+        config(['app.demo_mode' => true]);
+        $user = Mockery::mock(User::class)->makePartial();
+        $user->shouldReceive('hasPermission')->with('admin.settings.index')->andReturn(false);
+        $this->actingAs($user);
+
+        $response = (new SyncRuntimeMiddleware)->handle(
+            Request::create('/'),
+            fn (Request $request) => response('Demo app')
+        );
+
+        $this->assertSame('Demo app', $response->getContent());
+        Http::assertNothingSent();
+        $this->assertFalse(Cache::has('lcs_checked_at'));
+
+        config(['app.demo_mode' => false]);
+
+        $this->expectException(HttpException::class);
+        $this->expectExceptionMessage('License Expired');
+        (new SyncRuntimeMiddleware)->handle(Request::create('/'), fn (Request $request) => response('Blocked'));
+    }
+
+    public function test_production_demo_skips_license_reporting(): void
+    {
+        $this->app->instance('env', 'production');
+        config(['app.demo_mode' => true]);
+
+        $this->artisan('cronjobs:report-active-check')
+            ->expectsOutput('Skipping active license check in development demo mode.')
+            ->assertSuccessful();
+
+        Http::assertNothingSent();
+        $this->assertFalse(Cache::has('last_license_check_reported_at'));
+    }
+
+    public function test_demo_admin_can_use_dashboard_and_license_actions_without_a_key(): void
+    {
+        $this->app->instance('env', 'production');
+        config(['app.demo_mode' => true, 'app.installed' => true]);
+        $admin = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+        $environment = file_get_contents(base_path('.env'));
+
+        $this->actingAs($admin)
+            ->withSession(['admin_reauthenticated_at' => now()->toDateTimeString()])
+            ->get(route('admin.index'))
+            ->assertOk();
+
+        $this->get(route('admin.license.index'))
+            ->assertOk()
+            ->assertSee('Demo mode active')
+            ->assertSee('License bypass is enabled')
+            ->assertDontSee('Save License')
+            ->assertDontSee('Verify License');
+
+        foreach (['admin.license.verify', 'admin.license.update'] as $route) {
+            $this->from(route('admin.license.index'))
+                ->withSession(['_token' => 'demo-license-test'])
+                ->post(route($route), ['_token' => 'demo-license-test'])
+                ->assertRedirect(route('admin.license.index'))
+                ->assertSessionHasNoErrors()
+                ->assertSessionHas('status', 'License checks are bypassed for this development environment.');
+        }
+
+        Http::assertNothingSent();
+        $this->assertSame($environment, file_get_contents(base_path('.env')));
+        $this->assertFalse(Cache::has('license.validation.data'));
+    }
+
+    public function test_production_license_page_requires_activation_without_demo_mode(): void
+    {
+        $this->app->instance('env', 'production');
+        config(['app.installed' => true]);
+        $admin = User::factory()->create(['status' => 'active', 'email_verified_at' => now()]);
+
+        $this->actingAs($admin)
+            ->withSession(['admin_reauthenticated_at' => now()->toDateTimeString()])
+            ->get(route('admin.license.index'))
+            ->assertOk()
+            ->assertDontSee('Demo mode active')
+            ->assertSee('Save License');
+
+        $this->withSession(['_token' => 'demo-license-test'])
+            ->post(route('admin.license.verify'), ['_token' => 'demo-license-test'])
+            ->assertSessionHasErrors('license_key');
+    }
+
     /**
-     * @return array<string, array{string, bool}>
+     * @return array<string, array{string, bool, bool?: bool}>
      */
     public static function enforcedEnvironments(): array
     {
@@ -178,6 +288,7 @@ class LocalLicenseBypassTest extends TestCase
             'production with opt-in' => ['production', true],
             'staging with opt-in' => ['staging', true],
             'testing with opt-in' => ['testing', true],
+            'demo without bypass opt-in' => ['production', false, true],
         ];
     }
 }

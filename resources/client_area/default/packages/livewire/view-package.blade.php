@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\Cart;
+use App\Models\CartItem;
+use App\Models\PackagePrice;
+use Illuminate\Support\Facades\DB;
 use App\Models\Payment;
 use Illuminate\Validation\ValidationException;
 use Livewire\Volt\Component;
@@ -23,6 +26,10 @@ new class extends Component {
     #[Url]
     public $config_options = [];
 
+    #[Url]
+    #[Locked]
+    public ?int $cartItemId = null;
+
     public function mount($packageSlug)
     {
         $this->package = Package::where('slug', $packageSlug)->firstOrFail();
@@ -33,10 +40,33 @@ new class extends Component {
         if ($firstPrice AND !$this->packagePriceId) {
             $this->packagePriceId = $firstPrice->id;
         }
+
+        if ($this->cartItemId) {
+            $item = $this->editableCartItem();
+            $this->packagePriceId = $item->cartable_id;
+            foreach ($item->options as $option) {
+                Arr::set($this->config_options, $option->key, $option->value);
+            }
+        }
     }
 
-    public function addToCart()
+    private function editableCartItem(): CartItem
     {
+        $item = cart()->items()->with(['cartable', 'options'])->findOrFail($this->cartItemId);
+        abort_unless($item->cartable instanceof PackagePrice && $item->cartable->package_id === $this->package->id, 404);
+
+        return $item;
+    }
+
+    public function addToCart(): void
+    {
+        $editingItem = $this->cartItemId ? $this->editableCartItem() : null;
+
+        if (! $this->packagePrice) {
+            $this->addError('package_error', 'Choose an available billing cycle.');
+
+            return;
+        }
         // if server connection has prevent_purchasing enabled, and the server connection is not healthy, prevent adding to cart
         if ($this->package->serverConnection->prevent_purchasing AND !$this->package->serverConnection->isHealthy()) {
             $this->addError('package_error', 'Could not establish connection to third party server. Please contact support or try again later.');
@@ -57,11 +87,28 @@ new class extends Component {
             return;
         }
 
-        Cart::actions()->addPackageToCart([
-            'cart_id' => cart()->id,
-            'package_price_id' => $this->packagePriceId,
-            'config_options' => $this->config_options,
-        ]);
+        if ($editingItem) {
+            $breakdown = $this->package->configurableOptionCalculator($this->config_options, $this->packagePrice->period_in_days);
+            DB::transaction(function () use ($editingItem, $breakdown): void {
+                $editingItem->update([
+                    'cartable_id' => $this->packagePrice->id,
+                    'price' => $this->packagePrice->price + $this->packagePrice->setup_fee,
+                ]);
+                $editingItem->options()->delete();
+                $editingItem->options()->createMany(collect($breakdown['breakdown'])->map(fn (array $option): array => [
+                    'name' => $option['label'],
+                    'price' => $option['total'],
+                    'key' => $option['key'],
+                    'value' => $option['value'],
+                ])->all());
+            });
+        } else {
+            Cart::actions()->addPackageToCart([
+                'cart_id' => cart()->id,
+                'package_price_id' => $this->packagePriceId,
+                'config_options' => $this->config_options,
+            ]);
+        }
 
         $this->redirect(route('cart'), true);
     }
@@ -103,11 +150,7 @@ new class extends Component {
 <section class="vh-package-page mx-auto max-w-screen-xl px-4 2xl:px-0">
     <div class="vh-package-topline">
         <a href="{{ route('categories.index') }}" wire:navigate class="vh-package-back"><span aria-hidden="true">&larr;</span> All services</a>
-        <ol class="vh-purchase-steps" aria-label="Order progress">
-            <li aria-current="step"><span>01</span> Configure</li>
-            <li><span>02</span> Cart</li>
-            <li><span>03</span> Checkout</li>
-        </ol>
+        <x-theme::purchase-steps :current="2" />
     </div>
 
     <header class="vh-package-heading">
@@ -233,13 +276,14 @@ new class extends Component {
             @endif
         </div>
 
-        <aside class="vh-package-summary" aria-labelledby="package-summary-heading">
+        <aside class="vh-package-summary" aria-labelledby="package-summary-heading" x-data="{ expanded: false }">
             <div class="vh-purchase-panel">
+                <button type="button" class="vh-summary-toggle" @click="expanded = !expanded" :aria-expanded="expanded" aria-controls="package-price-breakdown">Order summary <span x-text="expanded ? 'Hide details −' : 'Show details +'">Show details +</span></button>
                 <span class="vh-package-eyebrow">Your configuration</span>
                 <h2 id="package-summary-heading">Order summary</h2>
                 <div class="vh-summary-product"><img src="{{ $package->icon() }}" alt="" width="44" height="44"><div><strong>{{ $package->name }}</strong><span>{{ $this->packagePrice?->cycle() ?? 'Unavailable' }}</span></div></div>
                 @if ($this->packagePrice)
-                    <div class="vh-summary-breakdown" aria-live="polite" aria-atomic="true">
+                    <div id="package-price-breakdown" class="vh-summary-breakdown" :class="{ 'vh-mobile-collapsed': !expanded }" aria-live="polite" aria-atomic="true">
                         <dl><dt>Billing cycle</dt><dd>{{ price($this->packagePrice->price) }} <small>/ {{ $this->packagePrice->cycle() }}</small></dd></dl>
                         <dl><dt>Setup fee</dt><dd>{{ price($this->packagePrice->setup_fee) }}</dd></dl>
                         @if ($this->calculateConfigOptionCost()['total'] > 0)
@@ -252,8 +296,8 @@ new class extends Component {
                         @if ($this->packagePrice->setup_fee > 0)<p class="vh-summary-note">Plus {{ price($this->packagePrice->setup_fee) }} one-time setup fee.</p>@endif
                     </div>
                     <button type="button" wire:click="addToCart" wire:loading.attr="disabled" class="vh-action vh-action-tile vh-package-submit">
-                        <span wire:loading.remove wire:target="addToCart"><x-theme::action-content label="Add to cart" description="Review before checkout" icon="M3 3h2l3 12h11l3-9H6M9 20h.01M18 20h.01" /></span>
-                        <span wire:loading wire:target="addToCart" role="status">Adding to cart&hellip;</span>
+                        <span wire:loading.remove wire:target="addToCart"><x-theme::action-content :label="$cartItemId ? 'Save configuration' : 'Add to cart'" description="Review before checkout" icon="M3 3h2l3 12h11l3-9H6M9 20h.01M18 20h.01" /></span>
+                        <span wire:loading wire:target="addToCart" role="status">Saving configuration&hellip;</span>
                     </button>
                     <p class="vh-summary-footnote">You can review your items in the cart before checkout.</p>
                 @else

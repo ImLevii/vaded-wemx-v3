@@ -29,7 +29,7 @@ new class extends Component
 
 
 <form class="w-full max-w-md space-y-4 md:space-y-6 xl:max-w-xl" wire:submit="handleLogin">
-    <x-theme::text.h5>Welcome back</x-theme::text.h5>
+    <div class="vh-form-heading"><h1>Welcome back to Vaded.</h1><p>Your servers, billing, and community are right here.</p></div>
 
     @foreach(extensionElements(['client-login-top-view']) as $element)
         @includeIf($element['view'])
@@ -45,7 +45,7 @@ new class extends Component
 
     <div class="mb-4">
         <x-theme::form.label for="password" text="Password"/>
-        <x-theme::form.input type="password" placeholder="Password" class="mb-3" wire:model="password" id="password"/>
+        <x-theme::form.password placeholder="Password" wire:model="password" id="password" />
         @error('password')
         <x-theme::form.error :text="$message"/>
         @enderror
@@ -55,7 +55,7 @@ new class extends Component
         <x-theme::form.checkbox label="Remember me" id="remember" wire:model="remember"/>
         <x-theme::text.link text="Forgot Password?" class="text-sm" wire:navigate href="{{ route('forgot-password') }}"/>
     </div>
-    <x-theme::button.primary type="submit" text="Sign in to your account" class="w-full justify-content-center"/>
+    <x-theme::button.primary type="submit" class="w-full" wire:loading.attr="disabled"><span wire:loading.remove wire:target="handleLogin">Sign in to your account</span><span wire:loading wire:target="handleLogin" role="status">Signing in&hellip;</span></x-theme::button.primary>
 
     @foreach(extensionElements(['client-login-bottom-view']) as $element)
         @includeIf($element['view'])

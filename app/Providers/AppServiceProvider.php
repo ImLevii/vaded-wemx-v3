@@ -83,6 +83,22 @@ class AppServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(resource_path('client_area/'.config('app.theme', 'default')), 'theme');
 
+        $this->app->scoped(\App\Support\HostingCatalog::class);
+
+        View::composer('theme::dashboard.dashboard-layout', function (ViewInstance $view): void {
+            $view->with('nextRenewal', auth()->user()?->orders()->where('status', 'active')
+                ->whereNotNull('due_date')->orderBy('due_date')->first());
+        });
+
+        View::composer(['theme::categories.index', 'theme::layouts.footer'], function (ViewInstance $view): void {
+            $catalog = app(\App\Support\HostingCatalog::class);
+            $view->with('hostingCategories', $catalog->categories());
+
+            if ($view->name() === 'theme::categories.index') {
+                $view->with('selectedCategory', $catalog->selectedCategory());
+            }
+        });
+
         View::composer('theme::layouts.header', function (ViewInstance $view): void {
             $isAdmin = auth()->user()?->isAdmin() ?? false;
 

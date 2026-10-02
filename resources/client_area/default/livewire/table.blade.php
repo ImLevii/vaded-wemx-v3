@@ -99,7 +99,7 @@ new class extends Component
 
 
 <div>
-    <x-theme::table containerClass="shadow-md sm:rounded-t-lg" >
+    <x-theme::table containerClass="shadow-md sm:rounded-t-lg" class="vh-responsive-table">
         <x-theme::table.caption :description="$description">
             <div class="flex flex-column justify-between items-center">
                 <div>
@@ -148,7 +148,7 @@ new class extends Component
             @if(count($this->filteredRows) === 0)
                 <x-theme::table.row>
                     <x-theme::table.cell class="text-center" colspan="{{ count($columns) }}">
-                        No data available
+                        <div class="vh-table-empty"><x-theme::icon name="search" /><strong>{{ $search ? 'No matching results.' : 'Nothing here yet.' }}</strong><span>{{ $search ? 'Try a different search to find your records.' : 'Your records will appear here when they are available.' }}</span></div>
                     </x-theme::table.cell>
                 </x-theme::table.row>
             @endif
@@ -156,7 +156,7 @@ new class extends Component
             @foreach($this->paginatedRows as $row)
                 <x-theme::table.row>
                     @foreach($row as $cell)
-                        <x-theme::table.cell>{!! $cell !!}</x-theme::table.cell>
+                        <x-theme::table.cell data-label="{{ $columns[$loop->index] ?? '' }}">{!! $cell !!}</x-theme::table.cell>
                     @endforeach
                 </x-theme::table.row>
             @endforeach

@@ -148,8 +148,8 @@
                            <img src="'. $order->package->icon() .'" class="avatar me-2" alt="'. $order->package->name .'">
                             <span class=""></span>
                             <div class="flex-fill">
-                                <div class="font-weight-medium"><a href="https://wemxv2.test/admin/packages/edit/2" wire:navigate="" class="text-reset">'. $order->package->name .'</a></div>
-                                <div class="text-secondary"><a href="https://wemxv2.test/admin/categories/edit/1" wire:navigate="" class="text-reset">'. $order->package->category->name .'</a></div>
+                                <div class="font-weight-medium"><a href="'. route('admin.packages.edit', $order->package) .'" wire:navigate="" class="text-reset">'. $order->package->name .'</a></div>
+                                <div class="text-secondary"><a href="'. route('admin.categories.edit', $order->package->category) .'" wire:navigate="" class="text-reset">'. $order->package->category->name .'</a></div>
                             </div>
                         </div>',
                         '<a href="' . route('admin.servers.connections.edit', $order->package->serverConnection->id) . '" wire:navigate>'. $order->package->serverConnection->alias .'</a>',
