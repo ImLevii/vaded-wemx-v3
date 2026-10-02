@@ -21,6 +21,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Validation\ValidationException;
+use Livewire\Volt\Volt;
+use PHPUnit\Framework\Attributes\DataProvider;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -361,6 +363,95 @@ class PterodactylServerTest extends TestCase
         $this->expectExceptionMessage('does not have a provisioned');
 
         (new Server)->suspend($this->createOrder(), $this->connection);
+    }
+
+    #[DataProvider('invalidServerIds')]
+    public function test_lifecycle_actions_reject_invalid_server_ids_without_calling_the_panel(?string $serverId): void
+    {
+        $order = $this->createOrder();
+        $order->update(['external_id' => $serverId]);
+        $server = new Server;
+
+        foreach (['suspend', 'unsuspend', 'terminate'] as $action) {
+            try {
+                $server->{$action}($order, $this->connection);
+                $this->fail('An invalid server ID must not reach the panel.');
+            } catch (RuntimeException $exception) {
+                $this->assertStringContainsString("Order #{$order->id}", $exception->getMessage());
+                $this->assertStringContainsString('link its numeric panel server ID', $exception->getMessage());
+            }
+        }
+
+        Http::assertNothingSent();
+        $this->assertSame('pending', $order->fresh()->status);
+    }
+
+    /** @return array<string, array{0: ?string}> */
+    public static function invalidServerIds(): array
+    {
+        return [
+            'missing' => [null],
+            'empty' => [''],
+            'zero' => ['0'],
+            'negative' => ['-1'],
+            'fraction' => ['1.5'],
+            'identifier instead of numeric ID' => ['abc123'],
+            'extra path' => ['101/suspend'],
+            'whitespace' => [' 101 '],
+        ];
+    }
+
+    public function test_lifecycle_actions_normalize_a_trailing_slash_in_the_panel_url(): void
+    {
+        $this->fakePanel();
+        $this->connection->update(['config' => array_merge($this->credentials(), ['hostname' => 'https://panel.example.test/'])]);
+        $order = $this->provisionedOrder();
+        $server = new Server;
+
+        $server->suspend($order, $this->connection);
+        $server->unsuspend($order, $this->connection);
+        $server->terminate($order, $this->connection);
+
+        Http::assertSentCount(3);
+        Http::assertNotSent(fn (Request $request): bool => str_contains($request->url(), '.test//'));
+    }
+
+    public function test_lifecycle_api_errors_are_propagated_without_changing_order_status(): void
+    {
+        Http::fake(['*' => Http::response(['errors' => [['detail' => 'Method not allowed']]], 405)]);
+        $order = $this->provisionedOrder();
+        $server = new Server;
+
+        foreach (['suspend', 'unsuspend', 'terminate'] as $action) {
+            try {
+                $server->{$action}($order, $this->connection);
+                $this->fail('A failed panel action must not report success.');
+            } catch (\Exception $exception) {
+                $this->assertStringContainsString('status code: 405', $exception->getMessage());
+            }
+        }
+
+        Http::assertSentCount(3);
+        $this->assertSame('pending', $order->fresh()->status);
+    }
+
+    public function test_order_alerts_display_the_actual_failed_action(): void
+    {
+        $order = $this->createOrder();
+
+        foreach (['create', 'suspend', 'unsuspend', 'terminate'] as $action) {
+            $order->exceptions()->create(['action' => $action, 'message' => 'Panel action failed']);
+        }
+
+        $resolved = $order->exceptions()->create(['action' => 'terminate', 'message' => 'Resolved incident']);
+        $resolved->resolve();
+
+        Volt::test('admin_area.default.orders.livewire.order-alerts', ['order' => $order])
+            ->assertSee('Failed to perform action "Create"', false)
+            ->assertSee('Failed to perform action "Suspend"', false)
+            ->assertSee('Failed to perform action "Unsuspend"', false)
+            ->assertSee('Failed to perform action "Terminate"', false)
+            ->assertDontSee('Resolved incident');
     }
 
     public function test_password_changes_resolve_the_user_from_the_correct_panel(): void

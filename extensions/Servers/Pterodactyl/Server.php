@@ -7,9 +7,11 @@ use App\Models\Order;
 use App\Models\Package;
 use App\Models\ServerConnection;
 use Exception;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class Server extends ServerExtension
 {
@@ -176,7 +178,7 @@ class Server extends ServerExtension
                     );
 
                     if (! isset($egg['attributes'])) {
-                        throw new \RuntimeException('Invalid egg response from panel.');
+                        throw new RuntimeException('Invalid egg response from panel.');
                     }
 
                     return $egg['attributes'];
@@ -363,12 +365,12 @@ class Server extends ServerExtension
     /**
      * Make API request to Pterodactyl API
      */
-    public static function makeRequest(array $credentials, $endpoint, $method = 'get', $data = [])
+    public static function makeRequest(array $credentials, string $endpoint, string $method = 'get', array $data = []): Response
     {
         $method = strtolower($method);
 
         $apiKey = $credentials['api_key'] ?? '';
-        $hostname = $credentials['hostname'] ?? '';
+        $hostname = rtrim($credentials['hostname'] ?? '', '/');
 
         if (! in_array($method, ['get', 'post', 'put', 'delete', 'patch'])) {
             throw new Exception('Invalid method');
@@ -378,7 +380,7 @@ class Server extends ServerExtension
             'Authorization' => 'Bearer '.$apiKey,
             'Accept' => 'Application/vnd.Pterodactyl.v1+json',
             'Content-Type' => 'application/json',
-        ])->$method($hostname.$endpoint, $data);
+        ])->connectTimeout(5)->timeout(20)->$method($hostname.'/'.ltrim($endpoint, '/'), $data);
 
         if ($response->failed()) {
             throw new Exception("Failed to connect to Pterodactyl API at endpoint: $endpoint with status code: {$response->status()} and response: {$response->body()}");
@@ -640,35 +642,46 @@ class Server extends ServerExtension
      * This function is responsible for suspending an instance of the
      * service. This method is called when a order is expired or
      * suspended by an admin
-     *
-     * @return void
      */
-    public function suspend(Order $order, ServerConnection $connection)
+    public function suspend(Order $order, ServerConnection $connection): void
     {
-        Server::makeRequest($connection->config, "/api/application/servers/{$order->external_id}/suspend", 'post');
+        $serverId = $this->provisionedServerId($order);
+
+        Server::makeRequest($connection->config, "/api/application/servers/{$serverId}/suspend", 'post');
     }
 
     /**
      * This function is responsible for unsuspending an instance of the
      * service. This method is called when a order is activated or
      * unsuspended by an admin
-     *
-     * @return void
      */
-    public function unsuspend(Order $order, ServerConnection $connection)
+    public function unsuspend(Order $order, ServerConnection $connection): void
     {
-        Server::makeRequest($connection->config, "/api/application/servers/{$order->external_id}/unsuspend", 'post');
+        $serverId = $this->provisionedServerId($order);
+
+        Server::makeRequest($connection->config, "/api/application/servers/{$serverId}/unsuspend", 'post');
     }
 
     /**
      * This function is responsible for deleting an instance of the
      * service. This can be anything such as a server, vps or any other instance.
-     *
-     * @return void
      */
-    public function terminate(Order $order, ServerConnection $connection)
+    public function terminate(Order $order, ServerConnection $connection): void
     {
-        Server::makeRequest($connection->config, "/api/application/servers/{$order->external_id}", 'delete');
+        $serverId = $this->provisionedServerId($order);
+
+        Server::makeRequest($connection->config, "/api/application/servers/{$serverId}", 'delete');
+    }
+
+    private function provisionedServerId(Order $order): string
+    {
+        $serverId = (string) $order->external_id;
+
+        if (! ctype_digit($serverId) || (int) $serverId < 1) {
+            throw new RuntimeException("Order #{$order->id} does not have a provisioned Pterodactyl server ID. Provision the server or link its numeric panel server ID before performing this action.");
+        }
+
+        return $serverId;
     }
 
     public function upgrade(Order $order)

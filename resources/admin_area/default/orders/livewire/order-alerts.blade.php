@@ -23,7 +23,7 @@ new class extends Component
     @foreach($order->exceptions()->where('resolved_at', null)->latest()->get() as $exception)
     <div class="alert alert-danger" role="alert">
         <div>
-            <h4 class="alert-heading">Failed to perform action "Suspend" #{{ $exception->id }}</h4>
+            <h4 class="alert-heading">Failed to perform action "{{ Str::headline($exception->action) }}" #{{ $exception->id }}</h4>
             <div class="alert-description">
                 <ul class="alert-list">
                     <li>
