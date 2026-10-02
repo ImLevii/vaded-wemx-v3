@@ -33,11 +33,15 @@ class SyncRuntimeMiddleware
         }
 
         if (empty(config('app.license_key')) or ! str_starts_with(config('app.license_key'), 'WMX-')) {
-            if (auth()->user()->hasPermission('admin.settings.index') and ! in_array($request->route()->getName(), $this->except)) {
-                return redirect()->route('admin.license.index');
-            } else {
+            if (! auth()->user()->hasPermission('admin.settings.index')) {
                 abort(403, 'License Expired');
             }
+
+            if ($request->route() && ! in_array($request->route()->getName(), $this->except)) {
+                return redirect()->route('admin.license.index');
+            }
+
+            return $next($request);
         }
 
         if (Cache::has('lcs_checked_at')) {
