@@ -32,8 +32,15 @@
         @endforeach
     </div>
 
-    <section id="services" class="vh-section" aria-labelledby="services-heading">
-        <div class="vh-section-heading"><div><span class="vh-kicker">01 / CHOOSE YOUR SERVER</span><h2 id="services-heading">Built for your kind of hosting.</h2></div><span class="vh-section-note">All Services <span aria-hidden="true">↘</span></span></div>
+    <section id="services" class="vh-section vh-services-section" aria-labelledby="services-heading">
+        <div class="vh-section-heading">
+            <div>
+                <span class="vh-kicker"><span></span> 01 / CHOOSE YOUR SERVER</span>
+                <h2 id="services-heading">Built for your <em>kind of hosting.</em></h2>
+                <p>Find your platform. Choose your resources. Build your community.</p>
+            </div>
+            <a class="vh-services-compare" href="#pricing">Compare hosting plans <x-theme::icon name="arrow" /></a>
+        </div>
         <div class="vh-service-cards">
             @forelse($hostingCategories as $category)
                 @php($startingPrice = $category->packages->flatMap->prices->sortBy('price')->first())
@@ -45,10 +52,13 @@
                             <x-theme::icon :name="str_contains($category->slug, 'minecraft') ? 'cube' : (str_contains($category->slug, 'bot') ? 'bot' : (str_contains($category->slug, 'vps') ? 'cloud' : 'server'))" />
                         @endif
                         <span class="vh-service-index">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
+                        @if($selectedCategory?->is($category))
+                            <span class="vh-service-selected">Selected</span>
+                        @endif
                     </div>
                     <div class="vh-service-body"><h3>{{ $category->name }}</h3><p>{{ $category->description ?: 'Choose the resources for your workload and manage your hosting from one place.' }}</p>
                         <div class="vh-service-price">@if($startingPrice)<small>Starting from</small><strong>{{ price($startingPrice->price) }}</strong><span>/ {{ $startingPrice->cycle() }}</span>@else<span>Explore available plans</span>@endif</div>
-                        <span class="vh-service-link">View {{ $category->name }} plans <x-theme::icon name="arrow" /></span>
+                        <span class="vh-service-link"><span>View {{ $category->name }} plans</span><span class="vh-service-arrow"><x-theme::icon name="arrow" /></span></span>
                     </div>
                 </a>
             @empty
