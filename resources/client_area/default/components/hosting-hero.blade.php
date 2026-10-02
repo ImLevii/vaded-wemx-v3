@@ -5,9 +5,11 @@
     'description' => 'Manage your servers, services, and billing from one place. Your next project starts here.',
     'primaryHref' => null,
     'primaryLabel' => 'VIEW ALL SERVICES',
+    'primaryDescription' => null,
     'primaryNavigate' => true,
     'secondaryHref' => null,
     'secondaryLabel' => 'Learn more',
+    'secondaryDescription' => null,
     'image' => 'assets/common/img/vaded-server-rack.png',
     'inlineTitle' => false,
     'ambient' => false,
@@ -26,9 +28,13 @@
         <h1>{{ $title }}@if($inlineTitle) {{ ' ' }}@else<br>@endif<span>{{ $accent }}</span></h1>
         <p>{{ $description }}</p>
         <div class="vh-hero-actions">
-            <a href="{{ $primaryHref ?? route('categories.index') }}" @if($primaryNavigate) wire:navigate @endif class="vh-action">{{ $primaryLabel }} <span aria-hidden="true">&rarr;</span></a>
+            <a href="{{ $primaryHref ?? route('categories.index') }}" @if($primaryNavigate) wire:navigate @endif class="vh-action vh-action-tile">
+                <x-theme::action-content :label="$primaryLabel" :description="$primaryDescription" icon="M4 3h16v7H4zM4 14h16v7H4zM7 6.5h.01M7 17.5h.01M11 6.5h6M11 17.5h6" />
+            </a>
             @if($secondaryHref)
-                <a href="{{ $secondaryHref }}" class="vh-action vh-action-secondary">{{ $secondaryLabel }}</a>
+                <a href="{{ $secondaryHref }}" class="vh-action vh-action-secondary vh-action-tile">
+                    <x-theme::action-content :label="$secondaryLabel" :description="$secondaryDescription" />
+                </a>
             @else
                 @auth
                     <a href="{{ route('account.settings') }}" wire:navigate class="vh-action vh-action-secondary">Manage account</a>
@@ -37,8 +43,10 @@
                 @endauth
             @endif
         </div>
+        {{ $slot }}
     </div>
     <div class="vh-hero-art" aria-hidden="true">
         <img src="{{ asset($image) }}" alt="" width="1024" height="1536" fetchpriority="high">
+        {{ $artOverlay ?? '' }}
     </div>
 </section>

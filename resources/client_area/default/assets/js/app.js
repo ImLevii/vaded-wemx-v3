@@ -23,6 +23,23 @@ document.addEventListener('livewire:navigated', () => {
     }
 });
 
+document.addEventListener('click', (event) => {
+    const navigationLink = event.target.closest('#client-main-navigation a');
+    const toggle = document.getElementById('client-nav-toggle');
+
+    if (navigationLink && toggle && toggle.getAttribute('aria-expanded') === 'true') {
+        toggle.click();
+    }
+
+    if (navigationLink || (event.target.closest('#client-nav-toggle') && toggle?.getAttribute('aria-expanded') === 'false')) {
+        window.dispatchEvent(new CustomEvent('vaded-nav-close'));
+    }
+});
+
+document.addEventListener('livewire:navigating', () => {
+    window.dispatchEvent(new CustomEvent('vaded-nav-close'));
+});
+
 // default options
 toastr.options = {
     closeButton: true,

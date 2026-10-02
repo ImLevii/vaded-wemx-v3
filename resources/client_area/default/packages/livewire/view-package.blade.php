@@ -100,65 +100,81 @@ new class extends Component {
 };
 ?>
 
-<section>
-    <div class="mx-auto max-w-screen-xl px-4 2xl:px-0">
+<section class="vh-package-page mx-auto max-w-screen-xl px-4 2xl:px-0">
+    <div class="vh-package-topline">
+        <a href="{{ route('categories.index') }}" wire:navigate class="vh-package-back"><span aria-hidden="true">&larr;</span> All services</a>
+        <ol class="vh-purchase-steps" aria-label="Order progress">
+            <li aria-current="step"><span>01</span> Configure</li>
+            <li><span>02</span> Cart</li>
+            <li><span>03</span> Checkout</li>
+        </ol>
+    </div>
 
-        <div class="mb-4 flex items-end">
-            <img class="w-16 h-16 rounded-sm mr-3" src="{{ $package->icon() }}" alt="Large avatar">
-
+    <header class="vh-package-heading">
+        <div class="vh-package-identity">
+            <div class="vh-package-art"><img src="{{ $package->icon() }}" alt="" width="96" height="96"></div>
             <div>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white sm:text-2xl">{{ $package->name }}</h2>
-                <p class="text-lg text-gray-500 lg:mb-0 dark:text-gray-400 lg:max-w-2xl">{{ $package->short_description }}</p>
+                <span class="vh-package-eyebrow">Make it yours</span>
+                <h1>{{ $package->name }}</h1>
+                @if (filled($package->short_description))
+                    <p>{{ $package->short_description }}</p>
+                @else
+                    <p>Choose your billing cycle and configure your service.</p>
+                @endif
             </div>
         </div>
+        @if ($this->packagePrice)
+            <div class="vh-package-price-preview"><span>Selected plan</span><strong>{{ price($this->packagePrice->price) }}</strong><small>{{ $this->packagePrice->cycle() }}</small></div>
+        @endif
+    </header>
 
-        <div class=" md:gap-6 lg:flex lg:items-start xl:gap-8">
-            <div class="mx-auto w-full flex-none lg:max-w-2xl xl:max-w-4xl">
-                @error('package_error')
-                    <x-theme::alert.danger :text="$message" />
-                @enderror
+    <div class="vh-package-layout">
+        <div class="vh-package-main">
+            @error('package_error')
+                <div role="alert"><x-theme::alert.danger :text="$message" /></div>
+            @enderror
 
-                <x-theme::card class="mb-6">
-                    <div class="format format-sm format-blue dark:format-invert ">
-                        {!! Str::markdown(($package->description) ?? 'No description provided') !!}
-                    </div>
-                </x-theme::card>
+            @if (filled(trim($package->description ?? '')) || $package->features->isNotEmpty())
+                <section class="vh-purchase-panel vh-package-overview" aria-labelledby="package-overview-heading">
+                    <div class="vh-purchase-section-heading"><span class="vh-purchase-section-icon" aria-hidden="true">&#10003;</span><div><h2 id="package-overview-heading">Your plan at a glance</h2><p>Everything included with this service.</p></div></div>
+                    @if (filled(trim($package->description ?? '')))
+                        <div class="format format-sm dark:format-invert vh-package-description">{!! Str::markdown($package->description) !!}</div>
+                    @endif
+                    @if ($package->features->isNotEmpty())
+                        <ul class="vh-package-features">
+                            @foreach ($package->features as $feature)
+                                <li><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m4 10 4 4 8-8"/></svg>{{ $feature->description }}</li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </section>
+            @endif
 
-                <hr class="h-px my-4 bg-gray-200 border-0 dark:bg-gray-700">
-
-                <div>
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Billing Cycle</h2>
-                    <ul class="grid w-full gap-6 md:grid-cols-3">
-
-                        @foreach($package->prices as $price)
-                            <li class="col-span-3 lg:col-span-1 md:col-span-1">
-                                <input type="radio" wire:model.live="packagePriceId"
-                                       id="package_price_id{{ $price->id }}" value="{{ $price->id }}"
-                                       class="hidden peer" required/>
-                                <label for="package_price_id{{ $price->id }}"
-                                       class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 peer-checked:border-blue-600 dark:peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                    <div class="block">
-                                        <div class="w-full text-lg font-semibold">{{ price($price->price) }}
-                                            / {{ $price->cycle() }}</div>
-                                        <div class="w-full">{{ $price->short_description }}</div>
-                                    </div>
-                                    <svg class="w-5 h-5 ms-3 rtl:rotate-180" aria-hidden="true"
-                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 10">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                              stroke-width="2" d="M1 5h12m0 0L9 1m4 4L9 9"/>
-                                    </svg>
+            <section class="vh-purchase-panel" aria-labelledby="billing-heading">
+                <div class="vh-purchase-section-heading"><span class="vh-purchase-section-icon" aria-hidden="true">01</span><div><h2 id="billing-heading">Billing cycle</h2><p>Choose how often you would like to be billed.</p></div></div>
+                <fieldset>
+                    <legend class="sr-only">Billing cycle</legend>
+                    <ul class="vh-billing-options">
+                        @forelse ($package->prices as $price)
+                            <li wire:key="billing-{{ $price->id }}">
+                                <input type="radio" name="package-billing-cycle" wire:model.live="packagePriceId" id="package_price_id{{ $price->id }}" value="{{ $price->id }}" class="sr-only peer" required>
+                                <label for="package_price_id{{ $price->id }}" class="vh-billing-option">
+                                    <span class="vh-billing-option-top"><span>{{ $price->cycle() }}</span><span class="vh-billing-check" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 8 3 3 7-7"/></svg></span></span>
+                                    <strong>{{ price($price->price) }}</strong>
+                                    @if (filled($price->short_description))<span class="vh-billing-description">{{ $price->short_description }}</span>@endif
+                                    <span class="vh-billing-setup">{{ $price->setup_fee > 0 ? price($price->setup_fee).' setup fee' : 'No setup fee' }}</span>
                                 </label>
                             </li>
-                        @endforeach
-
+                        @empty
+                            <li class="vh-package-unavailable">No billing options are currently available for this plan.</li>
+                        @endforelse
                     </ul>
-                </div>
+                </fieldset>
+            </section>
 
-                @if($this->package->configOptions->isNotEmpty())
-                    <hr class="h-px my-6 bg-gray-200 border-0 dark:bg-gray-700">
-                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Configurable Options</h2>
-
-                    <x-theme::card class="mb-6">
+            @if ($this->packagePrice && $this->package->configOptions->isNotEmpty())
+                <section class="vh-purchase-panel vh-package-options" aria-labelledby="options-heading">
+                    <div class="vh-purchase-section-heading"><span class="vh-purchase-section-icon" aria-hidden="true">02</span><div><h2 id="options-heading">Configure your service</h2><p>Adjust the options to suit your project.</p></div></div>
                         @foreach($this->package->configOptions as $option)
                             <div class="mb-4">
                                 @if($option->type !== 'radio')
@@ -212,77 +228,39 @@ new class extends Component {
                                     @enderror
                             </div>
                         @endforeach
-                    </x-theme::card>
-                @endif
-            </div>
 
-            <div class="mx-auto mt-6 max-w-4xl flex-1 space-y-6 lg:mt-0 lg:w-full">
-                <div
-                    class="space-y-4 rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800 sm:p-6">
-                    <p class="text-xl font-semibold text-gray-900 dark:text-white">Summary</p>
-
-                    <div class="space-y-4">
-                        <div class="space-y-2">
-                            <dl class="flex items-center justify-between gap-4">
-                                <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Billing Cycle</dt>
-                                <dd class="text-base font-medium text-gray-900 dark:text-white">{{ price($this->packagePrice->price) }} / {{ $this->packagePrice->cycle() }}</dd>
-                            </dl>
-
-                            <dl class="flex items-center justify-between gap-4">
-                                <dt class="text-base font-normal text-gray-500 dark:text-gray-400">Setup Fee</dt>
-                                <dd class="text-base font-medium text-gray-900 dark:text-white">{{ price($this->packagePrice->setup_fee) }}</dd>
-                            </dl>
-
-
-                        @if($this->calculateConfigOptionCost()['total'] > 0)
-                            <p class="text-md font-semibold text-gray-900 dark:text-white">Configurable Options</p>
-                            @foreach($this->calculateConfigOptionCost()['breakdown'] as $option)
-                                @continue((float) ($option['total'] ?? 0) <= 0)
-                                <dl class="flex items-center justify-between gap-4">
-                                    <dt class="text-base font-normal text-gray-500 dark:text-gray-400">{{ $option['label'] }}</dt>
-                                    <dd class="text-base font-medium text-gray-900 dark:text-white">{{ price($option['total']) }}</dd>
-                                </dl>
-                                @endforeach
-                            @endif
-                        </div>
-
-                        <dl class="flex items-center justify-between gap-4 border-t border-gray-200 pt-2 dark:border-gray-700">
-                            <dt class="text-base font-bold text-gray-900 dark:text-white">Total</dt>
-                            <dd class="text-base font-bold text-gray-900 dark:text-white">{{ price($this->calculateConfigOptionCost()['total'] + $this->packagePrice->price) }} / {{ $this->packagePrice->cycle() }} @if($this->packagePrice->setup_fee > 0) (+ {{ price($this->packagePrice->setup_fee) }} Setup Fee) @endif</dd>
-                        </dl>
-                    </div>
-
-                    <button type="button" wire:click="addToCart()" wire:loading.attr="disabled"
-                            class="flex w-full items-center justify-center rounded-lg bg-primary-700 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-800 focus:outline-none focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">
-                        <svg wire:loading aria-hidden="true" role="status"
-                             class="inline w-4 h-4 me-3 text-white animate-spin" viewBox="0 0 100 101" fill="none"
-                             xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                                fill="#E5E7EB"/>
-                            <path
-                                d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                                fill="currentColor"/>
-                        </svg>
-                        Add to Cart
-                    </button>
-
-                    <div class="flex items-center justify-center gap-2">
-                        <span class="text-sm font-normal text-gray-500 dark:text-gray-400"> or </span>
-                        <a href="{{ route('categories.index') }}" title="" wire:navigate
-                           class="inline-flex items-center gap-2 text-sm font-medium text-primary-700 underline hover:no-underline dark:text-primary-500">
-                            Continue Shopping
-                            <svg class="h-5 w-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                 viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                      stroke-width="2" d="M19 12H5m14 0-4 4m4-4-4-4"/>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-
-            </div>
+                </section>
+            @endif
         </div>
+
+        <aside class="vh-package-summary" aria-labelledby="package-summary-heading">
+            <div class="vh-purchase-panel">
+                <span class="vh-package-eyebrow">Your configuration</span>
+                <h2 id="package-summary-heading">Order summary</h2>
+                <div class="vh-summary-product"><img src="{{ $package->icon() }}" alt="" width="44" height="44"><div><strong>{{ $package->name }}</strong><span>{{ $this->packagePrice?->cycle() ?? 'Unavailable' }}</span></div></div>
+                @if ($this->packagePrice)
+                    <div class="vh-summary-breakdown" aria-live="polite" aria-atomic="true">
+                        <dl><dt>Billing cycle</dt><dd>{{ price($this->packagePrice->price) }} <small>/ {{ $this->packagePrice->cycle() }}</small></dd></dl>
+                        <dl><dt>Setup fee</dt><dd>{{ price($this->packagePrice->setup_fee) }}</dd></dl>
+                        @if ($this->calculateConfigOptionCost()['total'] > 0)
+                            @foreach ($this->calculateConfigOptionCost()['breakdown'] as $option)
+                                @continue((float) ($option['total'] ?? 0) <= 0)
+                                <dl><dt>{{ $option['label'] }}</dt><dd>{{ price($option['total']) }}</dd></dl>
+                            @endforeach
+                        @endif
+                        <div class="vh-summary-total"><span>Plan total</span><div><strong>{{ price($this->calculateConfigOptionCost()['total'] + $this->packagePrice->price) }}</strong><small>{{ $this->packagePrice->cycle() }}</small></div></div>
+                        @if ($this->packagePrice->setup_fee > 0)<p class="vh-summary-note">Plus {{ price($this->packagePrice->setup_fee) }} one-time setup fee.</p>@endif
+                    </div>
+                    <button type="button" wire:click="addToCart" wire:loading.attr="disabled" class="vh-action vh-action-tile vh-package-submit">
+                        <span wire:loading.remove wire:target="addToCart"><x-theme::action-content label="Add to cart" description="Review before checkout" icon="M3 3h2l3 12h11l3-9H6M9 20h.01M18 20h.01" /></span>
+                        <span wire:loading wire:target="addToCart" role="status">Adding to cart&hellip;</span>
+                    </button>
+                    <p class="vh-summary-footnote">You can review your items in the cart before checkout.</p>
+                @else
+                    <p class="vh-package-unavailable">This plan is currently unavailable. Explore our other services to find your next server.</p>
+                @endif
+                <a href="{{ route('categories.index') }}" wire:navigate class="vh-package-continue">Continue shopping <span aria-hidden="true">&rarr;</span></a>
+            </div>
+        </aside>
     </div>
 </section>
-

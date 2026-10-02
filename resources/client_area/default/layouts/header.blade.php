@@ -21,7 +21,7 @@
                         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
                     </svg>
                 </button>
-                <a href="{{ route('categories.index') }}" class="vh-brand flex mr-4 min-w-0 items-center">
+                <a href="{{ route('categories.index') }}" class="vh-brand flex mr-4 min-w-0 items-center" aria-label="{{ settings('app_name', 'Application') }} home">
                     <img
                         src="{{ settings('app_logo', '/assets/common/img/app-logo.png') }}"
                         class="mr-2 h-10 shrink-0 rounded"
@@ -29,7 +29,7 @@
                     />
                     <span
                         class="font-semibold truncate dark:text-white"
-                    >{{ settings('app_name', 'Application') }}</span
+                    >@foreach (preg_split('/(\bhosting\b)/i', settings('app_name', 'Application'), -1, PREG_SPLIT_DELIM_CAPTURE) as $brandPart)<span @class(['vh-brand-hosting' => strtolower($brandPart) === 'hosting'])>{{ $brandPart }}</span>@endforeach</span
                     >
                 </a>
             </div>
@@ -43,20 +43,45 @@
                         aria-label="Main navigation"
                     >
                         <ul
-                            class="mt-0 flex w-full flex-col text-sm font-medium lg:flex-row lg:flex-wrap lg:justify-center"
+                            class="vh-nav-list mt-0 flex w-full flex-col text-sm font-medium lg:flex-row lg:flex-wrap lg:justify-center"
                         >
-                            <li
-                                class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
-                            >
-                                <a
-                                    href="{{ route('categories.index') }}"
-                                    wire:navigate
-                                    class="block py-3 px-4 @if($activePage == 'categories') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
-                                    @if($activePage == 'categories') aria-current="page" @endif
-                                >
-                                    Home
-                                </a>
+                            @foreach($navigationGroups as $navigationGroupKey => $navigationGroup)
+                            <li class="vh-mega-item"
+                                x-data="{ open: false, hoverOpened: false, closeTimer: null }"
+                                @pointerenter="clearTimeout(closeTimer); if (window.matchMedia('(min-width: 1024px) and (hover: hover)').matches && $event.pointerType === 'mouse') { $dispatch('vaded-nav-open', { id: '{{ $navigationGroupKey }}' }); if (!open) { hoverOpened = true; open = true } }"
+                                @pointerleave="closeTimer = setTimeout(() => { if (!$el.contains(document.activeElement)) { open = false; hoverOpened = false } }, 180)"
+                                @vaded-nav-open.window="if ($event.detail.id !== '{{ $navigationGroupKey }}') { open = false; hoverOpened = false }"
+                                @click.outside="open = false; hoverOpened = false"
+                                @keydown.escape.window="if (open) { open = false; hoverOpened = false; $refs.trigger.focus() }"
+                                @focusout="$nextTick(() => { if (!$el.contains(document.activeElement)) { open = false; hoverOpened = false } })"
+                                @vaded-nav-close.window="open = false; hoverOpened = false">
+                                <button id="{{ $navigationGroupKey }}-menu-trigger" type="button" @class(['vh-nav-trigger', 'is-current' => request()->routeIs('categories.index') && $navigationGroup['categories']->contains('slug', request()->query('category'))]) x-ref="trigger"
+                                    aria-expanded="false" :aria-expanded="open.toString()" aria-controls="{{ $navigationGroupKey }}-menu"
+                                    @click="if (hoverOpened) { hoverOpened = false } else { open = !open } if (open) { $dispatch('vaded-nav-open', { id: '{{ $navigationGroupKey }}' }) }"
+                                    @keydown.arrow-down.prevent="open = true; hoverOpened = false; $dispatch('vaded-nav-open', { id: '{{ $navigationGroupKey }}' }); $nextTick(() => $refs.panel.querySelector('a')?.focus())">
+                                    <svg class="vh-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="{{ $navigationGroup['icon'] }}" /></svg>
+                                    {{ $navigationGroup['label'] }}
+                                    <svg class="vh-nav-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
+                                </button>
+                                <div id="{{ $navigationGroupKey }}-menu" @class(['vh-mega-panel', 'vh-mega-panel-compact' => $navigationGroup['categories']->count() < 3]) x-ref="panel" x-show="open" x-cloak aria-labelledby="{{ $navigationGroupKey }}-menu-trigger">
+                                    <div class="vh-mega-grid">
+                                        @forelse($navigationGroup['categories'] as $navigationCategory)
+                                            <a href="{{ route('categories.index', ['category' => $navigationCategory->slug]) }}#pricing"
+                                                class="vh-mega-card"
+                                                @if(request()->routeIs('categories.index') && request()->query('category') === $navigationCategory->slug) aria-current="page" @endif>
+                                                <img src="{{ $navigationCategory->icon() }}" alt="" width="240" height="150" loading="lazy">
+                                                <span class="vh-mega-card-copy"><strong>{{ $navigationCategory->name }}</strong><small>{{ $navigationCategory->description ?: 'Find your next plan. Make room for your next idea.' }}</small></span>
+                                                <span class="vh-mega-card-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="{{ $navigationGroup['icon'] }}" /></svg></span>
+                                            </a>
+                                        @empty
+                                            <p class="vh-mega-empty">New services are on the way. Check back soon.</p>
+                                        @endforelse
+                                    </div>
+                                    <div class="vh-mega-footer"><span>{{ $navigationGroup['label'] }}</span><a href="{{ route('categories.index') }}#services">View all services <span aria-hidden="true">&rarr;</span></a></div>
+                                </div>
                             </li>
+                            @endforeach
+
                             <li
                                 class="block border-b dark:border-gray-700 lg:inline lg:border-b-0"
                             >
@@ -66,7 +91,8 @@
                                     class="block py-3 px-4 @if($activePage == 'dashboard') border-b-2 text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:border-primary-500 border-primary-600 @else text-gray-500 dark:text-gray-400 hover:text-primary-600 hover:border-b-2 dark:hover:text-primary-500 dark:hover:border-primary-500 hover:border-primary-600 @endif"
                                     @if($activePage == 'dashboard') aria-current="page" @endif
                                 >
-                                    Dashboard
+                                    <svg class="vh-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z" /></svg>
+                                    Client area
                                 </a>
                             </li>
                             @foreach(extensionElements(['navigation-item']) as $element)

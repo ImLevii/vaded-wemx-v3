@@ -151,4 +151,45 @@ class ClientDashboardTest extends TestCase
             ->assertOk()
             ->assertSee('You have 2 pending invite(s) to orders.');
     }
+
+    public function test_orders_table_can_search_and_filter_without_losing_its_empty_state(): void
+    {
+        $customer = User::factory()->create(['status' => 'active', 'language' => 'en']);
+        $category = Category::query()->create(['name' => 'Hosting', 'slug' => 'hosting', 'status' => 'active', 'icon' => '/assets/common/img/category-placeholder.png']);
+        $connection = ServerConnection::query()->create(['alias' => 'orders-test', 'extension_identifier' => 'server-universal']);
+        Event::fake([OrderCreated::class]);
+
+        foreach (['active' => 'Bot Hosting', 'suspended' => 'Starter VPS'] as $status => $name) {
+            $package = Package::query()->create(['category_id' => $category->id, 'connection_id' => $connection->id, 'name' => $name, 'slug' => $status, 'status' => 'active']);
+            Order::query()->create([
+                'user_id' => $customer->id,
+                'package_id' => $package->id,
+                'status' => $status,
+                'due_date' => $status === 'active' ? now()->addMonth() : null,
+                'last_renewed_at' => now(),
+            ]);
+        }
+
+        $this->actingAs($customer)->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Starter VPS')
+            ->assertSee('is suspended');
+
+        Volt::actingAs($customer)->test(client_view_path('orders.livewire.orders-table'))
+            ->assertSee('Bot Hosting')
+            ->assertSee('Starter VPS')
+            ->assertSee('Never')
+            ->set('filterStatus', ['suspended'])
+            ->assertSee('Starter VPS')
+            ->assertDontSee('Bot Hosting')
+            ->set('search', 'bot')
+            ->assertSee('No matching orders')
+            ->assertDontSee('Starter VPS')
+            ->set('filterStatus', [])
+            ->assertSee('Bot Hosting')
+            ->assertDontSee('No matching orders')
+            ->set('search', '')
+            ->assertSee('Bot Hosting')
+            ->assertSee('Starter VPS');
+    }
 }

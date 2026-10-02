@@ -125,9 +125,9 @@ class Server extends ServerExtension
                 'key' => 'location_id',
                 'name' => 'Location ID',
                 'col' => 'col-12',
-                'description' => 'The location on which the server should be deployed. Make this option configurable to allow users to select the location.',
+                'description' => 'The numeric location ID from Pterodactyl Admin > Locations. Make this option configurable to allow users to select the location.',
                 'type' => 'text',
-                'rules' => ['required'],
+                'rules' => ['required', 'integer', 'min:1'],
                 'is_configurable' => true,
             ],
             [
@@ -343,8 +343,8 @@ class Server extends ServerExtension
         Server::findViableNode(
             connection: $package->serverConnection,
             allowedLocations: [$locationId],
-            diskLimit: $configOptions['disk_limit'] ?? $package->data('disk_limit', 0),
-            memoryLimit: $configOptions['memory_limit'] ?? $package->data('memory_limit', 0),
+            diskLimit: (int) ceil((float) ($configOptions['disk_limit'] ?? $package->data('disk_limit', 0)) * 1024),
+            memoryLimit: (int) ceil((float) ($configOptions['memory_limit'] ?? $package->data('memory_limit', 0)) * 1024),
             cpuLimit: $configOptions['cpu_limit'] ?? $package->data('cpu_limit', 0),
         );
     }
@@ -576,59 +576,64 @@ class Server extends ServerExtension
      * Find a viable node based on the order requirements
      *
      * Returns the node id and allocation id
+     *
+     * @param  array<int, int|string>  $allowedLocations
+     * @return array{node_id: int, allocation_id: int}
      */
     private static function findViableNode(ServerConnection $connection, array $allowedLocations = [], string|int $diskLimit = 0, string|int $memoryLimit = 0, string|int $cpuLimit = 0): array
     {
-        $findDeployableNodes = Server::makeRequest($connection->config, '/api/application/nodes/deployable', 'get', [
-            'disk' => $diskLimit,
-            'memory' => $memoryLimit,
-            'cpu' => $cpuLimit,
-            'include' => 'allocations',
-        ]);
-
-        if (! isset($findDeployableNodes['data']) or empty($findDeployableNodes['data'])) {
-            throw new Exception('Could not find node satisfying the requirements');
+        foreach ($allowedLocations as $locationId) {
+            if (filter_var($locationId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false) {
+                throw new Exception('Location ID must be a positive numeric ID from Pterodactyl Admin > Locations.');
+            }
         }
 
-        $nodes = $findDeployableNodes['data'];
+        $allowedLocations = array_map('intval', $allowedLocations);
+        $page = 1;
+        $hasEligibleNode = false;
 
-        foreach ($nodes as $node) {
-            $node = $node['attributes'];
+        do {
+            $findDeployableNodes = Server::makeRequest($connection->config, '/api/application/nodes/deployable', 'get', [
+                'disk' => $diskLimit,
+                'memory' => $memoryLimit,
+                'cpu' => $cpuLimit,
+                'location_ids' => $allowedLocations,
+                'include' => 'allocations',
+                'page' => $page,
+            ]);
 
-            // if node is not in allowed nodes, skip
-            if (! empty($allowedLocations) and ! in_array($node['id'], $allowedLocations)) {
-                continue;
-            }
+            foreach ($findDeployableNodes['data'] ?? [] as $node) {
+                $node = $node['attributes'];
 
-            // now that we have determined the node, lets find an allocation
-            $allocations = $node['relationships']['allocations']['data'];
-
-            // lets go over each allocation and ensure its not in use
-            foreach ($allocations as $allocation) {
-                $allocation = $allocation['attributes'];
-
-                // check if the allocation is in use
-                if ($allocation['assigned']) {
+                if ($allowedLocations !== [] && ! in_array((int) ($node['location_id'] ?? 0), $allowedLocations, true)) {
                     continue;
                 }
 
-                // allocation is not in use, return the node id and allocation id
-                return [
-                    'node_id' => $node['id'],
-                    'allocation_id' => $allocation['id'],
-                ];
+                $hasEligibleNode = true;
+
+                foreach ($node['relationships']['allocations']['data'] ?? [] as $allocation) {
+                    $allocation = $allocation['attributes'];
+
+                    if ($allocation['assigned']) {
+                        continue;
+                    }
+
+                    return [
+                        'node_id' => $node['id'],
+                        'allocation_id' => $allocation['id'],
+                    ];
+                }
             }
 
-            // if we reach here, no allocation was found
-            // in the future, add logic to create a new allocation
-            // on one of the available nodes
+            $totalPages = (int) ($findDeployableNodes['meta']['pagination']['total_pages'] ?? 1);
+            $page++;
+        } while ($page <= $totalPages);
 
-            // for now, throw an exception
-            throw new Exception('Could not find a free allocation on the node, please contact support');
+        if ($hasEligibleNode) {
+            throw new Exception('Could not find a free allocation on any eligible node, please contact support');
         }
 
-        // theoretically, we should never reach here but we assume no node was found
-        throw new Exception('Could not find a node satisfying the requirements');
+        throw new Exception('Could not find a node satisfying the requirements in the selected location. Check the Location ID and available memory and disk on Pterodactyl.');
     }
 
     /**

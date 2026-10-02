@@ -17,7 +17,7 @@
     })->count();
     $totalSubscriptionsCount = $dashboardUser->subscriptions()->count();
 @endphp
-<div class="vh-dashboard mx-auto max-w-screen-2xl px-4 2xl:px-0">
+<div class="vh-dashboard mx-auto w-full min-w-0 max-w-screen-2xl">
     <div class="vh-dashboard-welcome flex flex-wrap items-center justify-between gap-4">
         <div class="min-w-0">
             <span class="vh-portal-eyebrow">Client area / Overview</span>

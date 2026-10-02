@@ -89,8 +89,7 @@
 .vaded-admin :is(.form-control, .form-select):focus { border-color: var(--vh-accent); box-shadow: 0 0 0 3px var(--vh-accent-soft); }
 .vaded-admin .form-control::placeholder { color: var(--vh-muted); opacity: .7; }
 .vaded-admin .form-label { color: var(--vh-text); font-size: 12px; }
-.vaded-admin .btn { border-radius: 5px; font-weight: 700; font-size: 12px; }
-.vaded-admin .btn-primary { --tblr-btn-bg: #e52c34; --tblr-btn-hover-bg: #f43b43; --tblr-btn-active-bg: #ca202a; --tblr-btn-border-color: #fa4149; background-image: linear-gradient(rgba(255, 255, 255, .10), transparent); box-shadow: inset 0 1px rgba(255, 255, 255, .18), 0 3px 12px rgba(180, 30, 50, .15); }
+.vaded-admin .btn { font-size: 12px; }
 .vaded-admin .btn-outline-primary { color: var(--vh-accent); border-color: rgba(239, 48, 56, .35); }
 .vaded-admin .btn-outline-primary:hover { color: #fff; background: #e52c34; }
 .vaded-admin .dropdown-item { color: var(--vh-text); }

@@ -37,7 +37,7 @@ new class extends Component
 <section class="vh-portal-plans antialiased">
     <div class="mx-auto max-w-screen-xl">
         <!-- Heading & Filters -->
-        <div class="vh-portal-heading text-center">
+        <div class="vh-portal-heading">
             <div>
                 <span class="vh-portal-eyebrow">Find your perfect fit</span>
                 <h2>{{ $category->name }} plans</h2>
@@ -45,11 +45,13 @@ new class extends Component
             </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-4">
+        <div @class(['vh-plan-grid grid grid-cols-1 gap-5', 'max-w-xl' => $packages->count() === 1, 'sm:grid-cols-2' => $packages->count() > 1, 'xl:grid-cols-3' => $packages->count() > 2])>
             @forelse($packages as $package)
             <!-- Pricing Card -->
-            <div wire:key="package-{{ $package->id }}" class="vh-portal-plan vh-plan-row rounded-xl border p-5 text-left">
-                <div class="min-w-0">
+            <div wire:key="package-{{ $package->id }}" class="vh-portal-plan vh-plan-card flex flex-col rounded-xl border p-7 text-left">
+                <img class="mb-5 aspect-video w-full rounded-lg object-cover" src="{{ $package->icon() }}" alt="" loading="lazy" decoding="async" width="640" height="360">
+                <div class="vh-plan-heading min-w-0 !pr-0">
+                <span class="vh-portal-eyebrow">{{ $category->name }}</span>
                 <h3 class="mb-4 text-2xl font-semibold">{{ $package->name }}</h3>
                 <p class="text-gray-500 text-light sm:text-lg dark:text-gray-400">{{ Str::limit($package->short_description, 70) }}</p>
                 </div>
@@ -67,7 +69,7 @@ new class extends Component
                     </li>
                     @endforeach
                 </ul>
-                <a href="{{ route('packages.view', $package->slug) }}" wire:navigate class="vh-action">Order now <span aria-hidden="true">&rarr;</span></a>
+                <a href="{{ route('packages.view', $package->slug) }}" wire:navigate class="vh-action mt-auto" aria-label="Order {{ $package->name }}">Order now <span aria-hidden="true">&rarr;</span></a>
             </div>
             @empty
                 <div class="vh-portal-empty col-span-full rounded-xl border p-8 text-center">

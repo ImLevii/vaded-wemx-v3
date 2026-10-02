@@ -1,8 +1,7 @@
 <?php
 
-use Livewire\Volt\Component;
-use Livewire\Attributes\Session;
 use Livewire\Attributes\Url;
+use Livewire\Volt\Component;
 
 new class extends Component
 {
@@ -42,7 +41,7 @@ new class extends Component
 @endphp
 
 
-<section>
+<section class="vh-orders min-w-0" aria-label="Orders">
     @if(auth()->user()->orders->isEmpty())
         <x-theme::empty-state
             title="No orders found"
@@ -55,22 +54,21 @@ new class extends Component
             :action-navigate="true"
         />
     @else
-    <div class="">
-        <!-- Start coding here -->
-        <div class="bg-white dark:bg-gray-800 relative shadow-md sm:rounded-lg overflow-hidden">
-            <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4 border-b dark:border-gray-700">
-                <div class="w-full flex items-center space-x-3">
+        <div class="vh-orders-card bg-white dark:bg-gray-800 relative rounded-xl border shadow-sm">
+            <div class="vh-orders-toolbar flex flex-wrap items-center justify-between gap-4 p-4 border-b dark:border-gray-700">
+                <div class="flex shrink-0 items-center gap-3">
                     <h5 class="dark:text-white font-semibold">Orders</h5>
                 </div>
-                <div class="w-full flex flex-row items-center justify-end space-x-3">
-                    <a href="{{ route('categories.index') }}" wire:navigate class="w-full md:w-auto flex items-center justify-center text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-3 py-2 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800">
+                <div class="vh-orders-controls flex min-w-0 flex-wrap items-center gap-3">
+                    <a href="{{ route('categories.index') }}" wire:navigate class="flex shrink-0 items-center justify-center whitespace-nowrap text-white bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-3 py-2 dark:bg-primary-600 dark:hover:bg-primary-700 focus:outline-none dark:focus:ring-primary-800">
                         <svg class="h-3.5 w-3.5 mr-2" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path clip-rule="evenodd" fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" />
                         </svg>
                         New Order
                     </a>
 
-                    <button id="filterDropdownButton" data-dropdown-toggle="filterDropdown" class="w-full md:w-auto flex items-center justify-center py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="button">
+                    <div class="relative" x-data="{ open: false }" @keydown.escape.prevent.stop="open = false; $refs.filter.focus()" @click.outside="open = false">
+                    <button x-ref="filter" @click="open = !open" :aria-expanded="open" aria-controls="orders-status-filter" class="flex shrink-0 items-center justify-center gap-1 whitespace-nowrap py-2 px-4 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700" type="button">
                         <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="h-4 w-4 mr-2 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clip-rule="evenodd"></path>
                         </svg>
@@ -79,38 +77,39 @@ new class extends Component
                             <path clip-rule="evenodd" fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"></path>
                         </svg>
                     </button>
-                    <div id="filterDropdown" class="z-10 w-48 p-3 bg-white rounded-lg shadow dark:bg-gray-700 hidden" style="position: absolute; inset: 0px auto auto 0px; margin: 0px; transform: translate(1148px, 84px);" data-popper-placement="bottom">
+                    <div id="orders-status-filter" x-cloak x-show="open" class="absolute right-0 top-full z-20 mt-2 w-48 rounded-lg border border-gray-200 bg-white p-3 shadow-lg dark:border-gray-700 dark:bg-gray-800">
                         <h6 class="mb-3 text-sm font-medium text-gray-900 dark:text-white">Filter by status</h6>
-                        <ul class="space-y-2 text-sm" aria-labelledby="filterDropdownButton">
+                        <ul class="space-y-2 text-sm" aria-label="Filter orders by status">
                             @foreach($statuses as $status => $count)
                             <li class="flex items-center">
-                                <input id="{{ $status }}" wire:model.change="filterStatus" type="checkbox" value="{{ $status }}" class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
-                                <label for="{{ $status }}" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ ucfirst($status) }} ({{ $count }})</label>
+                                <input id="orders-status-{{ $status }}" wire:model.change="filterStatus" type="checkbox" value="{{ $status }}" class="w-4 h-4 bg-gray-100 border-gray-300 rounded text-primary-600 focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500">
+                                <label for="orders-status-{{ $status }}" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">{{ ucfirst($status) }} ({{ $count }})</label>
                             </li>
                             @endforeach
                         </ul>
                     </div>
-                    <div class="flex items-center">
-                        <label for="order-search" class="sr-only">Search</label>
+                    </div>
+                    <div class="vh-orders-search flex min-w-0 items-center">
+                        <label for="client-orders-search" class="sr-only">Search orders</label>
                         <div class="relative w-full">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                 <svg aria-hidden="true" class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
                                     <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path>
                                 </svg>
                             </div>
-                            <input type="text" wire:model.change="search" id="order-search" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Search" required="">
+                            <input type="search" wire:model.live.debounce.300ms="search" id="client-orders-search" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary-500 focus:border-primary-500 block w-full pl-10 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder="Search orders">
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+            <div class="vh-orders-scroll overflow-x-auto rounded-b-xl" role="region" aria-label="Service orders" tabindex="0">
+                <table class="vh-orders-table w-full text-sm text-left text-gray-500 dark:text-gray-400">
                     <thead class="text-xs uppercase bg-gray-50 dark:bg-gray-700">
                     <tr>
                         <th scope="col" class="px-4 py-3">
                             <span class="sr-only">Expand/Collapse Row</span>
                         </th>
-                        <th scope="col" class="px-4 py-">Product</th>
+                        <th scope="col" class="px-4 py-3">Product</th>
                         <th scope="col" class="px-4 py-3">
                             Price Cycle
                         </th>
@@ -119,9 +118,6 @@ new class extends Component
                         </th>
                         <th scope="col" class="px-4 py-3">
                             Status
-                            <svg class="h-4 w-4 ml-1 inline-block" fill="currentColor" viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <path clip-rule="evenodd" fill-rule="evenodd" d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z" />
-                            </svg>
                         </th>
                         <th scope="col" class="px-4 py-3">
                             Due Date
@@ -131,21 +127,25 @@ new class extends Component
                         </th>
                     </tr>
                     </thead>
-                    @foreach($orders as $order)
-                    <tbody data-accordion="table-column">
-                    <tr class="border-b dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition" id="table-column-header-{{ $order->id }}" data-accordion-target="#table-column-body-{{ $order->id }}" aria-expanded="false" aria-controls="table-column-body-{{ $order->id }}">
+                    @forelse($orders as $order)
+                    <tbody wire:key="client-order-{{ $order->id }}" x-data="{ expanded: false }">
+                    <tr class="border-b dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition" @click="expanded = !expanded">
                         <td class="p-3 w-4">
-                            <svg data-accordion-icon="" class="w-6 h-6 shrink-0" fill="currentColor" viewbox="0 0 20 20" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                            </svg>
+                            <button type="button" class="flex h-8 w-8 items-center justify-center rounded-lg" @click.stop="expanded = !expanded" :aria-expanded="expanded" aria-controls="table-column-body-{{ $order->id }}" aria-label="Details for {{ $order->package->name }}" id="table-column-header-{{ $order->id }}">
+                                <svg :class="{ 'rotate-180': expanded }" class="w-5 h-5 shrink-0 transition-transform" fill="currentColor" viewbox="0 0 20 20" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
                         </td>
-                        <th scope="row" class="flex items-center whitespace-nowrap px-4 py-3 font-medium text-gray-900 dark:text-white">
-                            <img class="mr-2 h-9 w-9 rounded" src="{{ $order->package->icon() }}" alt="">
-                            <span class="flex flex-col"> {{ $order->package->name }}
-                                <small class="text-gray-500 dark:text-gray-400">
+                        <th scope="row" class="px-4 py-3 font-medium text-gray-900 dark:text-white">
+                            <div class="flex items-center gap-3">
+                                <img class="h-10 w-10 shrink-0 rounded-lg object-cover" src="{{ $order->package->icon() }}" alt="">
+                                <span class="flex min-w-0 flex-col gap-1 break-words"> {{ $order->package->name }}
+                                    <small class="text-gray-500 dark:text-gray-400">
                                         {{ $order->package->category->name }}
-                                </small>
-                            </span>
+                                    </small>
+                                </span>
+                            </div>
                         </th>
                         <td class="px-4 py-3">
                             <div class="flex items-center text-gray-500 dark:text-gray-400">
@@ -184,15 +184,15 @@ new class extends Component
                         </td>
                         <td class="px-4 py-3">
                             @if($order->due_date)
-                                {{ $order->due_date }}
+                                {{ $order->due_date->diffForHumans() }}
                             @else
                                 Never
                             @endif
                         </td>
                     </tr>
-                    <tr class="hidden flex-1 overflow-x-auto w-full" id="table-column-body-{{ $order->id }}" aria-labelledby="table-column-header-{{ $order->id }}">
-                        <td class="p-4 border-b dark:border-gray-700" colspan="9">
-                            <div class="mb-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <tr x-cloak x-show="expanded" id="table-column-body-{{ $order->id }}" aria-labelledby="table-column-header-{{ $order->id }}">
+                        <td class="p-4 border-b dark:border-gray-700" colspan="7">
+                            <div class="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                                 <h6 class="mb-2 text-base font-medium leading-none text-gray-900 dark:text-white">
                                     Details
                                 </h6>
@@ -260,13 +260,18 @@ new class extends Component
                         </td>
                     </tr>
                     </tbody>
-                    @endforeach
+                    @empty
+                    <tbody>
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center">
+                                <p class="font-medium text-gray-900 dark:text-white">No matching orders</p>
+                                <p class="mt-1">Try another search or adjust your status filters.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                    @endforelse
                 </table>
             </div>
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-3 md:space-y-0 px-4 pt-3 pb-4" aria-label="Table navigation">
-
-            </div>
         </div>
-    </div>
     @endif
 </section>

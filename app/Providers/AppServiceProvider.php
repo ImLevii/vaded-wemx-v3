@@ -4,11 +4,15 @@ namespace App\Providers;
 
 use App\Extensions\ExtensionServiceProvider;
 use App\Install\InstallServiceProvider;
+use App\Models\Category;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Number;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\View as ViewInstance;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -78,6 +82,44 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->loadViewsFrom(resource_path('client_area/'.config('app.theme', 'default')), 'theme');
+
+        View::composer('theme::layouts.header', function (ViewInstance $view): void {
+            $isAdmin = auth()->user()?->isAdmin() ?? false;
+
+            $navigationCategories = Category::query()
+                ->when($isAdmin, fn (Builder $query): Builder => $query->whereNotIn('status', ['disabled', 'unlisted']))
+                ->when(! $isAdmin, fn (Builder $query): Builder => $query->where('status', 'active'))
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->get(['id', 'name', 'slug', 'icon', 'description']);
+
+            $navigationGroups = collect();
+            $remainingCategories = $navigationCategories;
+
+            foreach (config('client-navigation.groups', []) as $key => $group) {
+                $categories = $remainingCategories->whereIn('slug', $group['slugs']);
+
+                if ($categories->isNotEmpty()) {
+                    $navigationGroups->put($key, [
+                        'label' => $group['label'],
+                        'icon' => $group['icon'],
+                        'categories' => $categories,
+                    ]);
+                }
+
+                $remainingCategories = $remainingCategories->whereNotIn('slug', $group['slugs']);
+            }
+
+            if ($remainingCategories->isNotEmpty() || $navigationGroups->isEmpty()) {
+                $navigationGroups->put('hosting', [
+                    'label' => $navigationGroups->isEmpty() ? 'Hosting' : 'More hosting',
+                    'icon' => 'M4 4h16v6H4z M4 14h16v6H4z M7 7h2 M7 17h2 M12 7h5 M12 17h5',
+                    'categories' => $remainingCategories,
+                ]);
+            }
+
+            $view->with('navigationGroups', $navigationGroups);
+        });
 
         // php artisan vendor:publish --tag=client - Publishes the client theme assets
         $this->publishes([
