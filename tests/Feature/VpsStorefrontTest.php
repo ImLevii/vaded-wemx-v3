@@ -53,7 +53,7 @@ class VpsStorefrontTest extends TestCase
             ->assertSee('Ubuntu 22.04 OS')
             ->assertSee('No setup fee')
             ->assertSee(route('packages.view', ['package' => $this->package->slug, 'packagePriceId' => $monthly->id]), false)
-            ->assertDontSee('YOUR SERVER.')
+            ->assertDontSee('vh-hero-wordmark', false)
             ->assertDontSee('Most popular')->assertDontSee('Buffalo')->assertDontSee('9950X');
     }
 
@@ -93,8 +93,8 @@ class VpsStorefrontTest extends TestCase
 
     public function test_vps_layout_is_scoped_to_an_available_vps_category(): void
     {
-        $this->get('/')->assertOk()->assertSee('YOUR SERVER.')->assertDontSee('vh-vps-hero', false);
-        $this->get('/?category=games')->assertOk()->assertSee('YOUR SERVER.')->assertDontSee('vh-vps-hero', false);
+        $this->get('/')->assertOk()->assertSeeText('VADED HOSTING')->assertDontSee('vh-vps-hero', false);
+        $this->get('/?category=games')->assertOk()->assertSeeText('VADED HOSTING')->assertDontSee('vh-vps-hero', false);
 
         $this->package->update(['status' => 'disabled']);
         $this->get('/?category=vps-hosting')->assertOk()->assertSee('More VPS plans are on the way.')->assertDontSee('Basic VPS');

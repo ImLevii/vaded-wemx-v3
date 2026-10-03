@@ -42,7 +42,10 @@ class HostingStorefrontTest extends TestCase
 
     public function test_homepage_selects_a_real_catalog_and_preserves_price_cycle_links(): void
     {
-        $this->get('/')->assertOk()->assertSee('AT FULL POWER.')
+        $this->get('/')->assertOk()->assertSeeText('VADED HOSTING')
+            ->assertSeeText('Deploy high-performance Game Servers, VPS Solutions, and Discord Bots in seconds.')
+            ->assertSeeText('Enterprise-grade hardware with 99.9% uptime guarantee.')
+            ->assertDontSee('YOUR SERVER.')->assertDontSee('AT FULL POWER.')
             ->assertSee('Game Server &amp; Cloud Hosting', false)
             ->assertDontSee('Game Server &amp;amp; Cloud Hosting', false)
             ->assertSee('Community hosting plans')->assertSee('4 GB memory')

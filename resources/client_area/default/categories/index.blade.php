@@ -16,9 +16,9 @@
         </div>
         <div class="vh-store-hero-copy">
             <span class="vh-kicker"><span></span> VADED GAME INFRASTRUCTURE</span>
-            <h1 id="hosting-title">YOUR SERVER.<br><em>AT FULL POWER.</em></h1>
-            <p class="vh-hero-lead">Game server &amp; cloud hosting.<br>Built for the communities behind the screen.</p>
-            <p class="vh-hero-detail">Choose your resources. Configure your server. Keep your hosting, billing, and team in one connected workspace.</p>
+            <h1 id="hosting-title" class="vh-hero-wordmark"><span class="vh-hero-wordmark-name">VADED</span> <span class="vh-hero-wordmark-hosting">HOSTING</span></h1>
+            <p class="vh-hero-lead">Deploy high-performance <strong>Game Servers</strong>, <strong>VPS Solutions</strong>, and <strong>Discord Bots</strong> in seconds.</p>
+            <p class="vh-hero-detail">Enterprise-grade hardware with <strong>99.9% uptime guarantee</strong>.</p>
             <div class="vh-cta-row"><a class="vh-action" href="#services">Deploy Your Server <x-theme::icon name="arrow" /></a><a class="vh-action vh-action-secondary" href="#pricing">View Hosting Plans</a></div>
             <div class="vh-hero-footnote"><x-theme::icon name="sliders" /> Your plan. Your configuration. Clear pricing.</div>
         </div>
