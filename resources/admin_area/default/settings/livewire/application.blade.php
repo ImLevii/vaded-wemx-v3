@@ -3,6 +3,7 @@
 use Livewire\Volt\Component;
 use Illuminate\View\View;
 use App\Models\Setting;
+use App\Mail\EmailTheme;
 
 new class extends Component
 {
@@ -22,6 +23,10 @@ new class extends Component
 
     public $currency = 'USD';
 
+    public string $email_theme = 'default';
+
+    public array $emailThemes = [];
+
     public $lastModifiedTimestamps;
 
     public function mount()
@@ -31,6 +36,8 @@ new class extends Component
         $this->language = settings('language', 'en');
         $this->timezone = settings('timezone', 'UTC');
         $this->currency = settings('currency', 'USD');
+        $this->email_theme = EmailTheme::default()->slug;
+        $this->emailThemes = EmailTheme::options();
         $this->lastModifiedTimestamps = Setting::whereIn('key', ['language', 'currency'])->pluck('updated_at', 'key');
 
         $timezones = \DateTimeZone::listIdentifiers();
@@ -39,12 +46,14 @@ new class extends Component
 
     public function saveChanges()
     {
+        abort_unless(auth()->user()?->hasPermission('admin.settings.index'), 403);
         Setting::actions()->updateApplicationSettingsAsAdmin([
             'app_name' => $this->app_name,
             'company_address' => $this->company_address,
             'language' => $this->language,
             'timezone' => $this->timezone,
             'currency' => $this->currency,
+            'email_theme' => $this->email_theme,
         ]);
 
         $this->dispatch('alert', 'success', 'Settings saved successfully.');
@@ -55,6 +64,13 @@ new class extends Component
 
 <div>
     <x-admin::settings.page-form title="Application">
+            <div class="mb-4">
+                <h3 class="card-title">Default Email Theme</h3>
+                <x-admin::form.select wire:model="email_theme" id="email_theme" :options="$emailThemes" />
+                @error('email_theme')
+                    <x-admin::form.error :message="$message" />
+                @enderror
+            </div>
             <div class="mb-4">
                 <h3 class="card-title">Application Name</h3>
                 <p class="card-subtitle">

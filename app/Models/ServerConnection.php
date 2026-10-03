@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Actions\ServerConnectionActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ServerConnection extends Model
 {
@@ -42,6 +43,11 @@ class ServerConnection extends Model
     public function server(): BelongsTo
     {
         return $this->belongsTo(Server::class, 'extension_identifier', 'identifier');
+    }
+
+    public function packages(): HasMany
+    {
+        return $this->hasMany(Package::class, 'connection_id');
     }
 
     public static function actions(): ServerConnectionActions

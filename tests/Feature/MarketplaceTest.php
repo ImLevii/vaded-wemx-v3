@@ -46,6 +46,10 @@ class MarketplaceTest extends TestCase
     {
         parent::setUp();
 
+        if (! is_dir(base_path('extensions/Modules/Marketplace'))) {
+            $this->markTestSkipped('The optional Marketplace extension is not installed.');
+        }
+
         $this->artisan('migrate', [
             '--path' => 'extensions/Modules/Marketplace/Migrations',
         ]);

@@ -23,9 +23,14 @@ class IntegratedMarketplaceTest extends TestCase
 {
     use RefreshDatabase;
 
+    private ?string $originalDemoModule = null;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        $modulePath = base_path('extensions/Modules/OneClickDemo/Module.php');
+        $this->originalDemoModule = File::isFile($modulePath) ? File::get($modulePath) : null;
 
         config([
             'app.installed' => true,
@@ -46,6 +51,19 @@ class IntegratedMarketplaceTest extends TestCase
                 ],
             ]),
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            if ($this->originalDemoModule !== null) {
+                $directory = base_path('extensions/Modules/OneClickDemo');
+                File::ensureDirectoryExists($directory);
+                File::put($directory.'/Module.php', $this->originalDemoModule);
+            }
+        } finally {
+            parent::tearDown();
+        }
     }
 
     public function test_admin_can_browse_cached_marketplace_resources(): void

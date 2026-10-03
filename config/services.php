@@ -28,6 +28,12 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
+    'marketplace' => [
+        'enabled' => env('MARKETPLACE_ENABLED', false),
+        'url' => env('MARKETPLACE_URL'),
+        'mock' => env('MARKETPLACE_MOCK', false),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

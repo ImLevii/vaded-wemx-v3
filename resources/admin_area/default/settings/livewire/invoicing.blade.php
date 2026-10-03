@@ -3,6 +3,7 @@
 use Livewire\Volt\Component;
 use Illuminate\View\View;
 use App\Models\Setting;
+use App\Invoices\InvoiceTheme;
 
 new class extends Component
 {
@@ -12,19 +13,27 @@ new class extends Component
 
     public $billing_from_details;
 
+    public string $invoice_theme = 'default';
+
+    public array $invoiceThemes = [];
+
     public function mount()
     {
         $this->invoice_format = settings('invoice_format', 'INV-{year}-{id}');
         $this->invoice_id_padding = settings('invoice_id_padding', 4);
         $this->billing_from_details = settings('billing_from_details', '');
+        $this->invoice_theme = InvoiceTheme::default()->slug;
+        $this->invoiceThemes = InvoiceTheme::options();
     }
 
     public function saveChanges()
     {
+        abort_unless(auth()->user()?->hasPermission('admin.settings.index'), 403);
         Setting::actions()->updateApplicationInvoicingSettingsAsAdmin([
             'invoice_format' => $this->invoice_format,
             'invoice_id_padding' => $this->invoice_id_padding,
             'billing_from_details' => $this->billing_from_details,
+            'invoice_theme' => $this->invoice_theme,
         ]);
 
         $this->dispatch('alert', 'success', 'Settings saved successfully.');
@@ -35,6 +44,14 @@ new class extends Component
 
 <div>
     <x-admin::settings.page-form title="Payments & Invoicing">
+
+            <div class="mb-4">
+                <h3 class="card-title">Default Invoice Theme</h3>
+                <x-admin::form.select wire:model="invoice_theme" id="invoice_theme" :options="$invoiceThemes" />
+                @error('invoice_theme')
+                    <x-admin::form.error :message="$message" />
+                @enderror
+            </div>
 
             <div class="mb-4">
                 <h3 class="card-title">Invoice ID Format</h3>

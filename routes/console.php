@@ -12,6 +12,10 @@ Schedule::call(function () {
 Schedule::command('cronjobs:orders:renew-balance-renewals')->daily();
 Schedule::command('cronjobs:update-currency-rates')->daily();
 
+if (config('services.marketplace.enabled')) {
+    Schedule::command('cronjobs:check-marketplace-updates')->daily()->withoutOverlapping();
+}
+
 // every 3 hours
 Schedule::command('cronjobs:orders:suspend-expired')->everyThreeHours();
 Schedule::command('cronjobs:orders:terminate-expired')->everyThreeHours();

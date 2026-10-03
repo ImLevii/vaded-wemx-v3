@@ -5,12 +5,15 @@ namespace Extensions\Servers\Pterodactyl;
 use App\Extensions\Foundation\ServerExtension;
 use App\Models\Order;
 use App\Models\Package;
+use App\Models\PackagePrice;
+use App\Models\ServerAccount;
 use App\Models\ServerConnection;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class Server extends ServerExtension
@@ -45,7 +48,7 @@ class Server extends ServerExtension
      * Define the WemX versions that the extension is compatible with.
      * Use * to define that the extension is compatible with all versions.
      */
-    protected array $wemxVersions = ['1.0.0'];
+    protected array $wemxVersions = ['v3-alpha'];
 
     /**
      * Define the authors of the extension.
@@ -100,10 +103,10 @@ class Server extends ServerExtension
             ],
             [
                 'key' => 'api_key',
-                'name' => 'API Key',
+                'name' => 'Application API Key',
                 'description' => 'API Key of your Pterodactyl panel',
                 'type' => 'password',
-                'rules' => ['required', 'starts_with:ptlc_,ptla_'], // laravel validation rules
+                'rules' => ['required', 'starts_with:ptla_'], // laravel validation rules
             ],
             [
                 'key' => 'debug_mode',
@@ -354,12 +357,14 @@ class Server extends ServerExtension
     /**
      * Test API connection
      */
-    public static function testConnection(array $credentials)
+    public static function testConnection(array $credentials): string
     {
-        Server::makeRequest($credentials, '/api/application/users');
+        $response = Server::makeRequest($credentials, '/api/application/users', 'get', ['per_page' => 1]);
+        if (! is_array($response->json('data'))) {
+            throw new RuntimeException('Check the panel URL: the Application API did not return a user list.');
+        }
 
-        // throw new \Exception('This method is not implemented yet. Please implement the testConnection method in the Server class.');
-        return true;
+        return 'Connected to the Pterodactyl Application API.';
     }
 
     /**
@@ -374,6 +379,10 @@ class Server extends ServerExtension
         $apiKey = $credentials['api_key'] ?? '';
         $hostname = rtrim($credentials['hostname'] ?? '', '/');
 
+        if (! str_starts_with($apiKey, 'ptla_')) {
+            throw ValidationException::withMessages(['api_key' => 'Use a Pterodactyl Application API key starting with ptla_.']);
+        }
+
         if (! in_array($method, ['get', 'post', 'put', 'delete', 'patch'])) {
             throw new Exception('Invalid method');
         }
@@ -385,7 +394,7 @@ class Server extends ServerExtension
         ])->connectTimeout(5)->timeout(20)->$method($hostname.'/'.ltrim($endpoint, '/'), $data);
 
         if ($response->failed() && ! in_array($response->status(), $allowedFailureStatuses, true)) {
-            throw new Exception("Failed to connect to Pterodactyl API at endpoint: $endpoint with status code: {$response->status()} and response: {$response->body()}");
+            $response->throw();
         }
 
         return $response;
@@ -394,11 +403,12 @@ class Server extends ServerExtension
     /**
      * Changes the password of the Pterodactyl user associated with the order.
      */
-    public function changePassword(Order $order, string $newPassword)
+    public function changePassword(Order $order, string $newPassword): void
     {
-        $pterodactylUser = $order->getExternalUser()->data;
-
-        $response = Server::makeRequest($order->package->serverConnection->config, "/api/application/users/{$pterodactylUser['id']}", 'patch', [
+        $connection = $order->package->serverConnection;
+        $server = $order->data ?: Server::makeRequest($connection->config, '/api/application/servers/'.$this->provisionedServerId($order))->json('attributes');
+        $pterodactylUser = $this->ownedPanelUser($order, $connection, (int) ($server['user'] ?? 0));
+        Server::makeRequest($connection->config, "/api/application/users/{$pterodactylUser['id']}", 'patch', [
             'email' => $pterodactylUser['email'],
             'username' => $pterodactylUser['username'],
             'first_name' => $pterodactylUser['first_name'],
@@ -406,27 +416,40 @@ class Server extends ServerExtension
             'password' => $newPassword,
         ]);
 
-        $order->updateExternalPassword($newPassword);
+        $this->storePteroUserLocally($order, array_merge($pterodactylUser, ['password' => $newPassword]));
     }
 
     /**
      * This function is responsible for creating an instance of the
      * service. This can be anything such as a server, vps or any other instance.
-     *
-     * @return void
      */
-    public function create(Order $order, ServerConnection $connection)
+    public function create(Order $order, ServerConnection $connection): void
     {
-        // define variables
-        $pteroUserId = $this->getOrCreatePteroUser($order, $connection);
+        if ($order->external_id !== null) {
+            $this->provisionedServerId($order);
+
+            return;
+        }
+        $existing = Server::makeRequest($connection->config, '/api/application/servers/external/wemx_'.$order->id, 'get', [], [404]);
+        if ($existing->successful()) {
+            $server = $existing->json('attributes');
+            if (! is_array($server) || empty($server['id']) || empty($server['user'])) {
+                throw new RuntimeException('The panel returned an invalid server during provisioning recovery.');
+            }
+            $owner = $this->ownedPanelUser($order, $connection, (int) $server['user']);
+            $this->storePteroUserLocally($order, $owner);
+            $order->update(['external_id' => $server['id'], 'data' => $server]);
+
+            return;
+        }
         $package = $order->package;
 
         $locationId = $order->option('location_id');
 
         // specify limits and convert them to MB
-        $diskLimit = $order->option('disk_limit', 0) != 0 ? $order->option('disk_limit', 0) * 1024 : 0;
-        $memoryLimit = $order->option('memory_limit', 0) != 0 ? $order->option('memory_limit', 0) * 1024 : 0;
-        $swapLimit = $order->option('swap_limit', 0) != 0 ? $order->option('swap_limit', 0) * 1024 : 0;
+        $diskLimit = $this->megabytes($order->option('disk_limit', 0));
+        $memoryLimit = $this->megabytes($order->option('memory_limit', 0));
+        $swapLimit = $this->megabytes($order->option('swap_limit', 0));
         $cpuLimit = $order->option('cpu_limit', 0);
 
         $node = Server::findViableNode(
@@ -436,6 +459,7 @@ class Server extends ServerExtension
             memoryLimit: $memoryLimit,
             cpuLimit: $cpuLimit
         );
+        $pteroUserId = $this->getOrCreatePteroUser($order, $connection);
 
         // merge environment variables from package and order
         $environment = array_merge(
@@ -458,6 +482,7 @@ class Server extends ServerExtension
                 'disk' => $diskLimit,
                 'io' => $order->option('block_io_weight', 500),
                 'cpu' => $cpuLimit,
+                'threads' => $order->option('cpu_pinning'),
             ],
             'feature_limits' => [
                 'databases' => $order->option('database_limit', 0),
@@ -498,30 +523,24 @@ class Server extends ServerExtension
     {
         $user = $order->user;
 
-        try {
-            // Attempt to find the user on Pterodactyl with the same email
-            $userEmailResponse = Server::makeRequest($connection->config, '/api/application/users', 'get', [
-                'filter[email]' => $user->email,
-            ]);
+        $userEmailResponse = Server::makeRequest($connection->config, '/api/application/users', 'get', [
+            'filter[email]' => $user->email,
+        ]);
 
-            // if api returns a user, store the user data locally and return the user id
-            if (isset($userEmailResponse['data'][0])) {
-                $this->storePteroUserLocally(
-                    $order,
-                    $userEmailResponse['data'][0]['attributes']
-                );
+        if (isset($userEmailResponse['data'][0])) {
+            $this->storePteroUserLocally(
+                $order,
+                $userEmailResponse['data'][0]['attributes']
+            );
 
-                return $userEmailResponse['data'][0]['attributes']['id'];
-            }
-        } catch (Exception $e) {
-            dd($e->getMessage());
+            return $userEmailResponse['data'][0]['attributes']['id'];
         }
 
         // attempt to create the user on Pterodactyl
         $randomPassword = Str::random(16);
         $createUserResponse = Server::makeRequest($connection->config, '/api/application/users', 'post', [
-            'first_name' => $user->first_name,
-            'last_name' => $user->last_name,
+            'first_name' => $user->first_name ?: $user->username,
+            'last_name' => $user->last_name ?: 'Customer',
             'email' => $user->email,
             'username' => $user->username.$user->id, // username must be unique
             'password' => $randomPassword,
@@ -546,12 +565,16 @@ class Server extends ServerExtension
      */
     private function storePteroUserLocally(Order $order, array $pteroUserData): void
     {
-        $order->createExternalUser([
+        $password = $pteroUserData['password'] ?? null;
+        unset($pteroUserData['password']);
+        $account = ServerAccount::query()->firstOrNew(['order_id' => $order->id, 'server' => 'server-pterodactyl']);
+        $account->fill([
+            'user_id' => $order->user_id,
             'external_id' => $pteroUserData['id'],
             'username' => $pteroUserData['username'],
-            'password' => $pteroUserData['password'] ?? 'unknown',
-            'data' => $pteroUserData,
-        ]);
+            'password' => $password ?? ($account->exists ? $account->password : 'unknown'),
+            'data' => array_merge($pteroUserData, ['connection_id' => $order->package->connection_id]),
+        ])->save();
     }
 
     /**
@@ -560,6 +583,7 @@ class Server extends ServerExtension
     private function emailPteroCredentials(Order $order, string $email, string $password): void
     {
         $order->user->email([
+            'identifier' => 'server.pterodactyl.account_created',
             'mailable_type' => Order::class,
             'mailable_id' => $order->id,
             'subject' => 'Game Panel Account Created',
@@ -570,8 +594,8 @@ class Server extends ServerExtension
                 "Password: {$password}",
             ],
             'button' => [
-                'name' => 'Login to Game Panel',
-                'url' => 'https://panel.example.com',
+                'text' => 'Login to Game Panel',
+                'url' => rtrim($order->package->serverConnection->config['hostname'], '/'),
             ],
         ]);
     }
@@ -634,10 +658,10 @@ class Server extends ServerExtension
         } while ($page <= $totalPages);
 
         if ($hasEligibleNode) {
-            throw new Exception('Could not find a free allocation on any eligible node, please contact support');
+            throw new RuntimeException('Could not find a free allocation on any eligible node, please contact support');
         }
 
-        throw new Exception('Could not find a node satisfying the requirements in the selected location. Check the Location ID and available memory and disk on Pterodactyl.');
+        throw new RuntimeException('Could not find a node satisfying the requirements in the selected location. Check the Location ID and available memory and disk on Pterodactyl.');
     }
 
     /**
@@ -712,6 +736,50 @@ class Server extends ServerExtension
         }
 
         return $serverId;
+    }
+
+    /** @return array<string, mixed> */
+    private function ownedPanelUser(Order $order, ServerConnection $connection, int $userId): array
+    {
+        if ($userId < 1) {
+            throw new RuntimeException('The panel server does not have a valid owner.');
+        }
+        $owner = Server::makeRequest($connection->config, '/api/application/users/'.$userId)->json('attributes');
+        if (! is_array($owner) || mb_strtolower($owner['email'] ?? '') !== mb_strtolower($order->user->email)) {
+            throw new RuntimeException('The panel server does not belong to this customer.');
+        }
+
+        return $owner;
+    }
+
+    private function megabytes(mixed $value): int
+    {
+        return (float) $value === -1.0 ? -1 : (int) ceil((float) $value * 1024);
+    }
+
+    public function upgradeOrDowngrade(Order $order, PackagePrice $oldPrice, PackagePrice $newPrice, ServerConnection $connection): void
+    {
+        if ((int) $newPrice->package->connection_id !== (int) $connection->id) {
+            throw new RuntimeException('An upgrade must use the same Pterodactyl connection.');
+        }
+        $serverId = $this->provisionedServerId($order);
+        $server = Server::makeRequest($connection->config, '/api/application/servers/'.$serverId)->json('attributes');
+        $option = fn (string $key, mixed $default = null): mixed => $order->prices->firstWhere('key', $key)?->value ?? $newPrice->package->data($key, $default);
+        Server::makeRequest($connection->config, '/api/application/servers/'.$serverId.'/build', 'patch', [
+            'allocation' => $server['allocation'],
+            'limits' => [
+                'memory' => $this->megabytes($option('memory_limit', 0)),
+                'disk' => $this->megabytes($option('disk_limit', 0)),
+                'swap' => $this->megabytes($option('swap_limit', 0)),
+                'cpu' => $option('cpu_limit', 0), 'io' => $option('block_io_weight', 500),
+                'threads' => $option('cpu_pinning'),
+            ],
+            'feature_limits' => [
+                'databases' => (int) $option('database_limit', 0),
+                'allocations' => (int) $option('allocation_limit', 0),
+                'backups' => (int) $option('backup_limit', 0),
+            ],
+        ]);
     }
 
     public function upgrade(Order $order)

@@ -29,6 +29,10 @@ class DownloadsTest extends TestCase
     {
         parent::setUp();
 
+        if (! is_dir(base_path('extensions/Modules/Downloads'))) {
+            $this->markTestSkipped('The optional Downloads marketplace extension is not installed.');
+        }
+
         $this->artisan('migrate', [
             '--path' => 'extensions/Modules/Downloads/Migrations',
         ]);

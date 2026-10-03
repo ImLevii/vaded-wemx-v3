@@ -41,7 +41,8 @@ class ClientDashboardTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertViewIs('theme::categories.index')
-            ->assertSee('All Services');
+            ->assertSee('id="services"', false)
+            ->assertSee('id="pricing"', false);
 
         $customer = User::factory()->create(['status' => 'active', 'language' => 'en']);
         $this->actingAs($customer)->get('/')

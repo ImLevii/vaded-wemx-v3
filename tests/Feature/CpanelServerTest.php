@@ -35,6 +35,10 @@ class CpanelServerTest extends TestCase
     {
         parent::setUp();
 
+        if (! is_dir(base_path('extensions/Servers/Cpanel'))) {
+            $this->markTestSkipped('The optional cPanel marketplace extension is not installed.');
+        }
+
         Queue::fake();
         Http::preventStrayRequests();
 

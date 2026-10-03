@@ -4,11 +4,30 @@ namespace App\Actions;
 
 use App\Models\ServerConnection;
 use App\Support\LicensePlanLimits;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 class ServerConnectionActions extends Action
 {
+    /** @param array<string, mixed> $input */
+    public static function deleteServerConnectionAsAdmin(array $input): bool
+    {
+        $validated = Validator::make($input, ['connection_id' => ['required', 'integer', 'exists:server_connections,id']])->validate();
+
+        return DB::transaction(function () use ($validated): bool {
+            $connection = ServerConnection::query()->lockForUpdate()->findOrFail($validated['connection_id']);
+            $packageIds = $connection->packages()->pluck('id');
+            if ($packageIds->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'connection_id' => 'This connection is used by packages: #'.$packageIds->implode(', #'),
+                ]);
+            }
+
+            return $connection->delete();
+        });
+    }
+
     /**
      * Create a new Server Connection
      *

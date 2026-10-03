@@ -41,6 +41,10 @@ class ProxmoxServerTest extends TestCase
     {
         parent::setUp();
 
+        if (! is_dir(base_path('extensions/Servers/Proxmox'))) {
+            $this->markTestSkipped('The optional Proxmox marketplace extension is not installed.');
+        }
+
         Queue::fake();
         Http::preventStrayRequests();
 

@@ -115,7 +115,7 @@ class PterodactylNodeSelectionTest extends TestCase
     {
         Http::fake(['*/nodes/deployable*' => Http::response([], 403)]);
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('status code: 403');
+        $this->expectExceptionMessage('status code 403');
 
         Server::eventAddToCart($this->package());
     }

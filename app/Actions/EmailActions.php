@@ -2,15 +2,22 @@
 
 namespace App\Actions;
 
+use App\Mail\EmailTheme;
 use App\Models\Email;
+use App\Models\EmailTemplate;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class EmailActions extends Action
 {
-    public function sendUserEmail(array $input)
+    public function sendUserEmail(array $input): ?Email
     {
+        $input = EmailTemplate::compose($input, User::query()->find($input['user_id'] ?? null));
+        if ($input === null) {
+            return null;
+        }
         $validated = Validator::make($input, [
             'user_id' => ['required', 'exists:users,id'],
             'token' => ['nullable', 'string', 'max:255'],
@@ -27,7 +34,7 @@ class EmailActions extends Action
             'button_text' => ['nullable', 'string', 'max:255'],
             'button_url' => ['nullable', 'required_with:button_text'],
             'attachments' => ['nullable', 'array'],
-            'theme' => ['nullable', 'string', 'max:255'],
+            'theme' => ['nullable', 'string', Rule::in(array_keys(EmailTheme::options()))],
             'display' => ['nullable', 'boolean'],
         ])->validate();
 
@@ -45,7 +52,7 @@ class EmailActions extends Action
 
         // if theme is not set, set to default
         if (! isset($validated['theme'])) {
-            $validated['theme'] = 'default';
+            $validated['theme'] = EmailTheme::default()->slug;
         }
 
         // if display is not set, set to true
@@ -56,7 +63,7 @@ class EmailActions extends Action
         return Email::create(self::omitNullValues($validated));
     }
 
-    public function sendEmailToAddress(array $input)
+    public function sendEmailToAddress(array $input): Email
     {
         $validated = Validator::make($input, [
             'identifier' => ['nullable', 'string', 'max:255', 'required_with:cooldown'],
@@ -67,7 +74,7 @@ class EmailActions extends Action
             'button_text' => ['nullable', 'string', 'max:255', 'required_with:button_url'],
             'button_url' => ['nullable', 'url', 'required_with:button_text'],
             'attachments' => ['nullable', 'array'],
-            'theme' => ['nullable', 'string', 'max:255'],
+            'theme' => ['nullable', 'string', Rule::in(array_keys(EmailTheme::options()))],
             'display' => ['nullable', 'boolean'],
             'cooldown' => ['nullable', 'integer'],
         ])->validate();

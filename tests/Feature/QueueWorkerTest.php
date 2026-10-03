@@ -74,6 +74,17 @@ class QueueWorkerTest extends TestCase
             ->assertOk()->assertExactJson(['status' => 'completed']);
     }
 
+    public function test_worker_memory_limit_is_respected_and_releases_the_lock(): void
+    {
+        config(['queue.worker.memory' => 1]);
+
+        $this->withToken('test-worker-secret')->postJson('/internal/queue/work')
+            ->assertStatus(500)->assertExactJson(['status' => 'error']);
+
+        $this->assertFalse(AppTaskLog::isQueueWorkerRunning());
+        $this->assertTrue(Cache::store('database')->lock('queue:worker:lock', 90)->get());
+    }
+
     public function test_each_invocation_limits_the_number_of_jobs(): void
     {
         for ($index = 0; $index < 11; $index++) {

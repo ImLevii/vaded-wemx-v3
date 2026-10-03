@@ -33,6 +33,10 @@ class TicketActionsTest extends TestCase
     {
         parent::setUp();
 
+        if (! is_dir(base_path('extensions/Modules/Tickets'))) {
+            $this->markTestSkipped('The optional Tickets marketplace extension is not installed.');
+        }
+
         $this->artisan('migrate', [
             '--path' => 'extensions/Modules/Tickets/Migrations',
         ]);

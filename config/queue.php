@@ -17,6 +17,7 @@ return [
 
     'worker' => [
         'secret' => env('QUEUE_WORKER_SECRET'),
+        'memory' => (int) env('QUEUE_WORKER_MEMORY', 128),
     ],
 
     /*

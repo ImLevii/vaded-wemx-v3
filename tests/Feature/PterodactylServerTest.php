@@ -427,8 +427,8 @@ class PterodactylServerTest extends TestCase
             try {
                 $server->{$action}($order, $this->connection);
                 $this->fail('A failed panel action must not report success.');
-            } catch (\Exception $exception) {
-                $this->assertStringContainsString('status code: 405', $exception->getMessage());
+            } catch (RequestException $exception) {
+                $this->assertSame(405, $exception->response->status());
             }
         }
 
@@ -535,8 +535,8 @@ class PterodactylServerTest extends TestCase
         try {
             (new Server)->terminate($this->provisionedOrder(), $this->connection);
             $this->fail('A failed delete request must not complete termination.');
-        } catch (\Exception $exception) {
-            $this->assertStringContainsString('status code: '.$status, $exception->getMessage());
+        } catch (RequestException $exception) {
+            $this->assertSame($status, $exception->response->status());
             Http::assertSentCount(1);
         }
     }
@@ -570,8 +570,8 @@ class PterodactylServerTest extends TestCase
             try {
                 $server->{$action}($order, $this->connection);
                 $this->fail('A missing server must not report a successful suspension action.');
-            } catch (\Exception $exception) {
-                $this->assertStringContainsString('status code: 404', $exception->getMessage());
+            } catch (RequestException $exception) {
+                $this->assertSame(404, $exception->response->status());
             }
         }
 

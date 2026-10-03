@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Facades\World;
 use App\Models\Email;
+use App\Models\EmailTemplate;
 use App\Models\Session;
 use App\Models\User;
 use App\Models\UserBan;
@@ -17,6 +18,29 @@ use Illuminate\Validation\ValidationException;
 
 class UserActions extends Action
 {
+    /** @param array<string, mixed> $input */
+    public function sendEmailAsAdmin(array $input): void
+    {
+        $input['button_text'] = filled($input['button_text'] ?? null) ? trim((string) $input['button_text']) : null;
+        $input['button_url'] = filled($input['button_url'] ?? null) ? trim((string) $input['button_url']) : null;
+        $validated = Validator::make($input, [
+            'user_id' => ['required', 'exists:users,id'],
+            'subject' => ['required', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:20000'],
+            'button_text' => ['nullable', 'string', 'max:255', 'required_with:button_url'],
+            'button_url' => ['nullable', 'url', 'max:2048', 'required_with:button_text'],
+        ])->validate();
+        $lines = EmailTemplate::bodyToLines($validated['body']);
+        if ($lines === []) {
+            throw ValidationException::withMessages(['body' => __('validation.required', ['attribute' => 'body'])]);
+        }
+        $payload = ['identifier' => 'admin.manual-email', 'subject' => $validated['subject'], 'lines' => $lines];
+        if ($validated['button_text'] && $validated['button_url']) {
+            $payload['button'] = ['text' => $validated['button_text'], 'url' => $validated['button_url']];
+        }
+        User::query()->findOrFail($validated['user_id'])->email($payload);
+    }
+
     /**
      * This function creates a new user as an admin.
      * It validates the input data, hashes the password, and creates a new user.

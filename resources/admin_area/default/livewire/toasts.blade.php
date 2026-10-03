@@ -1,6 +1,9 @@
 <?php
 
 use App\Models\AppTaskLog;
+use App\Models\IntegratedMarketplaceInstallation;
+use Illuminate\Database\Eloquent\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
 
 new class extends Component
@@ -16,12 +19,46 @@ new class extends Component
     {
         session()->put('admin_dismiss_queue_toast', true);
     }
+
+    /**
+     * @return Collection<int, IntegratedMarketplaceInstallation>
+     */
+    #[Computed]
+    public function marketplaceUpdates(): Collection
+    {
+        if (! config('services.marketplace.enabled') || ! auth()->user()?->hasPermission('admin.marketplace.index')) {
+            return new Collection;
+        }
+
+        return IntegratedMarketplaceInstallation::query()
+            ->where('update_available', true)
+            ->orderBy('resource_name')
+            ->get()
+            ->filter(fn (IntegratedMarketplaceInstallation $installation): bool => $installation->isPresent());
+    }
 }
 
 ?>
 
 
 <div id="toast-container" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+
+    @if($this->marketplaceUpdates->isNotEmpty())
+        <div class="toast show" role="alert" aria-live="polite" aria-atomic="true" data-bs-autohide="false">
+            <div class="toast-header">
+                <strong class="me-auto">Marketplace updates available</strong>
+            </div>
+            <div class="toast-body">
+                {{ trans_choice(':count resource you installed from the marketplace has an update ready.|:count resources you installed from the marketplace have an update ready.', $this->marketplaceUpdates->count()) }}
+                <ul class="mt-2">
+                    @foreach($this->marketplaceUpdates as $installation)
+                        <li>{{ $installation->resource_name }}: version {{ $installation->version }} installed, version {{ $installation->latest_version }} available</li>
+                    @endforeach
+                </ul>
+                <a class="btn btn-primary" href="{{ route('admin.marketplace.installed') }}" wire:navigate>View installed resources</a>
+            </div>
+        </div>
+    @endif
 
     @if(false)
     <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="false" data-bs-toggle="toast">

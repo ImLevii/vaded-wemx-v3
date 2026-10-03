@@ -14,6 +14,11 @@ use Illuminate\Support\Collection;
  */
 trait HasRoles
 {
+    public function isPrimaryAdmin(): bool
+    {
+        return $this->id === 1;
+    }
+
     public function roles(): HasMany
     {
         return $this->hasMany(RoleUser::class);

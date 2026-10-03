@@ -33,6 +33,7 @@ class QueueWorkerController extends Controller
                 '--stop-when-empty' => true,
                 '--max-jobs' => 10,
                 '--max-time' => 20,
+                '--memory' => config('queue.worker.memory', 128),
                 '--timeout' => 25,
                 '--sleep' => 0,
                 '--tries' => 3,

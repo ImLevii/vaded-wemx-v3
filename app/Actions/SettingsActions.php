@@ -3,9 +3,12 @@
 namespace App\Actions;
 
 use App\Helpers\EnvironmentWriter;
+use App\Invoices\InvoiceTheme;
+use App\Mail\EmailTheme;
 use App\Models\GatewayConfig;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class SettingsActions extends Action
@@ -23,6 +26,7 @@ class SettingsActions extends Action
             'language' => ['required', 'string'],
             'currency' => ['required', 'string'],
             'timezone' => ['required', 'string', 'timezone'],
+            'email_theme' => ['sometimes', 'required', Rule::in(array_keys(EmailTheme::options()))],
         ])->validate();
 
         Setting::store(self::omitNullValues($validatedData));
@@ -79,6 +83,7 @@ class SettingsActions extends Action
             ],
             'invoice_id_padding' => ['required', 'integer', 'min:0'],
             'billing_from_details' => ['nullable', 'string'],
+            'invoice_theme' => ['sometimes', 'required', Rule::in(array_keys(InvoiceTheme::options()))],
         ])->validate();
 
         Setting::store(self::omitNullValues($validatedData));
