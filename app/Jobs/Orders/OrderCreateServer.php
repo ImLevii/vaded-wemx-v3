@@ -7,6 +7,7 @@ use App\Events\Orders\OrderActivated;
 use App\Models\Order;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 class OrderCreateServer implements ShouldQueue
@@ -25,8 +26,16 @@ class OrderCreateServer implements ShouldQueue
      */
     public function handle(): void
     {
+        Cache::lock('order-server-operation:'.$this->order->id, 180)->block(5, function (): void {
+            $this->create();
+        });
+    }
+
+    private function create(): void
+    {
         // if order status is not pending, return
-        if ($this->order->status !== 'pending') {
+        $this->order->refresh();
+        if ($this->order->status !== 'pending' || ($this->order->termination_requested_at && ! $this->order->terminate_at?->isFuture())) {
             return;
         }
 

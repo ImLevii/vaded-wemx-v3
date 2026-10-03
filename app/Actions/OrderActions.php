@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Events\Orders\OrderRenewed;
 use App\Handlers\Subscriptions\OrderSubscriptionHandler;
+use App\Jobs\Orders\OrderTerminateServer;
 use App\Models\GatewayConfig;
 use App\Models\Order;
 use App\Models\OrderMember;
@@ -12,12 +13,81 @@ use App\Models\Subscription;
 use App\Models\User;
 use App\Support\LicensePlanLimits;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class OrderActions extends Action
 {
+    /** @param array{order_id: int, termination_mode: string} $input */
+    public function terminateOrderAsClient(array $input): Order
+    {
+        $validated = Validator::make($input, [
+            'order_id' => ['required', 'integer'],
+            'termination_mode' => ['required', Rule::in(['now', 'due_date'])],
+        ])->validate();
+
+        return DB::transaction(function () use ($validated): Order {
+            $order = Order::query()->where('user_id', auth()->id())->lockForUpdate()->findOrFail($validated['order_id']);
+            $immediately = $validated['termination_mode'] === 'now';
+
+            if ($order->isTerminated() || ($order->termination_requested_at && (! $immediately || ! $order->terminate_at?->isFuture()))) {
+                throw ValidationException::withMessages(['termination_mode' => 'Termination has already been requested for this service.']);
+            }
+
+            if (! $immediately && (! $order->due_date || ! $order->due_date->isFuture())) {
+                throw ValidationException::withMessages(['termination_mode' => 'This service has no future due date. Choose immediate termination.']);
+            }
+
+            $terminateAt = $immediately ? now() : $order->due_date->copy();
+            $subscriptions = Subscription::query()->where('subscribable_type', $order->getMorphClass())
+                ->where('subscribable_id', $order->id)->whereIn('status', ['active', 'pending'])->get();
+
+            foreach ($subscriptions as $subscription) {
+                if ($subscription->status === 'pending') {
+                    $subscription->update(['status' => 'cancelled', 'cancelled_at' => now(), 'cancel_reason' => 'Service termination requested']);
+
+                    continue;
+                }
+
+                try {
+                    $subscription->cancelSubscription();
+                } catch (Throwable $exception) {
+                    report($exception);
+                    throw ValidationException::withMessages(['termination_mode' => 'Unable to cancel recurring billing. Please try again or contact support.']);
+                }
+
+                if ($subscription->fresh()->status === 'active') {
+                    throw ValidationException::withMessages(['termination_mode' => 'Cancel the payment subscription before terminating this service.']);
+                }
+            }
+
+            $order->update([
+                'termination_requested_at' => $order->termination_requested_at ?? now(),
+                'terminate_at' => $terminateAt,
+                'auto_balance_renew' => false,
+            ]);
+            $order->log([
+                'user_id' => auth()->id(),
+                'action' => 'termination_requested',
+                'description' => 'Client requested termination at '.$terminateAt->toDateTimeString(),
+            ]);
+            $order->user->email([
+                'subject' => 'Termination requested for service #'.$order->id,
+                'lines' => ['Your service '.$order->package->name.' will be permanently terminated '.($immediately ? 'as soon as the request is processed.' : 'on '.$terminateAt->format('d M Y H:i').'.'), 'Automatic renewal has been disabled.'],
+                'button' => ['text' => 'View service', 'url' => route('orders.view', $order)],
+            ]);
+
+            if ($immediately) {
+                OrderTerminateServer::dispatch($order)->afterCommit();
+            }
+
+            return $order;
+        });
+    }
+
     /**
      * This function creates a new order as an admin.
      *

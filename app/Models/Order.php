@@ -32,6 +32,8 @@ class Order extends Model
         'due_date',
         'last_renewed_at',
         'auto_balance_renew',
+        'termination_requested_at',
+        'terminate_at',
         'data',
     ];
 
@@ -44,6 +46,8 @@ class Order extends Model
             'setup_fee' => 'decimal:8',
             'upgrade_fee' => 'decimal:8',
             'auto_balance_renew' => 'boolean',
+            'termination_requested_at' => 'datetime',
+            'terminate_at' => 'datetime',
             'data' => 'array',
         ];
     }
@@ -272,6 +276,12 @@ class Order extends Model
 
     public function assertBillingReady(): void
     {
+        if ($this->termination_requested_at || $this->isTerminated()) {
+            throw ValidationException::withMessages([
+                'order_id' => 'This service is scheduled for termination or has been terminated. Renewal and billing changes are unavailable.',
+            ]);
+        }
+
         if ($this->requiresBillingReview()) {
             throw ValidationException::withMessages([
                 'order_id' => 'Billing review pending. Renewal and billing changes are unavailable until the original billing details are restored.',

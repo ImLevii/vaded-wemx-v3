@@ -2,6 +2,7 @@
 
 use Livewire\Volt\Component;
 use Illuminate\Support\Facades\Mail;
+use App\Services\SmtpConfiguration;
 
 new class extends Component
 {
@@ -23,67 +24,74 @@ new class extends Component
 
     public $connectionError = '';
 
-    public function mount()
+    public function mount(): void
     {
+        abort_unless(auth()->user()?->hasPerm('admin.emails.configure'), 403);
         $this->host = config('mail.mailers.smtp.host');
         $this->port = config('mail.mailers.smtp.port');
-        $this->encryption = config('mail.mailers.smtp.encryption');
+        $this->encryption = config('mail.mailers.smtp.encryption') ?? 'null';
         $this->mail_from_name = config('mail.from.name');
         $this->mail_from_address = config('mail.from.address');
         $this->username = config('mail.mailers.smtp.username');
-        $this->password = config('mail.mailers.smtp.password');
+        $this->password = '';
     }
 
-    public function testConnection()
+    /** @return array{host: string, port: int, encryption: ?string, username: ?string, password: ?string, mail_from_address: string, mail_from_name: string} */
+    private function smtpValues(): array
     {
-        // temporarily set the config values
-        config([
-            'mail.mailers.smtp.host' => $this->host,
-            'mail.mailers.smtp.port' => $this->port,
-            'mail.mailers.smtp.encryption' => $this->encryption,
-            'mail.from.name' => $this->mail_from_name,
-            'mail.from.address' => $this->mail_from_address,
-            'mail.mailers.smtp.username' => $this->username,
-            'mail.mailers.smtp.password' => $this->password,
+        abort_unless(auth()->user()?->hasPerm('admin.emails.configure'), 403);
+        $values = $this->validate([
+            'host' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z0-9.:-]+$/'],
+            'port' => ['required', 'integer', 'between:1,65535'],
+            'encryption' => ['required', 'in:null,tls,ssl'],
+            'mail_from_name' => ['required', 'string', 'max:255'],
+            'mail_from_address' => ['required', 'email', 'max:255'],
+            'username' => ['nullable', 'string', 'max:255'],
+            'password' => ['nullable', 'string', 'max:1024'],
         ]);
+        $values['port'] = (int) $values['port'];
+        $values['encryption'] = $values['encryption'] === 'null' ? null : $values['encryption'];
+        $values['username'] = filled($values['username']) ? $values['username'] : null;
+        $values['password'] = filled($values['password']) ? $values['password'] : config('mail.mailers.smtp.password');
+
+        return $values;
+    }
+
+    public function testConnection(): void
+    {
+        $this->connectionSuccessfull = false;
+        $this->connectionError = '';
+        $values = $this->smtpValues();
+        $originalMailConfig = config('mail');
 
         try {
-            Mail::raw('This is a test email', function ($message) {
+            app(SmtpConfiguration::class)->apply($values);
+            Mail::mailer('smtp')->raw('This is a test email', function ($message) {
                 $message->to(auth()->user()->email)
                     ->subject('Testing SMTP');
             });
-        } catch (\Exception $e) {
-            $this->connectionError = $e->getMessage();
-            $this->connectionSuccessfull = false;
-            return;
+            $this->connectionSuccessfull = true;
+        } catch (\Throwable $exception) {
+            report($exception);
+            $this->connectionError = 'SMTP delivery failed. Check the server, port, encryption, credentials, and sender address.';
+        } finally {
+            config(['mail' => $originalMailConfig]);
+            Mail::purge('smtp');
         }
-
-        $this->connectionSuccessfull = true;
-        $this->connectionError = '';
     }
 
-    public function updateSmtpConfig()
+    public function updateSmtpConfig(): void
     {
-        // before we update, make sure the connection is successfull
-        if(!$this->connectionSuccessfull) {
-            dd('Connection is not successfull');
+        $this->testConnection();
+        if (! $this->connectionSuccessfull) {
             return;
         }
 
-        // store values in the .env file
-        (new \App\Helpers\EnvironmentWriter())->write([
-            'MAIL_HOST' => $this->host,
-            'MAIL_PORT' => $this->port,
-            'MAIL_USERNAME' => $this->username,
-            'MAIL_PASSWORD' => $this->password,
-            'MAIL_ENCRYPTION' => $this->encryption,
-            'MAIL_FROM_ADDRESS' => $this->mail_from_address,
-            'MAIL_FROM_NAME' => $this->mail_from_name,
-        ]);
-
-        // reset the connection status
+        app(SmtpConfiguration::class)->save($this->smtpValues());
+        $this->password = '';
         $this->connectionSuccessfull = false;
         $this->connectionError = '';
+        $this->dispatch('toast', type: 'success', message: 'SMTP settings saved. Email delivery is now enabled.', title: 'Success');
     }
 }
 
@@ -138,7 +146,7 @@ new class extends Component
             </div>
         </div>
         <div class="mb-3 row">
-            <label class="col-3 col-form-label" for="mail_from_name">Mail From Address</label>
+            <label class="col-3 col-form-label" for="mail_from_name">Mail From Name</label>
             <div class="col">
                 <input type="text" wire:model="mail_from_name" class="form-control" aria-describedby="mail_from_name" id="mail_from_name" placeholder="Mail From Name" />
                 @error('mail_from_name')
@@ -184,7 +192,7 @@ new class extends Component
                     <x-admin::form.error :message="$message" />
                 @else
                     <small class="form-hint">
-                        The password of the SMTP server
+                        The password of the SMTP server. Leave blank to keep the saved password.
                     </small>
                 @enderror
             </div>
@@ -210,6 +218,6 @@ new class extends Component
         </div>
     </div>
     <div class="card-footer text-end">
-        <button type="button" class="btn btn-primary" wire:click="updateSmtpConfig" @if(!$connectionSuccessfull) disabled @endif>{{ __('messages.update') }}</button>
+        <button type="button" class="btn btn-primary" wire:click="updateSmtpConfig" wire:loading.attr="disabled">{{ __('messages.update') }}</button>
     </div>
 </form>

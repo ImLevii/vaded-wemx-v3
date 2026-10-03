@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Handlers\Subscriptions;
+
 use App\Models\Order;
 use App\Models\OrderSubscription;
 use App\Models\Subscription;
@@ -11,7 +12,7 @@ class OrderSubscriptionHandler
     {
         $order = Order::find($subscription->subscribable_id);
 
-        if (!$order) {
+        if (! $order || $order->termination_requested_at || $order->isTerminated()) {
             return;
         }
 
@@ -45,12 +46,12 @@ class OrderSubscriptionHandler
     {
         $orderSubscription = OrderSubscription::where('subscription_id', $subscription->id)->first();
 
-        if (!$orderSubscription) {
+        if (! $orderSubscription) {
             return;
         }
 
         // if remaining days have not been added, add them to the order due date if greater than 0
-        if (!$orderSubscription->remaining_days_added && $orderSubscription->remaining_days > 0) {
+        if (! $orderSubscription->remaining_days_added && $orderSubscription->remaining_days > 0) {
             $order = $orderSubscription->order;
 
             if ($order) {
@@ -75,7 +76,11 @@ class OrderSubscriptionHandler
     {
         $orderSubscription = OrderSubscription::where('subscription_id', $subscription->id)->first();
 
-        if (!$orderSubscription) {
+        if (! $orderSubscription) {
+            return;
+        }
+
+        if ($orderSubscription->order->termination_requested_at || $orderSubscription->order->isTerminated()) {
             return;
         }
 

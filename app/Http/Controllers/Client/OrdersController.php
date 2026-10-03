@@ -4,10 +4,42 @@ namespace App\Http\Controllers\Client;
 
 use App\Actions\OrderActions;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Client\TerminateOrderRequest;
 use App\Models\Order;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class OrdersController extends Controller
 {
+    public function termination(Order $order): View
+    {
+        abort_unless((int) $order->user_id === auth()->id(), 403);
+
+        return view('theme::orders.terminate', compact('order'));
+    }
+
+    public function terminate(TerminateOrderRequest $request, Order $order): RedirectResponse
+    {
+        Order::actions()->terminateOrderAsClient([
+            'order_id' => $order->id,
+            'termination_mode' => $request->validated('termination_mode'),
+        ]);
+
+        return redirect()->route('dashboard')->with('success', 'Service termination requested. Automatic renewal has been disabled.');
+    }
+
+    public function panel(Order $order): RedirectResponse
+    {
+        abort_unless((int) $order->user_id === auth()->id(), 403);
+        abort_unless($order->package->serverConnection?->extension_identifier === 'server-pterodactyl' && ! $order->isTerminated() && $order->external_id, 404);
+        $hostname = rtrim($order->package->serverConnection->config['hostname'] ?? '', '/');
+        abort_unless(filter_var($hostname, FILTER_VALIDATE_URL) && in_array(parse_url($hostname, PHP_URL_SCHEME), ['https', 'http'], true), 404);
+        $identifier = $order->data['identifier'] ?? null;
+        $path = is_string($identifier) && preg_match('/^[a-zA-Z0-9]+$/', $identifier) ? '/server/'.$identifier : '/';
+
+        return redirect()->away($hostname.$path)->withHeaders(['Cache-Control' => 'no-store', 'Referrer-Policy' => 'no-referrer']);
+    }
+
     public function view(Order $order)
     {
         return view('theme::orders.view', compact('order'));

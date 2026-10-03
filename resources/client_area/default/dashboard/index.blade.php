@@ -10,7 +10,7 @@
     </div>
     @endif
 
-    @foreach(auth()->user()->orders()->where('status', 'active')->whereNotNull('due_date')->where('due_date', '<', now()->addDays(5))->get() as $order)
+    @foreach(auth()->user()->orders()->whereNull('termination_requested_at')->where('status', 'active')->whereNotNull('due_date')->where('due_date', '<', now()->addDays(5))->get() as $order)
         <div>
             <x-theme::alert.warning class="vh-dashboard-alert flex items-center justify-between">
             <span>Order {{ $order->package->name }} (#{{ $order->id }}) is due in {{ $order->due_date->diffForHumans() }}, please renew it in time to avoid suspension.</span>
@@ -19,7 +19,7 @@
         </div>
     @endforeach
 
-    @foreach(auth()->user()->orders()->where('status', 'suspended')->get() as $order)
+    @foreach(auth()->user()->orders()->whereNull('termination_requested_at')->where('status', 'suspended')->get() as $order)
         <div>
             <x-theme::alert.danger class="vh-dashboard-alert flex items-center justify-between">
             <span>Order {{ $order->package->name }} (#{{ $order->id }}) is suspended, please renew it in time to avoid termination.</span>

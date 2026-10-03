@@ -4,22 +4,33 @@
 
 @section('container')
 <div>
+    @if($order->termination_requested_at && ! $order->isTerminated())
+        <x-theme::alert.warning text="{{ $order->terminate_at?->isFuture() ? 'This service will be terminated on '.$order->terminate_at->format('d M Y H:i').'. Automatic renewal is disabled.' : 'Termination is being processed. Automatic renewal is disabled.' }}" />
+    @endif
+    @if((int) $order->user_id === auth()->id() && ! $order->isTerminated())
+        <div class="mb-4 flex flex-wrap gap-3">
+            @if($order->package->serverConnection?->extension_identifier === 'server-pterodactyl' && $order->external_id)
+                <x-theme::button.primary href="{{ route('orders.panel', $order) }}" target="_blank" rel="noopener noreferrer" text="Open panel" />
+            @endif
+            <x-theme::button.danger href="{{ route('orders.termination', $order) }}" text="Terminate service" />
+        </div>
+    @endif
     @if($order->requiresBillingReview())
         <x-theme::alert.warning text="Billing review pending. Your existing service is connected; renewal charges are on hold while we restore the original billing details." />
     @endif
-    @if($order->status == 'active' && $order->due_date && $order->due_date->isToday())
+    @if(!$order->termination_requested_at && $order->status == 'active' && $order->due_date && $order->due_date->isToday())
         <x-theme::alert.warning class="flex items-center justify-between">
             <span>Order {{ $order->package->name }} (#{{ $order->id }}) is due in {{ $order->due_date->diffForHumans() }}, please renew it in time to avoid suspension.</span>
         </x-theme::alert.warning>
     @endif
 
-    @if($order->status == 'suspended')
+    @if(!$order->termination_requested_at && $order->status == 'suspended')
         <x-theme::alert.danger>
             <span>Order {{ $order->package->name }} (#{{ $order->id }}) is suspended, please renew it in time to avoid termination.</span>
         </x-theme::alert.danger>
     @endif
 
-    @if(!$order->requiresBillingReview() && \App\Models\GatewayConfig::balanceGateway())
+    @if(!$order->termination_requested_at && !$order->isTerminated() && !$order->requiresBillingReview() && \App\Models\GatewayConfig::balanceGateway())
         @livewire(client_view_path('orders.livewire.balance-renewal-switch'), ['order_id' => $order->id])
     @endif
 
@@ -27,7 +38,7 @@
         @includeIf($element['view'], ['order' => $order])
     @endforeach
 
-    @if(!$order->requiresBillingReview() && $order->isActive() && !$order->hasActiveSubscription() && $order->isRecurring() && !$order->auto_balance_renew && \App\Models\GatewayConfig::where('type', 'subscription')->where('is_active', true)->count() > 0)
+    @if(!$order->termination_requested_at && !$order->requiresBillingReview() && $order->isActive() && !$order->hasActiveSubscription() && $order->isRecurring() && !$order->auto_balance_renew && \App\Models\GatewayConfig::where('type', 'subscription')->where('is_active', true)->count() > 0)
         <div>
             <x-theme::alert.primary class="flex items-center justify-between">
             <span>
@@ -103,7 +114,9 @@
 
             <x-theme::datagrid.item>
                 <x-slot:label>Next Invoice</x-slot:label>
-                @if($order->requiresBillingReview())
+                @if($order->termination_requested_at || $order->isTerminated())
+                    No further renewals
+                @elseif($order->requiresBillingReview())
                     On hold
                 @elseif($order->due_date)
                     {{ $order->due_date->diffForHumans() }}
@@ -112,7 +125,7 @@
                 @endif
             </x-theme::datagrid.item>
         </x-theme::datagrid.grid>
-        @if(!$order->requiresBillingReview())
+        @if(!$order->termination_requested_at && !$order->isTerminated() && !$order->requiresBillingReview())
             <x-theme::button.success type="button" data-drawer-target="renew-order-drawer" data-drawer-show="renew-order-drawer" data-drawer-placement="right" aria-controls="renew-order-drawer" text="Renew" />
         @endif
     </x-theme::card>

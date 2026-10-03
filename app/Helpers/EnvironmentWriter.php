@@ -9,14 +9,20 @@ class EnvironmentWriter
      * reasonably cause environment parsing issues. Those values are then wrapped
      * in quotes before being returned.
      */
-    public static function escapeEnvironmentValue(string $value = null): string
+    public static function escapeEnvironmentValue(?string $value = null): string
     {
         if ($value === null) {
             return 'null';
         }
 
-        if (!preg_match('/^\"(.*)\"$/', $value) && preg_match('/([^\w.\-+\/])+/', $value)) {
-            return sprintf('"%s"', addslashes($value));
+        if ($value === '' || preg_match('/([^\w.\-+\/])+/', $value)) {
+            return '"'.strtr($value, [
+                '\\' => '\\\\',
+                '"' => '\\"',
+                '$' => '\\$',
+                "\r" => '\r',
+                "\n" => '\n',
+            ]).'"';
         }
 
         return $value;
@@ -29,9 +35,9 @@ class EnvironmentWriter
      */
     public static function write(array $values = []): void
     {
-        $path = base_path('.env');
+        $path = app()->environmentFilePath();
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             throw new \Exception('Cannot locate .env file, was this software installed correctly?');
         }
 
@@ -40,10 +46,10 @@ class EnvironmentWriter
             $key = strtoupper($key);
             $saveValue = sprintf('%s=%s', $key, self::escapeEnvironmentValue($value));
 
-            if (preg_match_all('/^' . $key . '=(.*)$/m', $saveContents) < 1) {
-                $saveContents = $saveContents . PHP_EOL . $saveValue;
+            if (preg_match_all('/^'.$key.'=(.*)$/m', $saveContents) < 1) {
+                $saveContents = $saveContents.PHP_EOL.$saveValue;
             } else {
-                $saveContents = preg_replace('/^' . $key . '=(.*)$/m', $saveValue, $saveContents);
+                $saveContents = preg_replace_callback('/^'.preg_quote($key, '/').'=(.*)$/m', static fn (): string => $saveValue, $saveContents);
             }
         });
 

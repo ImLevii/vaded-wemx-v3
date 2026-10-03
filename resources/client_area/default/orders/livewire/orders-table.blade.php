@@ -187,7 +187,18 @@ new class extends Component
                             @endif
                         </td>
                         <td class="px-4 py-3">
+                            <div class="flex flex-wrap items-center gap-2">
                             <a href="{{ route('orders.view', $order->id) }}" wire:navigate @click.stop class="vh-action vh-action-secondary">Manage <x-theme::icon name="arrow" /></a>
+                            @if(! $order->isTerminated())
+                                @if($order->package->serverConnection?->extension_identifier === 'server-pterodactyl' && $order->external_id)
+                                    <a href="{{ route('orders.panel', $order) }}" target="_blank" rel="noopener noreferrer" @click.stop class="vh-action vh-action-secondary">Open panel</a>
+                                @endif
+                                <a href="{{ route('orders.termination', $order) }}" wire:navigate @click.stop class="font-medium text-red-600 dark:text-red-400 hover:underline">Terminate</a>
+                            @endif
+                            </div>
+                            @if($order->termination_requested_at && ! $order->isTerminated())
+                                <p class="mt-2 text-sm text-amber-700 dark:text-amber-300">{{ $order->terminate_at?->isFuture() ? 'Terminates '.$order->terminate_at->format('d M Y H:i') : 'Termination requested' }}</p>
+                            @endif
                         </td>
                     </tr>
                     <tr x-cloak x-show="expanded" id="table-column-body-{{ $order->id }}" aria-labelledby="table-column-header-{{ $order->id }}">

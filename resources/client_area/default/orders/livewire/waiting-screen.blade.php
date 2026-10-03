@@ -34,4 +34,9 @@ new class extends Component
         </div>
         <x-theme::server-node />
     </div>
+    @if((int) $order->user_id === auth()->id() && ! $order->isTerminated())
+        <div class="mt-4">
+            <x-theme::button.danger href="{{ route('orders.termination', $order) }}" text="Terminate service" />
+        </div>
+    @endif
 </section>

@@ -156,7 +156,13 @@ class Subscription extends Model
 
     public function activated($subscriptionId, $nextBillingAt = null, $subscriptionData = []): void
     {
+        $order = $this->subscribable;
+        $serviceIsEnding = $order instanceof Order && ($order->termination_requested_at || $order->isTerminated());
         if ($this->isActive()) {
+            if ($serviceIsEnding) {
+                $this->cancelSubscription();
+            }
+
             return;
         }
 
@@ -179,6 +185,12 @@ class Subscription extends Model
             'activated_at' => now(),
             'next_billing_at' => $nextBillingAt,
         ]);
+
+        if ($serviceIsEnding) {
+            $this->cancelSubscription();
+
+            return;
+        }
 
         $this->callHandler('onSubscriptionActivated');
 

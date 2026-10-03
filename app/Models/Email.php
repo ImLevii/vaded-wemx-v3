@@ -59,7 +59,7 @@ class Email extends Model
         });
 
         static::created(function ($email) {
-            DeliverCustomerMail::dispatch($email);
+            DeliverCustomerMail::dispatch($email)->afterCommit();
         });
     }
 

@@ -25,6 +25,7 @@ new class extends Component {
 
     public function enableBalanceRenewal()
     {
+        abort_unless((int) $this->order->user_id === auth()->id(), 403);
         $this->order->assertBillingReady();
         $this->auto_balance_renew = !$this->auto_balance_renew;
 

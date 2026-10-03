@@ -9,6 +9,8 @@ Schedule::call(function () {
 })->everyMinute();
 
 // Every day
+Schedule::command('cronjobs:orders:terminate-requested')->everyMinute()->withoutOverlapping();
+Schedule::command('cronjobs:mass-mails:send')->everyMinute()->withoutOverlapping();
 Schedule::command('cronjobs:orders:renew-balance-renewals')->daily();
 Schedule::command('cronjobs:update-currency-rates')->daily();
 
