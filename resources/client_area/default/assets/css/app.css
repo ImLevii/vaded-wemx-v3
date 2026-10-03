@@ -97,7 +97,7 @@
     background: linear-gradient(90deg, transparent, var(--vh-accent-soft) 25%, color-mix(in srgb, var(--vh-accent) 24%, transparent) 50%, var(--vh-accent-soft) 75%, transparent);
     pointer-events: none;
 }
-.vaded-client .vh-client-header > nav { background: transparent; border: 0; padding: 0 24px; }
+.vaded-client .vh-client-header > nav { background: transparent; border: 0; border-radius: inherit; padding: 0 24px; }
 .vh-client-header > nav > div { max-width: 1280px; margin: 0 auto; gap: 16px; }
 .vh-client-header .vh-brand { font-size: 16px; }
 .vaded-theme .vh-client-header .vh-brand > span { background: none; -webkit-text-fill-color: currentColor; }
@@ -248,7 +248,7 @@
 .vaded-client .vh-client-stat > div:first-child svg { width: 19px; height: 19px; color: var(--vh-accent); }
 .vaded-client .vh-client-stat p { font-size: 12px; line-height: 1.6; margin-top: 5px; }
 
-.vaded-client[data-bs-theme="light"] .bg-white { background-color: var(--vh-surface); }
+.vaded-client[data-bs-theme="light"] :where(.bg-white) { background-color: var(--vh-surface); }
 .vaded-client[data-bs-theme="light"] :is(.vh-service-card, .vh-pricing-card, .vh-node, .vh-workspace-preview, .vh-launch-cta, .vh-vps-plan-card, .vh-vps-workload, .vh-vps-checkout-panel, .vh-package-summary .vh-purchase-panel) { box-shadow: var(--vh-shadow); }
 .vaded-client[data-bs-theme="light"] :is(.vh-service-card, .vh-pricing-card, .vh-vps-plan-card):is(:hover, :focus-visible) { box-shadow: var(--vh-shadow-hover); }
 .vaded-client[data-bs-theme="light"] .vh-client-header { --vh-nav-glass: rgba(225, 231, 238, .9); --vh-nav-edge: rgba(34, 46, 61, .2); }
