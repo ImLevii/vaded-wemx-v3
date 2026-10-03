@@ -195,9 +195,9 @@ class QueueWorkerTest extends TestCase
         $this->assertTrue(AppTaskLog::isQueueWorkerRunning());
     }
 
-    public function test_sync_queue_delivers_customer_email_when_the_record_is_created(): void
+    public function test_sync_queue_logs_customer_email_with_the_array_mailer_when_the_record_is_created(): void
     {
-        config(['queue.default' => 'sync']);
+        config(['queue.default' => 'sync', 'mail.default' => 'array']);
         Mail::fake();
         $user = User::factory()->create();
 
@@ -209,7 +209,7 @@ class QueueWorkerTest extends TestCase
         ]);
 
         Mail::assertSent(CustomerMail::class, fn (CustomerMail $mail): bool => $mail->hasTo($user->email));
-        $this->assertSame('delivered', $email->fresh()->status);
+        $this->assertSame('logged', $email->fresh()->status);
         $this->assertDatabaseCount('jobs', 0);
     }
 
