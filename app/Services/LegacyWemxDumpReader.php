@@ -6,7 +6,7 @@ use RuntimeException;
 
 class LegacyWemxDumpReader
 {
-    private const TABLES = ['categories', 'packages', 'package_prices', 'package_features', 'package_settings', 'package_config_options', 'users', 'addresses'];
+    private const TABLES = ['categories', 'packages', 'package_prices', 'package_features', 'package_settings', 'package_config_options', 'users', 'addresses', 'user_2fa'];
 
     /** @return array<string, list<array<string, string|null>>> */
     public function read(string $path): array
