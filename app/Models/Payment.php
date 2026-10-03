@@ -6,6 +6,8 @@ use App\Actions\PaymentActions;
 use App\Events;
 use App\Events\Payments\PaymentCompleted;
 use App\Facades\Tax;
+use App\Handlers\OrderUpgradeHandler;
+use App\Services\OrderUpgradeService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
@@ -388,6 +390,11 @@ class Payment extends Model
     {
         if ($this->isPaid()) {
             throw new \Exception('This payment has already been paid.');
+        }
+
+        if ($this->handler === OrderUpgradeHandler::class) {
+            abort_unless(auth()->check() && (int) $this->user_id === auth()->id(), 403);
+            app(OrderUpgradeService::class)->assertPayable($this);
         }
 
         // If payment price is zero, mark it as paid and redirect like other gateways.

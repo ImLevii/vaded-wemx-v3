@@ -9,6 +9,9 @@
     @endif
     @if((int) $order->user_id === auth()->id() && ! $order->isTerminated())
         <div class="mb-4 flex flex-wrap gap-3">
+            @if($canUpgrade)
+                <x-theme::button.primary href="{{ route('orders.upgrade', $order) }}" wire:navigate text="Upgrade service" />
+            @endif
             @if($order->package->serverConnection?->extension_identifier === 'server-pterodactyl' && $order->external_id)
                 <x-theme::button.primary href="{{ route('orders.panel', $order) }}" target="_blank" rel="noopener noreferrer" text="Open panel" />
             @endif

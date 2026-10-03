@@ -115,6 +115,9 @@ Route::middleware(['web', 'auth'])->group(function () {
     });
 
     Route::prefix('orders')->group(function () {
+        Route::get('/view/{order:id}/upgrade', [Client\OrdersController::class, 'upgrade'])->name('orders.upgrade');
+        Route::post('/view/{order:id}/upgrade', [Client\OrdersController::class, 'purchaseUpgrade'])->middleware('throttle:6,1')->name('orders.upgrade.purchase');
+        Route::post('/view/{order:id}/upgrade/{payment:id}/retry', [Client\OrdersController::class, 'retryUpgrade'])->middleware('throttle:6,1')->name('orders.upgrade.retry');
         Route::get('/view/{order:id}/terminate', [Client\OrdersController::class, 'termination'])->name('orders.termination');
         Route::post('/view/{order:id}/terminate', [Client\OrdersController::class, 'terminate'])->middleware('throttle:6,1')->name('orders.terminate');
         Route::get('/view/{order:id}/panel', [Client\OrdersController::class, 'panel'])->middleware('throttle:20,1')->name('orders.panel');

@@ -3,14 +3,50 @@
 namespace App\Http\Controllers\Client;
 
 use App\Actions\OrderActions;
+use App\Handlers\OrderUpgradeHandler;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\TerminateOrderRequest;
+use App\Http\Requests\Client\UpgradeOrderRequest;
 use App\Models\Order;
+use App\Models\Payment;
+use App\Services\OrderUpgradeService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
 class OrdersController extends Controller
 {
+    public function upgrade(Order $order, OrderUpgradeService $upgrades): View
+    {
+        abort_unless((int) $order->user_id === auth()->id(), 403);
+
+        return view('theme::orders.upgrade', [
+            'order' => $order, 'upgradeOptions' => $upgrades->options($order),
+            'unavailableReason' => $upgrades->unavailableReason($order),
+            'pendingUpgrade' => $upgrades->pendingPayment($order),
+            'completedUpgrade' => $order->payments()->where('handler', OrderUpgradeHandler::class)->where('status', 'paid')
+                ->whereNotNull('data->upgrade_applied_at')->latest()->first(),
+        ]);
+    }
+
+    public function purchaseUpgrade(UpgradeOrderRequest $request, Order $order, OrderUpgradeService $upgrades): RedirectResponse
+    {
+        $payment = $upgrades->checkout($order, (int) $request->validated('package_price_id'), $request->validated('quote_token'));
+
+        return redirect()->route($payment->isPaid() ? 'orders.upgrade' : 'payments.view', $payment->isPaid() ? $order : $payment->token);
+    }
+
+    public function retryUpgrade(Order $order, Payment $payment): RedirectResponse
+    {
+        abort_unless((int) $order->user_id === auth()->id() && (int) $payment->user_id === auth()->id(), 403);
+        abort_unless($payment->payable_type === $order->getMorphClass() && (int) $payment->payable_id === (int) $order->id
+            && $payment->handler === OrderUpgradeHandler::class && $payment->isPaid(), 404);
+        (new OrderUpgradeHandler)->onPaymentCompleted($payment);
+        $wasApplied = (bool) $payment->fresh()->data('upgrade_applied_at');
+
+        return redirect()->route('orders.upgrade', $order)->with($wasApplied ? 'success' : 'error',
+            $wasApplied ? 'Your service has been upgraded.' : 'Your payment is recorded, but the upgrade could not be completed. Please contact support or retry later.');
+    }
+
     public function termination(Order $order): View
     {
         abort_unless((int) $order->user_id === auth()->id(), 403);
@@ -40,9 +76,11 @@ class OrdersController extends Controller
         return redirect()->away($hostname.$path)->withHeaders(['Cache-Control' => 'no-store', 'Referrer-Policy' => 'no-referrer']);
     }
 
-    public function view(Order $order)
+    public function view(Order $order, OrderUpgradeService $upgrades): View
     {
-        return view('theme::orders.view', compact('order'));
+        $canUpgrade = (int) $order->user_id === auth()->id() && $upgrades->options($order)->isNotEmpty();
+
+        return view('theme::orders.view', compact('order', 'canUpgrade'));
     }
 
     public function payments(Order $order)

@@ -36,6 +36,10 @@
                                 </x-slot:icon>
                             </x-theme::navlist.item>
 
+                            @if((int) $order->user_id === auth()->id() && $order->package->serverConnection?->extension_identifier === 'server-pterodactyl' && $order->isActive())
+                                <x-theme::navlist.item wire:navigate text="Upgrade" href="{{ route('orders.upgrade', $order) }}" :active="$activeTab == 'upgrade'" />
+                            @endif
+
                             @if($order->isRecurring() AND \App\Models\GatewayConfig::where('type', 'subscription')->where('is_active', true)->count() > 0)
                             <x-theme::navlist.item wire:navigate text="Subscription" href="{{ route('orders.view.subscription', ['order' => $order->id]) }}" :active="$activeTab == 'subscription'">
                                 <x-slot:icon>

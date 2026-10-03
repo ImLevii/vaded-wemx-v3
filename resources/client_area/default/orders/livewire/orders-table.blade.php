@@ -1,7 +1,10 @@
 <?php
 
 use Livewire\Attributes\Url;
+use Livewire\Attributes\Computed;
 use Livewire\Volt\Component;
+use App\Services\OrderUpgradeService;
+use Illuminate\Support\Collection;
 
 new class extends Component
 {
@@ -10,13 +13,27 @@ new class extends Component
 
     #[Url('orderSearch')]
     public string $search = '';
+
+    #[Computed]
+    public function orders(): Collection
+    {
+        return auth()->user()->orders()->with(['package.category', 'package.serverConnection.server', 'prices'])->latest()->get();
+    }
+
+    #[Computed]
+    public function upgradeableOrderIds(): array
+    {
+        $upgrades = app(OrderUpgradeService::class);
+
+        return $upgrades->upgradeableOrderIds($this->orders);
+    }
 }
 
 ?>
 
 @php
     $user = auth()->user();
-    $orders = $user->orders->sortByDesc('created_at');
+    $orders = $this->orders;
 
     // get all available statuses as an array and the count of each status
     $statuses = $orders->pluck('status')->countBy();
@@ -189,6 +206,9 @@ new class extends Component
                         <td class="px-4 py-3">
                             <div class="flex flex-wrap items-center gap-2">
                             <a href="{{ route('orders.view', $order->id) }}" wire:navigate @click.stop class="vh-action vh-action-secondary">Manage <x-theme::icon name="arrow" /></a>
+                            @if(in_array($order->id, $this->upgradeableOrderIds, true))
+                                <a href="{{ route('orders.upgrade', $order) }}" wire:navigate @click.stop class="vh-action vh-action-secondary">Upgrade</a>
+                            @endif
                             @if(! $order->isTerminated())
                                 @if($order->package->serverConnection?->extension_identifier === 'server-pterodactyl' && $order->external_id)
                                     <a href="{{ route('orders.panel', $order) }}" target="_blank" rel="noopener noreferrer" @click.stop class="vh-action vh-action-secondary">Open panel</a>

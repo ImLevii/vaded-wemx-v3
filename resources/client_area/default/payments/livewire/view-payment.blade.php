@@ -69,6 +69,10 @@ new class extends Component {
 
     public function payPayment()
     {
+        if ($this->payment->handler === \App\Handlers\OrderUpgradeHandler::class) {
+            app(\App\Services\OrderUpgradeService::class)->assertPayable($this->payment->fresh());
+        }
+
         $payment = Payment::actions()->calculateSalesTaxAsClient([
             'payment_id' => $this->payment->id,
             'gateway_config_id' => $this->gatewayId,
@@ -102,6 +106,16 @@ new class extends Component {
         <p class="mt-2 text-base text-gray-500 dark:text-gray-400">
             {{ $payment->description }}
         </p>
+        @if($payment->handler === \App\Handlers\OrderUpgradeHandler::class && $payment->payable)
+            <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                @if($payment->data('upgrade_applied_at'))
+                    Your service has been upgraded.
+                @elseif($payment->isPaid())
+                    Your payment is recorded. View your upgrade to check its status or retry without another charge.
+                @endif
+                <a href="{{ route('orders.upgrade', $payment->payable_id) }}" wire:navigate class="font-medium text-primary-600 hover:underline dark:text-primary-400">View service upgrade</a>
+            </p>
+        @endif
 
         @if($payment->isNotPaid())
             <div class="mt-6 sm:mt-8 lg:flex lg:items-start lg:gap-8">
@@ -109,6 +123,8 @@ new class extends Component {
                 @error('gateway_config_id')
                 <x-theme::form.error :text="$message"/>
                 @enderror
+                @error('payment_id') <x-theme::form.error :text="$message" /> @enderror
+                @error('package_price_id') <x-theme::form.error :text="$message" /> @enderror
                 <x-theme::checkout.gateway-list :exclude-balance-gateway="true" :handler="$payment->handler" />
 
                 <hr class="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700">
