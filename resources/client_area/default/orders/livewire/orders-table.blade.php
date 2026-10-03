@@ -142,18 +142,22 @@ new class extends Component
                                 <img class="h-10 w-10 shrink-0 rounded-lg object-cover" src="{{ $order->package->icon() }}" alt="">
                                 <span class="flex min-w-0 flex-col gap-1 break-words"> {{ $order->package->name }}
                                     <small class="text-gray-500 dark:text-gray-400">
-                                        {{ $order->package->category->name }}
+                                        {{ $order->data['name'] ?? $order->package->category->name }}
                                     </small>
                                 </span>
                             </div>
                         </th>
                         <td class="px-4 py-3" data-label="Billing">
+                            @if($order->requiresBillingReview())
+                                Billing review pending
+                            @else
                             <div class="flex items-center text-gray-500 dark:text-gray-400">
                         <span class="mr-1 font-bold text-gray-500 dark:text-white">
                             {{ price($order->price) }}
                         </span>
                                 / {{ $order->cycle() }}
                             </div>
+                            @endif
                         </td>
                         <td class="px-4 py-3" data-label="Team">
                             <a href="{{ route('orders.view.members', $order->id) }}" wire:navigate @click.stop class="vh-text-link">Manage team</a>
@@ -174,7 +178,9 @@ new class extends Component
                             @endif
                         </td>
                         <td class="px-4 py-3" data-label="Renews">
-                            @if($order->due_date)
+                            @if($order->requiresBillingReview())
+                                Awaiting billing review
+                            @elseif($order->due_date)
                                 {{ $order->due_date->format('d M Y') }}
                             @else
                                 Never
@@ -198,7 +204,11 @@ new class extends Component
 
                                     <x-theme::datagrid.item>
                                         <x-slot:label>Billing cycle</x-slot:label>
-                                        <span class="mr-1 font-bold text-gray-500 dark:text-white">{{ price($order->price) }}</span> / {{ $order->cycle() }}
+                                        @if($order->requiresBillingReview())
+                                            Billing review pending
+                                        @else
+                                            <span class="mr-1 font-bold text-gray-500 dark:text-white">{{ price($order->price) }}</span> / {{ $order->cycle() }}
+                                        @endif
                                     </x-theme::datagrid.item>
 
                                     <x-theme::datagrid.item>
@@ -220,7 +230,9 @@ new class extends Component
 
                                     <x-theme::datagrid.item>
                                         <x-slot:label>Due date</x-slot:label>
-                                        @if($order->due_date)
+                                        @if($order->requiresBillingReview())
+                                            Awaiting billing review
+                                        @elseif($order->due_date)
                                             {{ $order->due_date->format('d M Y') }}
                                         @else
                                             Never
@@ -229,12 +241,14 @@ new class extends Component
 
                                     <x-theme::datagrid.item>
                                         <x-slot:label>Last renewal date</x-slot:label>
-                                        {{ $order->last_renewed_at->format('d M Y') }}
+                                        {{ $order->requiresBillingReview() ? 'Unknown' : $order->last_renewed_at->format('d M Y') }}
                                     </x-theme::datagrid.item>
 
                                     <x-theme::datagrid.item>
                                         <x-slot:label>Next Invoice</x-slot:label>
-                                        @if($order->due_date)
+                                        @if($order->requiresBillingReview())
+                                            On hold
+                                        @elseif($order->due_date)
                                             {{ $order->due_date->diffForHumans() }}
                                         @else
                                             Never

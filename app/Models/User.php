@@ -52,6 +52,7 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
+        'server_password',
         'tfa_secret',
         'remember_token',
         'verification_token',
@@ -66,6 +67,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'server_password' => 'encrypted',
             'email_verified_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'last_login_at' => 'datetime',

@@ -7,13 +7,13 @@ use App\Handlers\BalanceTopupHandler;
 use App\Handlers\OrderRenewalHandler;
 use App\Models\GatewayConfig;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\PaymentRefund;
 use App\Models\PaymentTaxDetail;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use App\Models\Payment;
 
 class PaymentActions extends Action
 {
@@ -38,7 +38,7 @@ class PaymentActions extends Action
         $payment->logActivity([
             'user_id' => auth()->check() ? auth()->id() : null,
             'event' => 'payment.created',
-            'description' => 'Payment created manually by ' . (auth()->check() ? auth()->user()->username : 'system'),
+            'description' => 'Payment created manually by '.(auth()->check() ? auth()->user()->username : 'system'),
             'model_type' => Payment::class,
             'model_id' => $payment->id,
         ]);
@@ -66,7 +66,7 @@ class PaymentActions extends Action
 
         $payment = Payment::find($validatedData['payment_id']);
 
-        if (!$payment) {
+        if (! $payment) {
             throw ValidationException::withMessages([
                 'payment_id' => 'Payment not found',
             ]);
@@ -100,7 +100,7 @@ class PaymentActions extends Action
         $payment = Payment::find($validatedData['payment_id']);
         $gateway = GatewayConfig::find($validatedData['gateway_config_id']);
 
-        if (!$payment) {
+        if (! $payment) {
             throw ValidationException::withMessages([
                 'payment_id' => 'Payment not found',
             ]);
@@ -113,14 +113,14 @@ class PaymentActions extends Action
             ]);
         }
 
-        if (!$gateway) {
+        if (! $gateway) {
             throw ValidationException::withMessages([
                 'gateway_config_id' => 'Gateway configuration not found',
             ]);
         }
 
         // Check if the gateway is gateway-balance or if it was used to pay for the payment
-        if($gateway->id !== $payment->gateway_config_id) {
+        if ($gateway->id !== $payment->gateway_config_id) {
             // check if the gateway is not a balance gateway
             if ($gateway->extension_identifier !== 'gateway-balance') {
                 throw ValidationException::withMessages([
@@ -130,7 +130,7 @@ class PaymentActions extends Action
         }
 
         // check if the gateway supports refunds
-        if (!$gateway->gateway->supportsRefunds()) {
+        if (! $gateway->gateway->supportsRefunds()) {
             throw ValidationException::withMessages([
                 'gateway_config_id' => 'The specified gateway does not support refunds',
             ]);
@@ -151,7 +151,7 @@ class PaymentActions extends Action
         // Here you would implement the logic to process the refund
         // For example, interacting with a payment gateway API
         try {
-            if($gateway->gateway->supportsPartialRefunds()) {
+            if ($gateway->gateway->supportsPartialRefunds()) {
                 // Process partial refund
                 $gateway->gateway->extension()->refund(
                     $payment,
@@ -161,9 +161,9 @@ class PaymentActions extends Action
                 // Process full refund
                 $gateway->gateway->extension()->refund($payment);
             }
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             throw ValidationException::withMessages([
-                'gateway_config_id' => 'Failed to process refund: ' . $e->getMessage(),
+                'gateway_config_id' => 'Failed to process refund: '.$e->getMessage(),
             ]);
         }
 
@@ -191,7 +191,7 @@ class PaymentActions extends Action
         $payment->logActivity([
             'user_id' => auth()->check() ? auth()->id() : null,
             'event' => 'payment.refunded',
-            'description' => 'Payment refunded manually by ' . (auth()->check() ? auth()->user()->username : 'system'),
+            'description' => 'Payment refunded manually by '.(auth()->check() ? auth()->user()->username : 'system'),
             'model_type' => Payment::class,
             'model_id' => $payment->id,
         ]);
@@ -225,7 +225,7 @@ class PaymentActions extends Action
 
         $payment = Payment::find($validatedData['payment_id']);
 
-        if (!$payment) {
+        if (! $payment) {
             throw ValidationException::withMessages([
                 'payment_id' => 'Payment not found',
             ]);
@@ -261,7 +261,7 @@ class PaymentActions extends Action
 
         $order = Order::find($validatedData['order_id']);
 
-        if (!$order) {
+        if (! $order) {
             throw ValidationException::withMessages([
                 'order_id' => 'Order not found',
             ]);
@@ -273,6 +273,7 @@ class PaymentActions extends Action
             ]);
         }
 
+        $order->assertBillingReady();
         $renewalPrice = $validatedData['renewal_days'] * $order->daily_price;
 
         $payment = Payment::create([
@@ -295,12 +296,12 @@ class PaymentActions extends Action
     {
         $validatedData = Validator::make($input, [
             'user_id' => ['required', 'exists:users,id'],
-            'amount' => ['required', 'numeric', 'min:'. settings('min_balance_topup_amount', 5)],
+            'amount' => ['required', 'numeric', 'min:'.settings('min_balance_topup_amount', 5)],
         ])->validate();
 
         $user = User::find($validatedData['user_id']);
 
-        if(!$user) {
+        if (! $user) {
             throw ValidationException::withMessages([
                 'user_id' => 'User not found',
             ]);
@@ -308,7 +309,7 @@ class PaymentActions extends Action
 
         return Payment::create([
             'user_id' => $user->id,
-            'description' => "Balance top-up of ". price($validatedData['amount'], in: baseCurrency(), to: baseCurrency()),
+            'description' => 'Balance top-up of '.price($validatedData['amount'], in: baseCurrency(), to: baseCurrency()),
             'subtotal' => $validatedData['amount'],
             'currency' => baseCurrency(),
             'handler' => BalanceTopupHandler::class,

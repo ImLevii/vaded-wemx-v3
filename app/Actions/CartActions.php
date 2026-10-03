@@ -133,6 +133,11 @@ class CartActions extends Action
             $package = $aggregate['package'];
             $requestedQuantity = $aggregate['quantity'];
 
+            $server = $package->serverConnection?->server?->functions();
+            if ($server !== null && method_exists($server, 'eventCheckout')) {
+                $server->eventCheckout($package, $user);
+            }
+
             if ($package->global_quantity !== -1 && $package->global_quantity < $requestedQuantity) {
                 throw ValidationException::withMessages([
                     'cart_id' => 'One or more packages in your cart are out of stock.',

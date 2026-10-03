@@ -4,9 +4,9 @@ namespace App\Console\Commands;
 
 use App\Services\BackupUserImporter;
 use App\Services\LegacyWemxDumpReader;
+use App\Services\UserImportBackup;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 
@@ -17,7 +17,7 @@ class ImportUserBackup extends Command
 
     protected $description = 'Import WemX and Pterodactyl users from a local backup while preserving existing accounts';
 
-    public function handle(LegacyWemxDumpReader $reader, BackupUserImporter $importer): int
+    public function handle(LegacyWemxDumpReader $reader, BackupUserImporter $importer, UserImportBackup $backup): int
     {
         $root = realpath((string) $this->argument('directory'));
         if ($root === false || ! is_dir($root)) {
@@ -56,15 +56,10 @@ class ImportUserBackup extends Command
             $commit = (bool) $this->option('commit');
             $prefix = null;
             if ($commit) {
-                if (DB::connection()->getDriverName() !== 'sqlite') {
-                    throw new RuntimeException('Automatic pre-import backups currently require SQLite.');
-                }
                 $directory = storage_path('app/private/legacy-imports');
                 File::ensureDirectoryExists($directory);
                 $prefix = $directory.'/users-'.now()->format('Ymd-His').'-'.bin2hex(random_bytes(4));
-                $pdo = DB::connection()->getPdo();
-                $pdo->exec('VACUUM INTO '.$pdo->quote($prefix.'.sqlite'));
-                $this->info('Database backup: '.$prefix.'.sqlite');
+                $this->info('Pre-import backup: '.$backup->create($prefix));
             }
             $report = $importer->import($wemx, $panel, $commit);
             if ($prefix !== null) {

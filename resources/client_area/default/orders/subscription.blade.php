@@ -3,11 +3,14 @@
 ])
 
 @section('container')
+    @if($order->requiresBillingReview())
+        <x-theme::alert.warning text="Billing review pending. Subscriptions are unavailable until the original billing details are restored." />
+    @endif
     @if($order->isNotActive())
         <x-theme::alert.warning text="This order is currently not active, subscription cannot be setup until it's active."/>
     @endif
 
-    @if(!$order->hasActiveSubscription(true))
+    @if(!$order->requiresBillingReview() && !$order->hasActiveSubscription(true))
     <x-theme::card class="mb-4">
         <div class="mb-4">
             <h3 class="text-xl font-bold dark:text-white">

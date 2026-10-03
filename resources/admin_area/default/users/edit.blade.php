@@ -153,7 +153,7 @@
                             </div>
                         </div>',
                         '<a href="' . route('admin.servers.connections.edit', $order->package->serverConnection->id) . '" wire:navigate>'. $order->package->serverConnection->alias .'</a>',
-                        price($order->price) .' / '. $order->cycle(),
+                        $order->requiresBillingReview() ? 'Billing review pending' : price($order->price) .' / '. $order->cycle(),
                         $order->status === 'active' ? '<span class="status status-green">'. __('messages.active') .'</span>' : '<span class="status status-red">'. __('messages.inactive') .'</span>',
                         $order->due_date ? $order->due_date->format(settings('date_format', 'd M Y H:i')) : 'N/A',
                         $order->created_at->format(settings('date_format', 'd M Y H:i')),

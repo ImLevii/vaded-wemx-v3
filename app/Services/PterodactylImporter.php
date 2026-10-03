@@ -25,9 +25,10 @@ class PterodactylImporter
 {
     /**
      * @param  array<int, int>  $serverPrices
+     * @param  list<int>  $serverIds
      * @return array{users_created: int, users_matched: int, orders_created: int, orders_skipped: int, servers: list<array<int, mixed>>}
      */
-    public function import(ServerConnection $connection, ?int $defaultPriceId = null, array $serverPrices = [], ?string $dueDate = null, bool $commit = false, bool $matchPackages = false): array
+    public function import(ServerConnection $connection, ?int $defaultPriceId = null, array $serverPrices = [], ?string $dueDate = null, bool $commit = false, bool $matchPackages = false, array $serverIds = [], ?int $userId = null, bool $billingReview = false): array
     {
         if ($connection->extension_identifier !== 'server-pterodactyl') {
             throw new RuntimeException('Select a Pterodactyl server connection.');
@@ -35,6 +36,11 @@ class PterodactylImporter
         $credentials = $connection->config ?? [];
         if (empty($credentials['hostname']) || ! str_starts_with($credentials['api_key'] ?? '', 'ptla_')) {
             throw new RuntimeException('Configure the connection with a panel hostname and a Pterodactyl Application API key (ptla_).');
+        }
+        Validator::make(['server_ids' => $serverIds], ['server_ids' => ['array'], 'server_ids.*' => ['integer', 'min:1', 'distinct']])->validate();
+        $expectedUser = $userId === null ? null : User::query()->findOrFail($userId);
+        if ($billingReview && ($serverIds === [] || $expectedUser === null || $dueDate !== null)) {
+            throw new RuntimeException('--billing-review requires explicit --server and --user selections and cannot be combined with --due-date.');
         }
         $renewalDate = null;
         if ($dueDate !== null) {
@@ -47,7 +53,14 @@ class PterodactylImporter
             throw new RuntimeException('An import for this connection is already running.');
         }
         try {
-            $servers = $this->fetchServers($credentials);
+            $servers = $this->fetchServers($credentials, $serverIds);
+            foreach ($servers as $server) {
+                $owner = $server['relationships']['user']['attributes'];
+                if ($expectedUser !== null && (mb_strtolower(trim($expectedUser->email)) !== mb_strtolower(trim($owner['email']))
+                    || (data_get($expectedUser->data, '_legacy_pterodactyl.id') !== null && (int) data_get($expectedUser->data, '_legacy_pterodactyl.id') !== (int) $owner['id']))) {
+                    throw new RuntimeException("Server {$server['id']} does not belong to the selected WemX customer.");
+                }
+            }
             $unknownMappings = array_diff(array_keys($serverPrices), array_column($servers, 'id'));
             if ($unknownMappings !== []) {
                 throw new RuntimeException('Price mappings reference servers absent from this panel: '.implode(', ', $unknownMappings));
@@ -61,11 +74,18 @@ class PterodactylImporter
             DB::beginTransaction();
             try {
                 ServerConnection::query()->whereKey($connection->id)->lockForUpdate()->firstOrFail();
-                Model::withoutEvents(function () use ($connection, $servers, $prices, $defaultPriceId, $serverPrices, $renewalDate, $matchPackages, &$report): void {
+                if ($expectedUser !== null) {
+                    $expectedUser = User::query()->whereKey($expectedUser->id)->lockForUpdate()->firstOrFail();
+                }
+                Model::withoutEvents(function () use ($connection, $servers, $prices, $defaultPriceId, $serverPrices, $renewalDate, $matchPackages, $billingReview, $expectedUser, &$report): void {
                     $users = [];
                     foreach ($servers as $server) {
                         $owner = $server['relationships']['user']['attributes'];
                         $email = mb_strtolower(trim($owner['email']));
+                        if ($expectedUser !== null && (mb_strtolower(trim($expectedUser->email)) !== $email
+                            || (data_get($expectedUser->data, '_legacy_pterodactyl.id') !== null && (int) data_get($expectedUser->data, '_legacy_pterodactyl.id') !== (int) $owner['id']))) {
+                            throw new RuntimeException("Server {$server['id']} does not belong to the selected WemX customer.");
+                        }
                         $orders = Order::query()->where('external_id', (string) $server['id'])
                             ->whereHas('package', fn ($query) => $query->where('connection_id', $connection->id))
                             ->with('user')->get();
@@ -73,7 +93,8 @@ class PterodactylImporter
                             throw new RuntimeException("Multiple orders link to Pterodactyl server {$server['id']}.");
                         }
                         if ($order = $orders->first()) {
-                            if (mb_strtolower($order->user->email) !== $email || $order->status === 'terminated') {
+                            if (mb_strtolower($order->user->email) !== $email || $order->status === 'terminated'
+                                || ($expectedUser !== null && (int) $order->user_id !== (int) $expectedUser->id)) {
                                 throw new RuntimeException("Existing order for server {$server['id']} has conflicting ownership or is terminated. Resolve it before importing.");
                             }
                             $this->linkAccount($order, $owner);
@@ -90,12 +111,25 @@ class PterodactylImporter
                         if ((int) $price->package->data('egg_id') !== (int) $server['egg']) {
                             throw new RuntimeException("The selected package egg does not match server {$server['id']}. Choose a matching --server-price={$server['id']}:PRICE_ID.");
                         }
-                        if ($price->isRecurring() && $renewalDate === null) {
+                        if ($price->isRecurring() && $renewalDate === null && ! $billingReview) {
                             throw new RuntimeException('Recurring orders require --due-date=YYYY-MM-DD. Pterodactyl does not provide billing dates.');
                         }
                         LicensePlanLimits::assertCanCreateOrders(1);
                         if (! isset($users[$owner['id']])) {
-                            $users[$owner['id']] = $this->importUser($owner, $report);
+                            if ($expectedUser !== null) {
+                                $users[$owner['id']] = $expectedUser;
+                                $report['users_matched']++;
+                            } else {
+                                $users[$owner['id']] = $this->importUser($owner, $report);
+                            }
+                        }
+                        $orderData = $server;
+                        if ($billingReview) {
+                            $orderData['_import'] = [
+                                'billing_review_required' => true, 'catalog_price_id' => $price->id,
+                                'imported_at' => now()->toIso8601String(),
+                                'legacy_wemx_order_id' => preg_match('/^wmx-([1-9][0-9]*)$/D', $server['external_id'] ?? '', $matches) ? (int) $matches[1] : null,
+                            ];
                         }
                         $order = Order::query()->create([
                             'user_id' => $users[$owner['id']]->id,
@@ -103,18 +137,18 @@ class PterodactylImporter
                             'package_price_id' => $price->id,
                             'external_id' => (string) $server['id'],
                             'status' => ($server['suspended'] ?? false) || ($server['status'] ?? null) === 'suspended' ? 'suspended' : 'active',
-                            'cycle_price' => $price->getDailyPrice(),
+                            'cycle_price' => $billingReview ? 0 : $price->getDailyPrice(),
                             'setup_fee' => 0,
-                            'upgrade_fee' => $price->upgrade_fee,
+                            'upgrade_fee' => $billingReview ? 0 : $price->upgrade_fee,
                             'period_in_days' => $price->period_in_days,
                             'due_date' => $price->isRecurring() ? $renewalDate : null,
                             'last_renewed_at' => now(),
                             'auto_balance_renew' => false,
-                            'data' => $server,
+                            'data' => $orderData,
                         ]);
                         $this->linkAccount($order, $owner);
                         $report['orders_created']++;
-                        $report['servers'][] = [$server['id'], $server['name'], $email, $price->id, $order->due_date?->toDateString(), 'Import'];
+                        $report['servers'][] = [$server['id'], $server['name'], $email, $price->id, $order->due_date?->toDateString(), $billingReview ? 'Billing review' : 'Import'];
                     }
                 });
                 if ($commit) {
@@ -166,17 +200,30 @@ class PterodactylImporter
 
     /**
      * @param  array<string, mixed>  $credentials
+     * @param  list<int>  $serverIds
      * @return list<array<string, mixed>>
      */
-    private function fetchServers(array $credentials): array
+    private function fetchServers(array $credentials, array $serverIds = []): array
     {
         $servers = [];
         $page = 1;
         do {
             try {
-                $response = Server::makeRequest($credentials, '/api/application/servers', 'get', [
-                    'include' => 'user,allocations', 'per_page' => 100, 'page' => $page,
-                ])->json();
+                if ($serverIds === []) {
+                    $response = Server::makeRequest($credentials, '/api/application/servers', 'get', [
+                        'include' => 'user,allocations', 'per_page' => 100, 'page' => $page,
+                    ])->json();
+                } else {
+                    $records = [];
+                    foreach ($serverIds as $serverId) {
+                        $record = Server::makeRequest($credentials, '/api/application/servers/'.$serverId, 'get', ['include' => 'user,allocations'])->json();
+                        if ((int) ($record['attributes']['id'] ?? 0) !== $serverId) {
+                            throw new RuntimeException("The panel returned a different server for requested ID {$serverId}.");
+                        }
+                        $records[] = $record;
+                    }
+                    $response = ['data' => $records, 'meta' => ['pagination' => ['total_pages' => 1]]];
+                }
             } catch (Throwable $exception) {
                 throw new RuntimeException("Unable to read Pterodactyl servers on page {$page}. Check connectivity and Application API read permissions for servers, users and allocations.", previous: $exception);
             }

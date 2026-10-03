@@ -9,6 +9,7 @@ use App\Models\Session;
 use App\Models\User;
 use App\Models\UserBan;
 use App\Rules\ValidVatNumber;
+use App\Services\CustomerServerCredentials;
 use Exception;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -81,9 +82,11 @@ class UserActions extends Action
         }
 
         // hash the password using Hash
-        $validatedData['password'] = Hash::make($validatedData['password']);
+        $password = $validatedData['password'];
+        $validatedData['password'] = Hash::make($password);
 
         $user = User::create(self::omitNullValues($validatedData));
+        app(CustomerServerCredentials::class)->capture($user, $password);
 
         $user->address()->update(self::omitNullValues([
             'company_name' => $validatedData['company_name'] ?? null,
@@ -203,12 +206,19 @@ class UserActions extends Action
         }
 
         if (isset($validatedData['password'])) {
+            $password = $validatedData['password'];
             $validatedData['password'] = bcrypt($validatedData['password']);
         }
 
         unset($validatedData['user_id']);
 
-        return $user->update(self::omitNullValues($validatedData));
+        $updated = $user->update(self::omitNullValues($validatedData));
+
+        if (isset($password)) {
+            app(CustomerServerCredentials::class)->capture($user, $password);
+        }
+
+        return $updated;
     }
 
     /**
@@ -545,9 +555,12 @@ class UserActions extends Action
             ],
         ]);
 
-        return $user->update([
+        $updated = $user->update([
             'password' => Hash::make($validatedData['new_password']),
         ]);
+        app(CustomerServerCredentials::class)->capture($user, $validatedData['new_password']);
+
+        return $updated;
     }
 
     public static function logoutSessionAsClient(array $input)

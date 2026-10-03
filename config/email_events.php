@@ -700,14 +700,12 @@ BODY,
         'subject' => 'Game Panel Account Created',
         'body' => <<<'BODY'
 Your account has been created on the game panel.
-You can login using the following details:
+Use the same email and password as your customer account to log in.
 Email: {{panel_email}}
-Password: {{panel_password}}
 BODY,
         'button_text' => 'Login to Game Panel',
         'placeholders' => [
             'panel_email' => 'Panel login email',
-            'panel_password' => 'Panel login password',
         ],
     ],
 

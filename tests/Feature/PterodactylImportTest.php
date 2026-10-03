@@ -12,6 +12,7 @@ use App\Models\PackagePrice;
 use App\Models\ServerAccount;
 use App\Models\ServerConnection;
 use App\Models\User;
+use App\Services\UserImportBackup;
 use Extensions\Servers\Pterodactyl\Server;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -35,6 +36,7 @@ class PterodactylImportTest extends TestCase
         parent::setUp();
         Queue::fake();
         Http::preventStrayRequests();
+        $this->mock(UserImportBackup::class)->shouldReceive('create')->andReturn('/private/pre-import-snapshot.json');
         Extension::query()->updateOrCreate(['identifier' => 'server-pterodactyl'], [
             'namespace' => Server::class, 'type' => 'server', 'name' => 'Pterodactyl', 'status' => 'enabled', 'version' => '1.0.0',
         ]);
@@ -321,6 +323,86 @@ class PterodactylImportTest extends TestCase
         $this->fakeServers([$this->server()]);
         $this->artisan('app:import-pterodactyl', $this->importOptions(['--server-price' => ['99:1']]))->assertFailed();
         $this->assertDatabaseCount('orders', 0);
+    }
+
+    public function test_selected_servers_restore_existing_customer_access_with_billing_held(): void
+    {
+        $customer = User::factory()->create(['email' => 'owner@example.test', 'data' => ['_legacy_pterodactyl' => ['id' => 7]]]);
+        Event::fake([UserCreated::class, OrderCreated::class]);
+        $servers = [];
+        foreach ([42, 43, 44, 45] as $id) {
+            $server = $this->server($id);
+            $server['external_id'] = 'wmx-'.($id + 80);
+            $servers['https://panel.example.test/api/application/servers/'.$id.'*'] = Http::response(['object' => 'server', 'attributes' => $server]);
+        }
+        Http::fake($servers);
+        $options = $this->importOptions(['--server' => ['42', '43', '44', '45'], '--user' => $customer->id, '--billing-review' => true]);
+        unset($options['--due-date']);
+        $this->artisan('app:import-pterodactyl', $options)->assertSuccessful();
+        $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseCount('orders', 4);
+        $this->assertDatabaseCount('server_accounts', 4);
+        foreach (Order::all() as $order) {
+            $this->assertSame($customer->id, $order->user_id);
+            $this->assertTrue($order->requiresBillingReview());
+            $this->assertNull($order->due_date);
+            $this->assertFalse($order->auto_balance_renew);
+            $this->assertSame('0.00000000', $order->cycle_price);
+            $this->assertSame($this->price->id, $order->package_price_id);
+            $this->assertSame((int) $order->external_id + 80, $order->data['_import']['legacy_wemx_order_id']);
+            $this->assertSame('7', $order->getExternalUser()->external_id);
+        }
+        $this->artisan('app:import-pterodactyl', $options)->expectsOutputToContain('existing orders skipped: 4')->assertSuccessful();
+        $this->assertDatabaseCount('orders', 4);
+        $this->assertDatabaseCount('server_accounts', 4);
+        Http::assertNotSent(fn (Request $request): bool => parse_url($request->url(), PHP_URL_PATH) === '/api/application/servers');
+        $this->assertNoSideEffects();
+    }
+
+    public function test_selected_server_ownership_and_missing_servers_abort_before_any_changes(): void
+    {
+        $customer = User::factory()->create(['email' => 'different@example.test']);
+        Http::fake(['https://panel.example.test/api/application/servers/42*' => Http::response(['attributes' => $this->server()])]);
+        $options = $this->importOptions(['--server' => ['42'], '--user' => $customer->id]);
+        $this->artisan('app:import-pterodactyl', $options)->expectsOutputToContain('does not belong')->assertFailed();
+        $customer->updateQuietly(['email' => 'owner@example.test', 'data' => ['_legacy_pterodactyl' => ['id' => 999]]]);
+        $this->artisan('app:import-pterodactyl', $options)->expectsOutputToContain('does not belong')->assertFailed();
+        Http::fake(['https://panel.example.test/api/application/servers/42*' => Http::response([], 404)]);
+        $this->artisan('app:import-pterodactyl', $options)->assertFailed();
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('server_accounts', 0);
+    }
+
+    public function test_billing_review_requires_explicit_scope_and_no_invented_due_date(): void
+    {
+        $customer = User::factory()->create(['email' => 'owner@example.test']);
+        $this->artisan('app:import-pterodactyl', $this->importOptions(['--billing-review' => true]))->assertFailed();
+        $this->artisan('app:import-pterodactyl', $this->importOptions(['--billing-review' => true, '--server' => ['42'], '--user' => $customer->id]))->assertFailed();
+        $this->artisan('app:import-pterodactyl', $this->importOptions(['--server' => ['bad']]))->assertFailed();
+        $this->artisan('app:import-pterodactyl', $this->importOptions(['--server' => ['42', '42']]))->assertFailed();
+        Http::assertNothingSent();
+    }
+
+    public function test_selected_customer_id_is_used_even_when_email_has_surrounding_whitespace(): void
+    {
+        $customer = User::factory()->create(['email' => ' owner@example.test ']);
+        Http::fake(['https://panel.example.test/api/application/servers/42*' => Http::response(['attributes' => $this->server()])]);
+        $this->artisan('app:import-pterodactyl', $this->importOptions(['--server' => ['42'], '--user' => $customer->id]))->assertSuccessful();
+        $this->assertDatabaseCount('users', 1);
+        $this->assertSame($customer->id, Order::firstOrFail()->user_id);
+    }
+
+    public function test_existing_order_must_belong_to_the_selected_customer_id(): void
+    {
+        Http::fake(fn (Request $request) => Http::response(str_contains($request->url(), '/servers/42')
+            ? ['attributes' => $this->server()]
+            : $this->response([$this->server()])));
+        $this->artisan('app:import-pterodactyl', $this->importOptions())->assertSuccessful();
+        $customer = User::factory()->create(['email' => 'OWNER@example.test']);
+        $this->artisan('app:import-pterodactyl', $this->importOptions(['--server' => ['42'], '--user' => $customer->id]))
+            ->expectsOutputToContain('conflicting ownership')->assertFailed();
+        $this->assertDatabaseCount('orders', 1);
+        $this->assertNotSame($customer->id, Order::firstOrFail()->user_id);
     }
 
     /**

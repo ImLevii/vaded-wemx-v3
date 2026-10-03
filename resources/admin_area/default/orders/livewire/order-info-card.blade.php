@@ -28,7 +28,7 @@ new class extends Component
                 </div>
                 <div class="col">
                     <div class="card-title">{{ $order->package->name }}</div>
-                    <div class="card-subtitle">{{ price($order->price) }} / {{ $order->cycle() }}</div>
+                    <div class="card-subtitle">{{ $order->requiresBillingReview() ? 'Billing review pending' : price($order->price).' / '.$order->cycle() }}</div>
                 </div>
             </div>
         </div>
@@ -41,11 +41,11 @@ new class extends Component
             </div>
             <div class="datagrid-item">
                 <div class="datagrid-title">Price</div>
-                <div class="datagrid-content">{{ price($order->price) }} / {{ $order->cycle() }}</div>
+                <div class="datagrid-content">{{ $order->requiresBillingReview() ? 'Billing review pending' : price($order->price).' / '.$order->cycle() }}</div>
             </div>
             <div class="datagrid-item">
                 <div class="datagrid-title">Uphrade Price</div>
-                <div class="datagrid-content">{{ price($order->upgrade_fee) }}</div>
+                <div class="datagrid-content">{{ $order->requiresBillingReview() ? 'Unknown' : price($order->upgrade_fee) }}</div>
             </div>
             <div class="datagrid-item">
                 <div class="datagrid-title">User</div>
@@ -72,14 +72,14 @@ new class extends Component
             <div class="datagrid-item">
                 <div class="datagrid-title">Due Date</div>
                 <div class="datagrid-content">
-                    {{ $order->due_date?->format('d M Y') ?? 'Never' }}
+                    {{ $order->requiresBillingReview() ? 'Awaiting billing review' : ($order->due_date?->format('d M Y') ?? 'Never') }}
                 </div>
             </div>
 
             <div class="datagrid-item">
                 <div class="datagrid-title">Last Renewed At</div>
                 <div class="datagrid-content">
-                    {{ $order->last_renewed_at->format('d M Y') }}
+                    {{ $order->requiresBillingReview() ? 'Unknown' : $order->last_renewed_at->format('d M Y') }}
                 </div>
             </div>
 

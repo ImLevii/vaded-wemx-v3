@@ -4,6 +4,9 @@
 
 @section('container')
 <div>
+    @if($order->requiresBillingReview())
+        <x-theme::alert.warning text="Billing review pending. Your existing service is connected; renewal charges are on hold while we restore the original billing details." />
+    @endif
     @if($order->status == 'active' && $order->due_date && $order->due_date->isToday())
         <x-theme::alert.warning class="flex items-center justify-between">
             <span>Order {{ $order->package->name }} (#{{ $order->id }}) is due in {{ $order->due_date->diffForHumans() }}, please renew it in time to avoid suspension.</span>
@@ -16,7 +19,7 @@
         </x-theme::alert.danger>
     @endif
 
-    @if(\App\Models\GatewayConfig::balanceGateway())
+    @if(!$order->requiresBillingReview() && \App\Models\GatewayConfig::balanceGateway())
         @livewire(client_view_path('orders.livewire.balance-renewal-switch'), ['order_id' => $order->id])
     @endif
 
@@ -24,7 +27,7 @@
         @includeIf($element['view'], ['order' => $order])
     @endforeach
 
-    @if($order->isActive() && !$order->hasActiveSubscription() && $order->isRecurring() && !$order->auto_balance_renew && \App\Models\GatewayConfig::where('type', 'subscription')->where('is_active', true)->count() > 0)
+    @if(!$order->requiresBillingReview() && $order->isActive() && !$order->hasActiveSubscription() && $order->isRecurring() && !$order->auto_balance_renew && \App\Models\GatewayConfig::where('type', 'subscription')->where('is_active', true)->count() > 0)
         <div>
             <x-theme::alert.primary class="flex items-center justify-between">
             <span>
@@ -48,7 +51,7 @@
 
     <x-theme::card class="mb-4">
         <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            {{ $order->package->name }}
+            {{ $order->data['name'] ?? $order->package->name }}
         </h5>
         <x-theme::datagrid.grid :cols="3" :gap="4">
             <x-theme::datagrid.item>
@@ -58,7 +61,11 @@
 
             <x-theme::datagrid.item>
                 <x-slot:label>Billing cycle</x-slot:label>
-                <span class="mr-1 font-bold text-gray-500 dark:text-white">{{ price($order->price) }}</span> / {{ $order->cycle() }}
+                @if($order->requiresBillingReview())
+                    Billing review pending
+                @else
+                    <span class="mr-1 font-bold text-gray-500 dark:text-white">{{ price($order->price) }}</span> / {{ $order->cycle() }}
+                @endif
             </x-theme::datagrid.item>
 
             <x-theme::datagrid.item>
@@ -80,7 +87,9 @@
 
             <x-theme::datagrid.item>
                 <x-slot:label>Due date</x-slot:label>
-                @if($order->due_date)
+                @if($order->requiresBillingReview())
+                    Awaiting billing review
+                @elseif($order->due_date)
                     {{ $order->due_date->format('d M Y') }}
                 @else
                     Never
@@ -89,19 +98,23 @@
 
             <x-theme::datagrid.item>
                 <x-slot:label>Last renewal date</x-slot:label>
-                {{ $order->last_renewed_at->format('d M Y') }}
+                {{ $order->requiresBillingReview() ? 'Unknown' : $order->last_renewed_at->format('d M Y') }}
             </x-theme::datagrid.item>
 
             <x-theme::datagrid.item>
                 <x-slot:label>Next Invoice</x-slot:label>
-                @if($order->due_date)
+                @if($order->requiresBillingReview())
+                    On hold
+                @elseif($order->due_date)
                     {{ $order->due_date->diffForHumans() }}
                 @else
                     Never
                 @endif
             </x-theme::datagrid.item>
         </x-theme::datagrid.grid>
-        <x-theme::button.success type="button" data-drawer-target="renew-order-drawer" data-drawer-show="renew-order-drawer" data-drawer-placement="right" aria-controls="renew-order-drawer" text="Renew" />
+        @if(!$order->requiresBillingReview())
+            <x-theme::button.success type="button" data-drawer-target="renew-order-drawer" data-drawer-show="renew-order-drawer" data-drawer-placement="right" aria-controls="renew-order-drawer" text="Renew" />
+        @endif
     </x-theme::card>
 
     @livewire(client_view_path('orders.livewire.server-account-block'), ['order_id' => $order->id])

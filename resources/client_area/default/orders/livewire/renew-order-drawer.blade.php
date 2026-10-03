@@ -92,7 +92,9 @@ new class extends Component {
     <x-theme::drawer.close-button drawer_id="renew-order-drawer"/>
     <x-theme::text.p class="text-sm mb-6" text="Select for how long you want to renew your order for."/>
 
-    @if($order->status == 'terminated')
+    @if($order->requiresBillingReview())
+        <x-theme::alert.warning text="Billing review pending. Renewal charges are on hold." />
+    @elseif($order->status == 'terminated')
         <x-theme::alert.danger text="This order has been terminated and cannot be renewed." style="background: #00000014;"/>
     @else
         <div class="mb-4">

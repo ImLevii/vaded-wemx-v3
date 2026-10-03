@@ -52,9 +52,13 @@ new class extends Component
                 <ul class="list-inline list-inline-dots mb-0">
                     <li class="list-inline-item"><span class="text-{{ $statusColor }}">{{ ucfirst($status) }}</span></li>
                     <li class="list-inline-item">
-                        Due in
-                        <span class="text-secondary">{{ $order->due_date?->diffForHumans() ?? 'Never' }}</span>
-                        ({{ $order->due_date?->format('d M Y') ?? 'Never' }})
+                        @if($order->requiresBillingReview())
+                            Billing review pending
+                        @else
+                            Due in
+                            <span class="text-secondary">{{ $order->due_date?->diffForHumans() ?? 'Never' }}</span>
+                            ({{ $order->due_date?->format('d M Y') ?? 'Never' }})
+                        @endif
                     </li>
                 </ul>
             </div>

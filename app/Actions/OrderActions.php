@@ -389,6 +389,8 @@ class OrderActions extends Action
             ]);
         }
 
+        $order->assertBillingReady();
+
         if ((int) $order->package->connection_id !== (int) $newPackagePrice->package->connection_id) {
             throw ValidationException::withMessages([
                 'package_price_id' => 'You can only upgrade/downgrade within packages on the same server connection.',
@@ -499,6 +501,7 @@ class OrderActions extends Action
             ]);
         }
 
+        $order->assertBillingReady();
         $order->update([
             'due_date' => ($order->due_date ?? now())->addDays($validatedData['renewal_days']),
             'last_renewed_at' => now(),
@@ -772,6 +775,8 @@ class OrderActions extends Action
                 'order_id' => 'This order is not eligible for subscriptions.',
             ]);
         }
+
+        $order->assertBillingReady();
 
         if (false) {
             throw ValidationException::withMessages([

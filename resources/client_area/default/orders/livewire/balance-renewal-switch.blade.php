@@ -25,6 +25,7 @@ new class extends Component {
 
     public function enableBalanceRenewal()
     {
+        $this->order->assertBillingReady();
         $this->auto_balance_renew = !$this->auto_balance_renew;
 
         // if user already has a subscription, show an error toast and return

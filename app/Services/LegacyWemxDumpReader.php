@@ -6,10 +6,13 @@ use RuntimeException;
 
 class LegacyWemxDumpReader
 {
-    private const TABLES = ['categories', 'packages', 'package_prices', 'package_features', 'package_settings', 'package_config_options', 'users', 'addresses', 'user_2fa'];
+    private const TABLES = ['categories', 'packages', 'package_prices', 'package_features', 'package_settings', 'package_config_options', 'users', 'addresses', 'user_2fa', 'orders', 'payments', 'balance_transactions', 'subscriptions', 'payment_taxes'];
 
-    /** @return array<string, list<array<string, string|null>>> */
-    public function read(string $path): array
+    /**
+     * @param  list<string>  $tableNames
+     * @return array<string, list<array<string, string|null>>>
+     */
+    public function read(string $path, array $tableNames = self::TABLES): array
     {
         $sql = file_get_contents($path);
         if ($sql === false) {
@@ -17,7 +20,7 @@ class LegacyWemxDumpReader
         }
 
         $tables = [];
-        foreach (self::TABLES as $table) {
+        foreach ($tableNames as $table) {
             $tables[$table] = [];
             if (! preg_match('/^CREATE TABLE `'.preg_quote($table, '/').'` \((.*?)^\)/ms', $sql, $schema)) {
                 continue;

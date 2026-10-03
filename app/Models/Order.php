@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class Order extends Model
 {
@@ -134,6 +135,9 @@ class Order extends Model
     public static function getOrdersPastDueDate($days = 3): Builder
     {
         return Order::query()
+            ->where(function (Builder $query): void {
+                $query->whereNull('data->_import->billing_review_required')->orWhere('data->_import->billing_review_required', false);
+            })
             ->whereNotNull('due_date')
             ->where('period_in_days', '!=', 0) // one time orders are not included
             ->where('due_date', '<', now()->subDays($days));
@@ -142,6 +146,9 @@ class Order extends Model
     public static function getOrdersAboutToExpire(int $days = 3): Builder
     {
         return Order::query()
+            ->where(function (Builder $query): void {
+                $query->whereNull('data->_import->billing_review_required')->orWhere('data->_import->billing_review_required', false);
+            })
             ->where('status', 'active')
             ->whereNotNull('due_date')
             ->where('period_in_days', '!=', 0)
@@ -161,6 +168,7 @@ class Order extends Model
 
     public function attemptBalanceRenewal(): bool
     {
+        $this->assertBillingReady();
         if (! $this->hasEnoughBalanceToRenew()) {
             throw new \Exception('User does not have enough balance to renew the order.');
         }
@@ -255,6 +263,20 @@ class Order extends Model
         $dailyTotal = $this->prices->where('is_active', true)->sum('cycle_price') + $this->cycle_price;
 
         return $dailyTotal * $this->period_in_days;
+    }
+
+    public function requiresBillingReview(): bool
+    {
+        return (bool) data_get($this->data, '_import.billing_review_required', false);
+    }
+
+    public function assertBillingReady(): void
+    {
+        if ($this->requiresBillingReview()) {
+            throw ValidationException::withMessages([
+                'order_id' => 'Billing review pending. Renewal and billing changes are unavailable until the original billing details are restored.',
+            ]);
+        }
     }
 
     public function getDailyPriceAttribute(): float|int

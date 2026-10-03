@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\Orders\OrderCreateServer;
 use App\Jobs\Orders\OrderTerminateServer;
+use App\Models\Cart;
 use App\Models\Category;
 use App\Models\Email;
 use App\Models\Extension;
+use App\Models\GatewayConfig;
 use App\Models\Order;
 use App\Models\Package;
 use App\Models\PackagePrice;
@@ -13,6 +16,7 @@ use App\Models\Role;
 use App\Models\ServerAccount;
 use App\Models\ServerConnection;
 use App\Models\User;
+use App\Services\CustomerServerCredentials;
 use Extensions\Servers\Pterodactyl\Server;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -236,6 +240,7 @@ class PterodactylServerTest extends TestCase
     public function test_new_accounts_store_encrypted_passwords_and_email_the_real_panel_link(): void
     {
         $this->customer->update(['first_name' => null, 'last_name' => null]);
+        app(CustomerServerCredentials::class)->capture($this->customer, 'password');
         $this->fakePanel(['https://panel.example.test/api/application/users?*' => Http::response(['data' => []])]);
         $order = $this->createOrder();
 
@@ -245,12 +250,213 @@ class PterodactylServerTest extends TestCase
         $this->assertNotSame($account->password, $account->getRawOriginal('password'));
         $this->assertArrayNotHasKey('password', $account->data);
         $this->assertSame($this->connection->id, $account->data['connection_id']);
+        $this->assertSame('password', $account->password);
+        $this->assertSame($this->customer->username, $account->username);
         Http::assertSent(fn (Request $request) => $request->method() === 'POST'
             && str_ends_with($request->url(), '/users')
             && $request['password'] === $account->password
+            && $request['email'] === $this->customer->email
+            && $request['username'] === $this->customer->username
             && $request['first_name'] === $this->customer->username && $request['last_name'] === 'Customer');
         $email = Email::where('identifier', 'server.pterodactyl.account_created')->firstOrFail();
         $this->assertSame('https://panel.example.test', $email->button_url);
+        $this->assertContains('Use the same email and password as your customer account to log in.', $email->lines);
+        $this->assertNotContains('Password: password', $email->lines);
+        $this->assertContains('Email: '.$this->customer->email, $email->lines);
+    }
+
+    public function test_existing_panel_accounts_use_the_verified_customer_credentials(): void
+    {
+        app(CustomerServerCredentials::class)->capture($this->customer, 'password');
+        $this->fakePanel();
+        $order = $this->createOrder();
+
+        (new Server)->create($order, $this->connection);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'PATCH'
+            && str_ends_with($request->url(), '/users/42')
+            && $request['email'] === $this->customer->email
+            && $request['username'] === $this->customer->username
+            && $request['password'] === 'password');
+        Http::assertNotSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/users'));
+        $this->assertDatabaseHas('server_accounts', ['order_id' => $order->id, 'external_id' => 42, 'username' => $this->customer->username]);
+        $this->assertSame('password', ServerAccount::where('order_id', $order->id)->firstOrFail()->password);
+    }
+
+    public function test_later_orders_reuse_the_customer_panel_account(): void
+    {
+        app(CustomerServerCredentials::class)->capture($this->customer, 'password');
+        $this->fakePanel(['https://panel.example.test/api/application/users?*' => Http::sequence()
+            ->push(['data' => []])
+            ->push(['data' => [['attributes' => $this->panelUser()]]])]);
+        $first = $this->createOrder();
+        $second = $this->createOrder();
+
+        (new Server)->create($first, $this->connection);
+        (new Server)->create($second, $this->connection);
+
+        $posts = Http::recorded(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/users'));
+        $this->assertCount(1, $posts);
+        $this->assertDatabaseHas('server_accounts', ['order_id' => $first->id, 'user_id' => $this->customer->id, 'external_id' => 42]);
+        $this->assertDatabaseHas('server_accounts', ['order_id' => $second->id, 'user_id' => $this->customer->id, 'external_id' => 42]);
+    }
+
+    public function test_paid_order_job_creates_a_customer_account_and_assigns_the_server(): void
+    {
+        app(CustomerServerCredentials::class)->capture($this->customer, 'password');
+        $this->fakePanel(['https://panel.example.test/api/application/users?*' => Http::response(['data' => []])]);
+        $order = $this->createOrder();
+
+        (new OrderCreateServer($order))->handle();
+
+        $this->assertSame('active', $order->fresh()->status);
+        $this->assertSame('101', (string) $order->fresh()->external_id);
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST'
+            && str_ends_with($request->url(), '/users') && $request['password'] === 'password');
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST'
+            && str_ends_with($request->url(), '/servers') && $request['user'] === 42);
+    }
+
+    public function test_existing_customer_without_captured_credentials_cannot_be_charged_at_checkout(): void
+    {
+        $this->actingAs($this->customer);
+        $cart = Cart::create(['user_id' => $this->customer->id, 'session_id' => 'checkout-test']);
+        $price = $this->price($this->package);
+        $cart->items()->create([
+            'cartable_type' => PackagePrice::class, 'cartable_id' => $price->id,
+            'name' => $this->package->name, 'price' => 10, 'quantity' => 1,
+        ]);
+        $gateway = GatewayConfig::create([
+            'extension_identifier' => 'gateway-balance', 'namespace' => self::class, 'display_name' => 'Balance',
+        ]);
+
+        try {
+            Cart::actions()->checkoutAsClient([
+                'cart_id' => $cart->id, 'user_id' => $this->customer->id, 'gateway_config_id' => $gateway->id,
+                'country' => 'US', 'region' => 'IL', 'zip_code' => '60601',
+            ]);
+            $this->fail('Checkout must ask for verified credentials before payment.');
+        } catch (ValidationException $exception) {
+            $this->assertStringContainsString('Log out and log in', $exception->errors()['cart_id'][0]);
+            $this->assertDatabaseCount('payments', 0);
+            $this->assertDatabaseCount('cart_order_items', 0);
+            Http::assertNothingSent();
+        }
+    }
+
+    public function test_checkout_accepts_verified_customer_credentials(): void
+    {
+        app(CustomerServerCredentials::class)->capture($this->customer, 'password');
+
+        Server::eventCheckout($this->package, $this->customer->fresh());
+
+        Http::assertNothingSent();
+    }
+
+    public function test_new_accounts_require_a_verified_customer_password(): void
+    {
+        $this->fakePanel(['https://panel.example.test/api/application/users?*' => Http::response(['data' => []])]);
+        $order = $this->createOrder();
+
+        try {
+            (new Server)->create($order, $this->connection);
+            $this->fail('An unknown customer password must not become a random panel password.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('Log out and log in', $exception->getMessage());
+            Http::assertNotSent(fn (Request $request) => $request->method() !== 'GET');
+            $this->assertNull($order->fresh()->external_id);
+            $this->assertDatabaseMissing('server_accounts', ['order_id' => $order->id]);
+        }
+    }
+
+    public function test_lookup_does_not_link_a_partial_email_match(): void
+    {
+        app(CustomerServerCredentials::class)->capture($this->customer, 'password');
+        $this->fakePanel(['https://panel.example.test/api/application/users?*' => Http::response(['data' => [
+            ['attributes' => array_merge($this->panelUser(), ['id' => 99, 'email' => 'other@example.test'])],
+            ['attributes' => $this->panelUser()],
+        ]])]);
+        $order = $this->createOrder();
+
+        (new Server)->create($order, $this->connection);
+
+        $this->assertDatabaseHas('server_accounts', ['order_id' => $order->id, 'external_id' => 42]);
+        Http::assertNotSent(fn (Request $request) => str_ends_with($request->url(), '/users/99'));
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST'
+            && str_ends_with($request->url(), '/servers') && $request['user'] === 42);
+    }
+
+    public function test_invalid_user_creation_response_does_not_create_a_server_or_email(): void
+    {
+        app(CustomerServerCredentials::class)->capture($this->customer, 'password');
+        $this->fakePanel([
+            'https://panel.example.test/api/application/users?*' => Http::response(['data' => []]),
+            'https://panel.example.test/api/application/users' => Http::response(['attributes' => ['id' => 42]], 201),
+        ]);
+        $order = $this->createOrder();
+
+        try {
+            (new Server)->create($order, $this->connection);
+            $this->fail('An invalid account response must not be accepted.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('invalid customer account', $exception->getMessage());
+            Http::assertNotSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers'));
+            $this->assertDatabaseMissing('emails', ['identifier' => 'server.pterodactyl.account_created']);
+            $this->assertNull($order->fresh()->external_id);
+        }
+    }
+
+    public function test_panel_account_creation_failure_does_not_provision_a_server(): void
+    {
+        app(CustomerServerCredentials::class)->capture($this->customer, 'password');
+        $this->fakePanel([
+            'https://panel.example.test/api/application/users?*' => Http::response(['data' => []]),
+            'https://panel.example.test/api/application/users' => Http::response([], 422),
+        ]);
+        $order = $this->createOrder();
+
+        try {
+            (new Server)->create($order, $this->connection);
+            $this->fail('Account creation must succeed before server creation.');
+        } catch (RequestException $exception) {
+            $this->assertSame(422, $exception->response->status());
+            Http::assertNotSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers'));
+            $this->assertDatabaseMissing('server_accounts', ['order_id' => $order->id]);
+            $this->assertDatabaseMissing('emails', ['identifier' => 'server.pterodactyl.account_created']);
+            $this->assertNull($order->fresh()->external_id);
+        }
+    }
+
+    public function test_failed_credential_sync_does_not_provision_a_server_with_a_different_login(): void
+    {
+        app(CustomerServerCredentials::class)->capture($this->customer, 'password');
+        $this->fakePanel(['https://panel.example.test/api/application/users/42' => Http::response([], 403)]);
+        $order = $this->createOrder();
+
+        try {
+            (new Server)->create($order, $this->connection);
+            $this->fail('The customer login must be synchronized before provisioning.');
+        } catch (RequestException $exception) {
+            $this->assertSame(403, $exception->response->status());
+            Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
+            $this->assertNull($order->fresh()->external_id);
+        }
+    }
+
+    public function test_duplicate_email_matches_are_rejected(): void
+    {
+        $this->fakePanel(['https://panel.example.test/api/application/users?*' => Http::response(['data' => [
+            ['attributes' => $this->panelUser()],
+            ['attributes' => array_merge($this->panelUser(), ['id' => 99])],
+        ]])]);
+
+        try {
+            (new Server)->create($this->createOrder(), $this->connection);
+            $this->fail('An ambiguous panel account must not be selected.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('Multiple panel accounts', $exception->getMessage());
+            Http::assertNotSent(fn (Request $request) => $request->method() !== 'GET');
+        }
     }
 
     public function test_unavailable_capacity_does_not_create_remote_users_or_servers(): void
@@ -698,8 +904,12 @@ class PterodactylServerTest extends TestCase
                 $this->node(7, 99, false), $this->node(20, 7, true), $this->node(21, 7, false),
             ]]),
             'https://panel.example.test/api/application/users?*' => Http::response(['data' => [['attributes' => $this->panelUser()]]]),
-            'https://panel.example.test/api/application/users' => Http::response(['attributes' => $this->panelUser()], 201),
-            'https://panel.example.test/api/application/users/42' => Http::response(['attributes' => $this->panelUser()]),
+            'https://panel.example.test/api/application/users' => fn (Request $request) => Http::response([
+                'attributes' => array_merge($this->panelUser(), collect($request->data())->only(['email', 'username', 'first_name', 'last_name'])->all()),
+            ], 201),
+            'https://panel.example.test/api/application/users/42' => fn (Request $request) => Http::response([
+                'attributes' => array_merge($this->panelUser(), collect($request->data())->only(['email', 'username', 'first_name', 'last_name'])->all()),
+            ]),
             'https://panel.example.test/api/application/servers' => Http::response(['attributes' => $this->panelServer()], 201),
             'https://panel.example.test/api/application/servers/101' => fn (Request $request) => $request->method() === 'DELETE'
                 ? Http::response('', 204) : Http::response(['attributes' => $this->panelServer()]),

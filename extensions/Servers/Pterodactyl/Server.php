@@ -8,11 +8,12 @@ use App\Models\Package;
 use App\Models\PackagePrice;
 use App\Models\ServerAccount;
 use App\Models\ServerConnection;
+use App\Models\User;
+use App\Services\CustomerServerCredentials;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -367,6 +368,15 @@ class Server extends ServerExtension
         return 'Connected to the Pterodactyl Application API.';
     }
 
+    public static function eventCheckout(Package $package, User $user): void
+    {
+        if (app(CustomerServerCredentials::class)->password($user) === null) {
+            throw ValidationException::withMessages([
+                'cart_id' => 'Log out and log in to your customer account before ordering a game server so you can use the same login on the game panel.',
+            ]);
+        }
+    }
+
     /**
      * Make API request to Pterodactyl API
      *
@@ -521,43 +531,83 @@ class Server extends ServerExtension
      */
     private function getOrCreatePteroUser(Order $order, ServerConnection $connection): int
     {
+        return Cache::lock('pterodactyl:user:'.$connection->id.':'.$order->user_id, 90)
+            ->block(5, fn (): int => $this->provisionPteroUser($order, $connection));
+    }
+
+    private function provisionPteroUser(Order $order, ServerConnection $connection): int
+    {
         $user = $order->user;
+        $password = app(CustomerServerCredentials::class)->password($user);
 
         $userEmailResponse = Server::makeRequest($connection->config, '/api/application/users', 'get', [
             'filter[email]' => $user->email,
         ]);
 
-        if (isset($userEmailResponse['data'][0])) {
-            $this->storePteroUserLocally(
-                $order,
-                $userEmailResponse['data'][0]['attributes']
-            );
-
-            return $userEmailResponse['data'][0]['attributes']['id'];
+        $users = $userEmailResponse->json('data');
+        if (! is_array($users)) {
+            throw new RuntimeException('The panel returned an invalid user list.');
         }
 
-        // attempt to create the user on Pterodactyl
-        $randomPassword = Str::random(16);
+        $matches = collect($users)->pluck('attributes')->filter(fn (mixed $attributes): bool => is_array($attributes)
+            && mb_strtolower($attributes['email'] ?? '') === mb_strtolower($user->email))->values();
+
+        if ($matches->count() > 1) {
+            throw new RuntimeException('Multiple panel accounts match this customer email.');
+        }
+
+        if ($matches->isNotEmpty()) {
+            $panelUser = $matches->first();
+            $this->validatePteroUser($panelUser, $order);
+
+            if ($password !== null) {
+                $response = Server::makeRequest($connection->config, '/api/application/users/'.$panelUser['id'], 'patch', [
+                    'email' => $user->email,
+                    'username' => $user->username,
+                    'first_name' => $user->first_name ?: $user->username,
+                    'last_name' => $user->last_name ?: 'Customer',
+                    'password' => $password,
+                ]);
+                $panelUser = $response->json('attributes');
+                $this->validatePteroUser($panelUser, $order, $user->username);
+                $panelUser['password'] = $password;
+            }
+
+            $this->storePteroUserLocally($order, $panelUser);
+
+            return (int) $panelUser['id'];
+        }
+
+        if ($password === null) {
+            throw new RuntimeException('Log out and log in to your customer account before creating a game panel account, then retry the order.');
+        }
+
         $createUserResponse = Server::makeRequest($connection->config, '/api/application/users', 'post', [
             'first_name' => $user->first_name ?: $user->username,
             'last_name' => $user->last_name ?: 'Customer',
             'email' => $user->email,
-            'username' => $user->username.$user->id, // username must be unique
-            'password' => $randomPassword,
+            'username' => $user->username,
+            'password' => $password,
         ]);
 
-        // email the user their Pterodactyl panel credentials
-        $this->emailPteroCredentials(
-            $order,
-            $user->email,
-            $randomPassword
-        );
+        $panelUser = $createUserResponse->json('attributes');
+        $this->validatePteroUser($panelUser, $order, $user->username);
 
-        // store the user data locally
-        $pteroUserData = array_merge($createUserResponse['attributes'], ['password' => $randomPassword]);
-        $this->storePteroUserLocally($order, $pteroUserData);
+        $this->storePteroUserLocally($order, array_merge($panelUser, ['password' => $password]));
+        $this->emailPteroCredentials($order, $user->email);
 
-        return $createUserResponse['attributes']['id'];
+        return (int) $panelUser['id'];
+    }
+
+    private function validatePteroUser(mixed $panelUser, Order $order, ?string $username = null): void
+    {
+        if (! is_array($panelUser)
+            || filter_var($panelUser['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) === false
+            || empty($panelUser['username'])
+            || mb_strtolower($panelUser['email'] ?? '') !== mb_strtolower($order->user->email)
+            || ($username !== null && mb_strtolower($panelUser['username']) !== mb_strtolower($username))) {
+            throw new RuntimeException('The panel returned an invalid customer account.');
+        }
     }
 
     /**
@@ -580,18 +630,18 @@ class Server extends ServerExtension
     /**
      * Email the user their Pterodactyl panel credentials
      */
-    private function emailPteroCredentials(Order $order, string $email, string $password): void
+    private function emailPteroCredentials(Order $order, string $email): void
     {
         $order->user->email([
             'identifier' => 'server.pterodactyl.account_created',
             'mailable_type' => Order::class,
             'mailable_id' => $order->id,
             'subject' => 'Game Panel Account Created',
+            'variables' => ['panel_email' => $email],
             'lines' => [
                 'Your account has been created on the game panel.',
-                'You can login using the following details:',
+                'Use the same email and password as your customer account to log in.',
                 "Email: {$email}",
-                "Password: {$password}",
             ],
             'button' => [
                 'text' => 'Login to Game Panel',
