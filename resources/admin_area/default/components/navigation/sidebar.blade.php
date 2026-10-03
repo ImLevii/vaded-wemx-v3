@@ -228,6 +228,17 @@
                 </x-admin::navigation.sidebar-item>
                 @endperm
 
+                @perm('admin.knowledgebase.manage')
+                <x-admin::navigation.sidebar-item
+                    title="Knowledgebase"
+                    :href="route('admin.knowledgebase.articles.index')"
+                    :active="$activePage === 'knowledgebase'">
+                    <x-slot name="icon">
+                        <x-admin::icon icon="book" outline/>
+                    </x-slot>
+                </x-admin::navigation.sidebar-item>
+                @endperm
+
                 <!-- Currencies -->
                 @perm('admin.currencies.index')
                 <x-admin::navigation.sidebar-item

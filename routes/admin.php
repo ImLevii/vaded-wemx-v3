@@ -4,6 +4,12 @@ use App\Http\Controllers\Admin;
 use App\Http\Middleware\AdminPathMiddleware;
 use Illuminate\Support\Facades\Route;
 
+Route::prefix('knowledgebase')->name('knowledgebase.')->middleware('permission:admin.knowledgebase.manage')->group(function () {
+    Route::get('articles/{article}/preview', [Admin\KnowledgebaseArticleController::class, 'preview'])->name('articles.preview');
+    Route::resource('articles', Admin\KnowledgebaseArticleController::class)->except('show');
+    Route::resource('categories', Admin\KnowledgebaseCategoryController::class)->except('show');
+});
+
 Route::view('/reauthenticate', 'admin::auth.reauthenticate')->name('reauthenticate');
 
 Route::get('/', [Admin\DashboardController::class, 'index'])->name('index')->middleware('permission:admin.dashboard');

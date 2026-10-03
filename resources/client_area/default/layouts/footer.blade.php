@@ -20,6 +20,7 @@
         <div>
             <h2>EXPLORE</h2>
             <ul>
+                <li><a href="{{ route('knowledgebase.index') }}">Knowledgebase</a></li>
                 <li><a href="{{ route('categories.index') }}#infrastructure">Infrastructure</a></li>
                 <li><a href="{{ route('categories.index') }}#locations">Deployment locations</a></li>
                 <li><a href="{{ route('categories.index') }}#features">Client area tour</a></li>

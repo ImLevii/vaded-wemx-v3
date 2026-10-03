@@ -54,6 +54,7 @@
                         ['route' => 'dashboard.balance', 'label' => 'Balance history', 'icon' => 'M4 5h16v15H4z M4 5V3h13v2 M15 10h5v5h-5z'],
                         ['route' => 'dashboard.order-invites', 'label' => 'Service invitations', 'icon' => 'M3 5h18v14H3z M3 5l9 7 9-7'],
                         ['route' => 'account.settings', 'label' => 'Account settings', 'icon' => 'M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8 M4 21v-3a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v3'],
+                        ['route' => 'knowledgebase.index', 'label' => 'Knowledgebase', 'icon' => 'M5 3h10l4 4v14H5z M14 3v5h5 M8 12h8 M8 16h6'],
                     ] as $item)
                         <a href="{{ route($item['route']) }}" wire:navigate @class(['flex items-center gap-3 rounded-lg px-3 py-3', 'is-active' => request()->routeIs($item['route'])]) @if(request()->routeIs($item['route'])) aria-current="page" @endif>
                             <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $item['icon'] }}" /></svg>

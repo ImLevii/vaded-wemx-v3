@@ -17,6 +17,7 @@
         'bot' => 'M5 7h14v13H5z M12 3v4 M9 11h.01 M15 11h.01 M8 16h8 M2 10v7 M22 10v7',
         'arrow' => 'M4 12h16 M14 6l6 6-6 6',
         'check' => 'M5 12l4 4L19 6',
+        'guide' => 'M5 3h10l4 4v14H5z M14 3v5h5 M8 12h8 M8 16h6',
         'search' => 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14 M15 15l6 6',
     ];
 @endphp

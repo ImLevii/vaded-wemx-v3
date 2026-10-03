@@ -99,6 +99,7 @@
                             <li x-data="{ open: false }" @click.outside="open = false" @keydown.escape="open = false; $refs.resources.focus()" @vaded-nav-close.window="open = false">
                                 <button type="button" class="vh-nav-trigger" x-ref="resources" @click="open = !open" :aria-expanded="open" aria-controls="resources-menu">Resources <svg class="vh-nav-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg></button>
                                 <div id="resources-menu" class="vh-mega-panel vh-mega-panel-compact vh-resource-links" x-show="open" x-cloak>
+                                    <a href="{{ route('knowledgebase.index') }}" @if($activePage === 'knowledgebase') aria-current="page" @endif><x-theme::icon name="guide" /> Knowledgebase</a>
                                     <a href="{{ route('categories.index') }}#infrastructure"><x-theme::icon name="cpu" /> Infrastructure</a>
                                     <a href="{{ route('categories.index') }}#locations"><x-theme::icon name="pin" /> Deployment locations</a>
                                     <a href="{{ route('categories.index') }}#faq"><x-theme::icon name="console" /> Hosting questions</a>

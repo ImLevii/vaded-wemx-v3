@@ -28,6 +28,12 @@ Route::get('/categories', function (Request $request): RedirectResponse {
 });
 Route::get('/pages/{page:slug}', [Client\PagesController::class, 'view'])->name('pages.view');
 
+Route::prefix('knowledgebase')->name('knowledgebase.')->group(function () {
+    Route::get('/', [Client\KnowledgebaseController::class, 'index'])->name('index');
+    Route::get('/category/{category:slug}', [Client\KnowledgebaseController::class, 'category'])->name('category');
+    Route::get('/article/{article:slug}', [Client\KnowledgebaseController::class, 'show'])->name('article');
+});
+
 Route::view('/packages/{package:slug}', 'theme::packages.view')->name('packages.view');
 
 Route::view('/cart', 'theme::cart.index')->name('cart');
