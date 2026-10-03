@@ -94,7 +94,8 @@ class VpsStorefrontTest extends TestCase
     public function test_vps_layout_is_scoped_to_an_available_vps_category(): void
     {
         $this->get('/')->assertOk()->assertSeeText('VADED HOSTING')->assertDontSee('vh-vps-hero', false);
-        $this->get('/?category=games')->assertOk()->assertSeeText('VADED HOSTING')->assertDontSee('vh-vps-hero', false);
+        $this->get('/?category=games')->assertOk()->assertSeeText('Game hosting plans')
+            ->assertDontSee('vh-store-hero', false)->assertDontSee('vh-vps-hero', false);
 
         $this->package->update(['status' => 'disabled']);
         $this->get('/?category=vps-hosting')->assertOk()->assertSee('More VPS plans are on the way.')->assertDontSee('Basic VPS');

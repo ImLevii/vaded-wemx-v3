@@ -1,5 +1,6 @@
 import './bootstrap';
 import './technology-carousel';
+import './minecraft-checkout';
 import { initFlowbite } from 'flowbite';
 
 import toastr from "toastr";

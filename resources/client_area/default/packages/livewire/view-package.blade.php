@@ -16,8 +16,10 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Illuminate\Support\Arr;
 use App\Support\OperatingSystemOptions;
+use App\Support\MinecraftCheckoutOptions;
 use App\Models\PackageConfigOption;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder;
 
 new class extends Component {
     #[Locked]
@@ -33,12 +35,12 @@ new class extends Component {
     #[Locked]
     public ?int $cartItemId = null;
 
-    public function mount($packageSlug)
+    public function mount(string $packageSlug): void
     {
-        $this->package = Package::where('slug', $packageSlug)->firstOrFail();
+        $this->package = Package::with(['category', 'prices', 'features', 'configOptions'])->where('slug', $packageSlug)->firstOrFail();
         abort_unless($this->package->isVisibleToUser(auth()->user()), 404);
 
-        $firstPrice = $this->package->prices->first();
+        $firstPrice = $this->isMinecraftCheckout ? $this->minecraftBillingCycles->firstWhere('period_in_days', 30) ?? $this->minecraftBillingCycles->first() : $this->package->prices->first();
 
         if ($firstPrice AND !$this->packagePriceId) {
             $this->packagePriceId = $firstPrice->id;
@@ -70,6 +72,13 @@ new class extends Component {
             $this->addError('package_error', 'Choose an available billing cycle.');
 
             return;
+        }
+        if ($this->isMinecraftCheckout) {
+            foreach ($this->package->configOptions as $option) {
+                if (MinecraftCheckoutOptions::kind($option) !== 'service') {
+                    $this->validate(['config_options.'.$option->key => [\Illuminate\Validation\Rule::in(array_column(MinecraftCheckoutOptions::choices($option), 'value'))]]);
+                }
+            }
         }
         // if server connection has prevent_purchasing enabled, and the server connection is not healthy, prevent adding to cart
         if ($this->package->serverConnection->prevent_purchasing AND !$this->package->serverConnection->isHealthy()) {
@@ -118,9 +127,9 @@ new class extends Component {
     }
 
     #[Computed]
-    public function packagePrice()
+    public function packagePrice(): ?PackagePrice
     {
-        return $this->package->prices()->find($this->packagePriceId);
+        return $this->package->prices()->when($this->isMinecraftCheckout, fn (Builder $query): Builder => $query->where('is_active', true))->find($this->packagePriceId);
     }
 
     #[Computed]
@@ -152,6 +161,52 @@ new class extends Component {
         return Str::contains(Str::lower($this->package->category->slug), 'vps');
     }
 
+    #[Computed]
+    public function isMinecraftCheckout(): bool
+    {
+        return Str::contains(Str::lower($this->package->category->slug), 'minecraft');
+    }
+
+    #[Computed]
+    public function minecraftBillingCycles(): \Illuminate\Support\Collection
+    {
+        return $this->package->prices->where('is_active', true)->sortBy('period_in_days')->values();
+    }
+
+    #[Computed]
+    public function hasMinecraftRecommendation(): bool
+    {
+        return $this->minecraftConfiguration['software']->contains(fn (PackageConfigOption $option): bool => MinecraftCheckoutOptions::recommendation($option) !== null);
+    }
+
+    /** @return array{locations: \Illuminate\Support\Collection, software: \Illuminate\Support\Collection, service: \Illuminate\Support\Collection} */
+    #[Computed]
+    public function minecraftConfiguration(): array
+    {
+        $groups = $this->package->configOptions->groupBy(fn (PackageConfigOption $option): string => MinecraftCheckoutOptions::kind($option));
+
+        return [
+            'locations' => $groups->get('locations', collect()),
+            'software' => $groups->get('software', collect()),
+            'service' => $groups->get('service', collect()),
+        ];
+    }
+
+    public function useRecommendedMinecraftConfiguration(): void
+    {
+        abort_unless($this->isMinecraftCheckout && $this->package->isVisibleToUser(auth()->user()), 404);
+
+        foreach ($this->minecraftConfiguration['software'] as $option) {
+            $recommended = MinecraftCheckoutOptions::recommendation($option);
+
+            if ($recommended) {
+                Arr::set($this->config_options, $option->key, $recommended['value']);
+            }
+        }
+
+        $this->resetValidation();
+    }
+
     /**
      * @return array{service: \Illuminate\Support\Collection, operatingSystems: \Illuminate\Support\Collection, network: \Illuminate\Support\Collection}
      */
@@ -178,6 +233,8 @@ new class extends Component {
 <div>
 @if($this->isVpsCheckout)
     @include('theme::packages.vps-checkout')
+@elseif($this->isMinecraftCheckout)
+    @include('theme::packages.minecraft-checkout')
 @else
 <section class="vh-package-page mx-auto max-w-screen-xl px-4 2xl:px-0">
     <div class="vh-package-topline">

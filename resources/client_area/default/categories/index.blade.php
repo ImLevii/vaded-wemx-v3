@@ -7,6 +7,7 @@
     @include('theme::categories.vps')
 @else
 <div class="vh-store">
+    @if(! request()->has('category'))
     <section class="vh-store-hero" aria-labelledby="hosting-title">
         <div class="vh-hero-backdrop" aria-hidden="true">
             <div class="vh-hero-backdrop-glow"></div>
@@ -44,7 +45,7 @@
         <div class="vh-service-cards">
             @forelse($hostingCategories as $category)
                 @php($startingPrice = $category->packages->flatMap->prices->sortBy('price')->first())
-                <a href="{{ route('categories.index', ['category' => $category->slug]) }}#pricing" wire:navigate class="vh-service-card" @if($selectedCategory?->is($category)) aria-current="true" @endif>
+                <a href="{{ route('categories.index', ['category' => $category->slug]) }}" wire:navigate class="vh-service-card" @if($selectedCategory?->is($category)) aria-current="true" @endif>
                     <div class="vh-service-art">
                         @if($category->icon && ! Str::contains($category->icon, ['placeholder', 'vaded-branded-server-rack', 'vaded-archive-server', 'default.png']))
                             <img src="{{ $category->icon() }}" alt="" width="480" height="240" loading="lazy" decoding="async">
@@ -67,8 +68,9 @@
         </div>
     </section>
 
+    @endif
     <section id="pricing" class="vh-section vh-plan-section" aria-label="Compare hosting plans">
-        <div class="vh-section-heading"><div><span class="vh-kicker">02 / FIND YOUR FIT</span><h2>Resources for your next level.</h2><p>Compare the plans. See what’s included. Configure before you commit.</p></div></div>
+        <div class="vh-section-heading"><div><span class="vh-kicker">02 / FIND YOUR FIT</span><h2>{{ request()->has('category') && $selectedCategory ? $selectedCategory->name.' plans' : 'Resources for your next level.' }}</h2><p>Compare the plans. See what’s included. Configure before you commit.</p></div>@if(request()->has('category'))<a href="{{ route('categories.index') }}" wire:navigate class="vh-text-link">All services <x-theme::icon name="arrow" /></a>@endif</div>
         <nav class="vh-catalog-tabs" aria-label="Select hosting service">
             @foreach($hostingCategories as $category)
                 <a href="{{ route('categories.index', ['category' => $category->slug]) }}#pricing" wire:navigate @if($selectedCategory?->is($category)) aria-current="page" @endif>{{ $category->name }}</a>
@@ -83,6 +85,7 @@
         @endif
     </section>
 
+    @if(! request()->has('category'))
     <section id="infrastructure" class="vh-section" aria-labelledby="hardware-heading">
         <div class="vh-section-heading"><div><span class="vh-kicker">03 / UNDERSTAND THE RESOURCES</span><h2 id="hardware-heading">Power behind the panel.</h2><p>Match your workload to the resources that matter. Exact allocations are listed with each plan.</p></div><a href="#pricing" class="vh-text-link">Compare plans <x-theme::icon name="arrow" /></a></div>
         <div class="vh-spec-grid">
@@ -160,6 +163,7 @@
         </div>
     </section>
     <section class="vh-launch-cta"><div><span class="vh-kicker">YOUR COMMUNITY STARTS HERE</span><h2>Ready to launch?</h2><p>Find the server that fits. Make it yours.</p></div><div class="vh-cta-row"><a href="#services" class="vh-action">Choose Your Server <x-theme::icon name="arrow" /></a><a href="#pricing" class="vh-action vh-action-secondary">View Plans</a></div></section>
+    @endif
 </div>
 @endif
 @endsection

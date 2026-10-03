@@ -66,6 +66,16 @@ class HostingStorefrontTest extends TestCase
             ->assertDontSee('Private promotion')->assertDontSee('$0.01');
     }
 
+    public function test_hosting_cards_open_directly_on_category_products(): void
+    {
+        $categoryUrl = route('categories.index', ['category' => $this->package->category->slug]);
+        $this->get('/')->assertOk()->assertSee('href="'.$categoryUrl.'" wire:navigate class="vh-service-card"', false);
+        $this->get($categoryUrl)->assertOk()->assertSee('Community hosting plans')->assertSee('Community 4GB')
+            ->assertSee('4 GB memory')->assertSee('All services')
+            ->assertDontSee('class="vh-store-hero"', false)->assertDontSee('id="services"', false)
+            ->assertDontSee('id="infrastructure"', false);
+    }
+
     public function test_unavailable_or_malformed_category_does_not_render_private_plans(): void
     {
         $this->package->category->update(['status' => 'disabled']);
