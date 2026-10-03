@@ -7,11 +7,13 @@ use App\Models\User;
 use App\Rules\NotReservedUsername;
 use App\Services\CustomerServerCredentials;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use PragmaRX\Google2FA\Google2FA;
+use Throwable;
 
 class AuthActions extends Action
 {
@@ -28,16 +30,18 @@ class AuthActions extends Action
         if (Auth::attempt([$authField => $validatedData['username'], 'password' => $validatedData['password']], $validatedData['remember'] ?? false)) {
             app(CustomerServerCredentials::class)->capture(auth()->user(), $validatedData['password']);
 
-            // notify user on their previous email address
-            auth()->user()->email([
-                'identifier' => 'account.new-login',
-                'subject' => 'New login to your account',
-                'lines' => [
-                    'You are receiving this email because there was a new login to your account on '.settings('app_name', 'Application').'.',
-                    'If this was you, you can safely ignore this email.',
-                ],
-                // todo: add more information like ip address, location, browser, os, etc.
-            ]);
+            try {
+                auth()->user()->email([
+                    'identifier' => 'account.new-login',
+                    'subject' => 'New login to your account',
+                    'lines' => [
+                        'You are receiving this email because there was a new login to your account on '.settings('app_name', 'Application').'.',
+                        'If this was you, you can safely ignore this email.',
+                    ],
+                ]);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
 
             return;
         } else {
@@ -47,7 +51,7 @@ class AuthActions extends Action
         }
     }
 
-    public function registerAsClient(array $input)
+    public function registerAsClient(array $input): User
     {
         $validatedData = Validator::make($input, [
             'first_name' => ['required', 'alpha', 'min:3', 'max:255'],
@@ -64,18 +68,28 @@ class AuthActions extends Action
         $validatedData['password'] = Hash::make($password);
 
         try {
-            $user = User::create($validatedData);
-            app(CustomerServerCredentials::class)->capture($user, $password);
-            $user->emailVerificationToken();
-        } catch (\Exception $e) {
+            $user = DB::transaction(function () use ($validatedData, $password): User {
+                $user = User::create(collect($validatedData)->except(['password_confirmation', 'log_user_in'])->all());
+                app(CustomerServerCredentials::class)->capture($user, $password);
+
+                if (User::count() === 1) {
+                    $user->markEmailAsVerified();
+                }
+
+                return $user;
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+
             throw ValidationException::withMessages([
                 'email' => 'Something went wrong. Please try again.',
             ]);
         }
 
-        // if this is the first user created, automatically verify their email
-        if (User::count() === 1) {
-            $user->markEmailAsVerified();
+        try {
+            $user->emailVerificationToken();
+        } catch (Throwable $exception) {
+            report($exception);
         }
 
         if (isset($validatedData['log_user_in']) && $validatedData['log_user_in']) {
