@@ -250,9 +250,19 @@
                 @endauth
                 @guest
                 <div class="vh-header-auth flex items-center gap-2">
-                    <a href="{{ route('login') }}" class="mr-2 rounded-lg px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-4 focus:ring-gray-300 dark:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-800 lg:py-2.5">Login</a>
+                    <a href="{{ route('login') }}" class="vh-header-auth-button vh-header-login">
+                        <svg class="vh-header-auth-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M4 12h11m-4-4 4 4-4 4" />
+                        </svg>
+                        <span>Login</span>
+                    </a>
                     @if(settings('enable_registrations', true))
-                        <a href="{{ route('categories.index') }}#services" class="bg-primary-700 hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 mr-2 rounded-lg px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-4 lg:py-2.5">Get Started</a>
+                        <a href="{{ route('register') }}" class="vh-header-auth-button vh-header-signup">
+                            <span>Sign Up</span>
+                            <svg class="vh-header-auth-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14m-6-6 6 6-6 6" />
+                            </svg>
+                        </a>
                     @endif
                 </div>
                 @endguest

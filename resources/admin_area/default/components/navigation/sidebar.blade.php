@@ -206,17 +206,6 @@
                 </x-admin::navigation.sidebar-item>
                 @endperm
 
-                @perm('admin.settings.index')
-                <x-admin::navigation.sidebar-item
-                    title="Updates"
-                    :href="route('admin.updates.index')"
-                    :active="$activePage === 'updates'">
-                    <x-slot name="icon">
-                        <x-admin::icon icon="refresh" outline/>
-                    </x-slot>
-                </x-admin::navigation.sidebar-item>
-                @endperm
-
                 @perm('admin.pages.index')
                 <x-admin::navigation.sidebar-item
                     :title="__('messages.pages')"

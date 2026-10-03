@@ -139,11 +139,8 @@ new class extends Component {
 
     public function rendering($view)
     {
-        if ($this->config_options == []) {
-            $this->config_options = [];
-
-            foreach ($this->package->configOptions as $option) {
-                // Sets nested arrays using dot notation: "a.b.c" => ['a' => ['b' => ['c' => value]]]
+        foreach ($this->package->configOptions as $option) {
+            if (! Arr::has($this->config_options, $option->key)) {
                 Arr::set($this->config_options, $option->key, $option->default_value ?? '');
             }
         }

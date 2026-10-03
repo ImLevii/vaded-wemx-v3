@@ -4,14 +4,25 @@ use Livewire\Volt\Component;
 use Livewire\Attributes\Locked;
 use App\Models\Category;
 use App\Models\Package;
+use App\Models\PackagePrice;
 use Illuminate\Support\Collection;
+use App\Support\MinecraftOrderOptions;
+use Livewire\Attributes\Computed;
+use Illuminate\Validation\Rule;
 
 new class extends Component
 {
     #[Locked]
     public Category|string $category;
 
+    #[Locked]
     public $packages;
+
+    public int $minecraftPlanIndex = 0;
+
+    public int $minecraftThreadIndex = 0;
+
+    public string $minecraftPeriod = '30';
 
     #[Locked]
     public bool $vpsLayout = false;
@@ -32,9 +43,81 @@ new class extends Component
         $this->packages = Package::query()
             ->where('category_id', $category->id)
             ->visibleToUser(auth()->user(), includeUnlisted: false)
-            ->with(['prices', 'features'])
+            ->with(['prices', 'features', 'configOptions'])
             ->orderBy('sort_order')->orderBy('id')
             ->get();
+
+        $prices = $this->minecraftPlans->first()['prices'] ?? collect();
+        $this->minecraftPeriod = (string) ($prices->firstWhere('period_in_days', 30)?->period_in_days ?? $prices->first()?->period_in_days ?? 30);
+    }
+
+    #[Computed]
+    public function minecraftPlans(): Collection
+    {
+        if ($this->vpsLayout || ! str_contains(strtolower($this->category->slug), 'minecraft')) {
+            return collect();
+        }
+
+        $this->packages->loadMissing(['prices', 'features', 'configOptions']);
+
+        return $this->packages->map(function (Package $package): array {
+            $threads = MinecraftOrderOptions::threads($package);
+            $memory = MinecraftOrderOptions::memory($package);
+            $prices = $package->prices->where('is_active', true)->sortBy('price')->unique('period_in_days')->sortBy('period_in_days')->values();
+            $oneTimeDays = $package->configOptions->firstWhere('key', 'cpu_limit')?->onetime_day_equivalent ?? 365;
+
+            return [
+                'package' => $package,
+                'memory' => $memory,
+                'prices' => $prices,
+                'threads' => $threads,
+                'preview' => [
+                    'name' => $package->name,
+                    'memory' => $memory.'GB',
+                    'includedThreads' => (int) (($threads[0]['value'] - $threads[0]['additional'] * 100) / 100),
+                    'threads' => $threads,
+                    'rates' => $prices->map(fn (PackagePrice $price): array => [
+                        'period' => (string) $price->period_in_days,
+                        'cycle' => $price->cycle(),
+                        'totals' => array_map(fn (array $thread): string => price((float) $price->price + $thread['dailyPrice'] * ($price->period_in_days ?: $oneTimeDays)), $threads),
+                        'setup' => $price->setup_fee > 0 ? price((float) $price->setup_fee).' one-time setup' : 'No setup fee',
+                    ])->all(),
+                ],
+            ];
+        })->filter(fn (array $plan): bool => $plan['memory'] !== null && $plan['prices']->isNotEmpty())
+            ->sortBy('memory')->values();
+    }
+
+    public function updatedMinecraftPlanIndex(): void
+    {
+        $this->minecraftThreadIndex = 0;
+        $prices = $this->minecraftPlans->get($this->minecraftPlanIndex)['prices'] ?? collect();
+
+        if (! $prices->contains('period_in_days', $this->minecraftPeriod)) {
+            $this->minecraftPeriod = (string) ($prices->firstWhere('period_in_days', 30)?->period_in_days ?? $prices->first()?->period_in_days ?? 30);
+        }
+    }
+
+    public function configureMinecraftServer(): void
+    {
+        $plans = $this->minecraftPlans;
+        $this->validate(['minecraftPlanIndex' => ['required', 'integer', 'min:0', 'max:'.($plans->count() - 1)]]);
+        $plan = $plans[$this->minecraftPlanIndex];
+        $this->validate([
+            'minecraftThreadIndex' => ['required', 'integer', Rule::in(array_keys($plan['threads']))],
+            'minecraftPeriod' => ['required', Rule::in($plan['prices']->pluck('period_in_days')->all())],
+        ]);
+
+        $package = Package::query()->visibleToUser(auth()->user(), includeUnlisted: false)
+            ->where('category_id', $this->category->id)->findOrFail($plan['package']->id);
+        $price = $package->prices()->where('is_active', true)->findOrFail($plan['prices']->firstWhere('period_in_days', $this->minecraftPeriod)->id);
+        $parameters = ['package' => $package->slug, 'packagePriceId' => $price->id];
+
+        if ($package->configOptions()->where('key', 'cpu_limit')->exists()) {
+            $parameters['config_options'] = ['cpu_limit' => $plan['threads'][$this->minecraftThreadIndex]['value']];
+        }
+
+        $this->redirect(route('packages.view', $parameters), navigate: true);
     }
 
     /**
@@ -97,6 +180,9 @@ new class extends Component
 @if($vpsLayout)
     @include('theme::categories.vps-plans')
 @else
+    @if($this->minecraftPlans->isNotEmpty())
+        @include('theme::categories.minecraft-order-slider')
+    @endif
 <section class="vh-plans" x-data="{ period: 'all', comparison: false, plan: '{{ $packages->count() > 4 ? $packages->first()->id : 'all' }}' }" aria-label="{{ $category->name }} plans">
     @php($billingCycles = $packages->flatMap->prices->sortBy('period_in_days')->unique('period_in_days'))
     <div class="vh-plans-toolbar">
