@@ -10,6 +10,7 @@ use App\Models\Package;
 use App\Models\PackagePrice;
 use App\Models\Payment;
 use App\Models\Subscription;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -58,8 +59,11 @@ class OrderUpgradeService
             return 'Upgrades are unavailable while termination or billing review is pending.';
         }
         $connection = $order->package->serverConnection;
-        if ($connection?->extension_identifier !== 'server-pterodactyl' || ! $connection->is_active || $connection->prevent_purchasing || $connection->server?->status !== 'enabled') {
+        if ($connection?->extension_identifier !== 'server-pterodactyl' || ! $connection->is_active || $connection->server?->status !== 'enabled') {
             return 'Self-service upgrades are unavailable for this service. Please contact support.';
+        }
+        if ($connection->prevent_purchasing && ! $connection->isHealthy()) {
+            return 'The server connection is currently unavailable. Please try your upgrade again later or contact support.';
         }
         $hasOriginalPrice = $this->billingPriceIds !== null
             ? (int) $this->billingPriceIds->get($order->package_price_id) === (int) $order->package_id
@@ -83,7 +87,7 @@ class OrderUpgradeService
         return null;
     }
 
-    /** @return Collection<int, array{price: PackagePrice, recurring: float, prorated: float, fee: float, total: float, token: string, resources: array<string, string>}> */
+    /** @return Collection<int, array{price: PackagePrice, recurring: float, prorated: float, fee: float, total: float, token: string, quoted_at: int, resources: array<string, string>}> */
     public function options(Order $order): Collection
     {
         if ($this->unavailableReason($order)) {
@@ -144,10 +148,11 @@ class OrderUpgradeService
         return $increased;
     }
 
-    /** @return array{price: PackagePrice, recurring: float, prorated: float, fee: float, total: float, token: string, resources: array<string, string>} */
-    public function quote(Order $order, PackagePrice $price): array
+    /** @return array{price: PackagePrice, recurring: float, prorated: float, fee: float, total: float, token: string, quoted_at: int, resources: array<string, string>} */
+    public function quote(Order $order, PackagePrice $price, ?int $quotedAt = null): array
     {
-        $remainingDays = max(0, now()->diffInSeconds($order->due_date, false) / 86400);
+        $quotedAt ??= now()->getTimestamp();
+        $remainingDays = max(0, CarbonImmutable::createFromTimestampUTC($quotedAt)->diffInSeconds($order->due_date, false) / 86400);
         $prorated = round(((float) $price->getDailyPrice() - (float) $order->cycle_price) * $remainingDays, 2);
         $fee = round((float) $price->upgrade_fee, 2);
         $total = round($prorated + $fee, 2);
@@ -160,19 +165,28 @@ class OrderUpgradeService
         return ['price' => $price,
             'recurring' => round((float) $price->price + $order->prices->where('is_active', true)->sum('cycle_price') * $order->period_in_days, 2),
             'prorated' => $prorated, 'fee' => $fee, 'total' => $total,
-            'token' => hash('sha256', $this->fingerprint($order).$this->targetFingerprint($price).$total), 'resources' => $resources];
+            'token' => hash_hmac('sha256', $this->fingerprint($order).$this->targetFingerprint($price).$total.':'.$quotedAt, config('app.key')),
+            'quoted_at' => $quotedAt, 'resources' => $resources];
     }
 
-    public function checkout(Order $order, int $priceId, string $quoteToken): Payment
+    public function checkout(Order $order, int $priceId, string $quoteToken, int $quotedAt): Payment
     {
         abort_unless((int) $order->user_id === auth()->id(), 403);
 
-        return DB::transaction(function () use ($order, $priceId, $quoteToken): Payment {
+        return DB::transaction(function () use ($order, $priceId, $quoteToken, $quotedAt): Payment {
             $order = Order::query()->lockForUpdate()->findOrFail($order->id);
             abort_unless((int) $order->user_id === auth()->id(), 403);
             $this->assertAvailable($order);
             $price = PackagePrice::query()->with('package')->findOrFail($priceId);
             $this->assertCompatible($order, $price);
+            $currentTimestamp = now()->getTimestamp();
+            if ($quotedAt > $currentTimestamp || $quotedAt < $currentTimestamp - 15 * 60) {
+                throw ValidationException::withMessages(['package_price_id' => 'The upgrade quote has expired. Refresh this page and review the latest price.']);
+            }
+            $quote = $this->quote($order, $price, $quotedAt);
+            if (! hash_equals($quote['token'], $quoteToken)) {
+                throw ValidationException::withMessages(['package_price_id' => 'The upgrade quote has changed. Refresh this page and review the latest price.']);
+            }
             $existing = $this->pendingPayment($order);
             if ($existing) {
                 if ((int) $existing->data('package_price_id') === $priceId && $existing->data('source_fingerprint') === $this->fingerprint($order)
@@ -183,10 +197,6 @@ class OrderUpgradeService
                     throw ValidationException::withMessages(['package_price_id' => 'A paid upgrade still needs to be completed. Retry it or contact support before purchasing another upgrade.']);
                 }
                 $existing->update(['data' => array_merge($existing->data, ['upgrade_superseded_at' => now()->toIso8601String()])]);
-            }
-            $quote = $this->quote($order, $price);
-            if (! hash_equals($quote['token'], $quoteToken)) {
-                throw ValidationException::withMessages(['package_price_id' => 'The upgrade quote has changed. Refresh this page and review the latest price.']);
             }
 
             return $order->payments()->create([

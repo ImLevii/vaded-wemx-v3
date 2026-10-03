@@ -12,6 +12,7 @@
             @endif
             @error('package_price_id') <x-theme::form.error :text="$message" /> @enderror
             @error('quote_token') <x-theme::form.error :text="$message" /> @enderror
+            @error('quoted_at') <x-theme::form.error :text="$message" /> @enderror
             @error('confirm_upgrade') <x-theme::form.error :text="$message" /> @enderror
         </x-theme::card>
 
@@ -40,7 +41,7 @@
         @elseif($upgradeOptions->isEmpty())
             <x-theme::card><p class="text-gray-600 dark:text-gray-300">No compatible larger plans are currently available for this service. Contact support if you need more resources.</p></x-theme::card>
         @elseif(! $pendingUpgrade?->isPaid())
-            <p class="text-sm text-gray-600 dark:text-gray-300">Pay only the price difference for the time remaining until {{ $order->due_date->format('d M Y') }}, plus any upgrade fee. Existing add-ons are retained. Applicable taxes are shown at checkout.</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">Pay only the price difference for the time remaining until {{ $order->due_date->format('d M Y') }}, plus any upgrade fee. Existing add-ons are retained. These quotes are valid for 15 minutes. Applicable taxes are shown at checkout.</p>
             <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                 @foreach($upgradeOptions as $option)
                     <x-theme::card>
@@ -58,6 +59,7 @@
                             @csrf
                             <input type="hidden" name="package_price_id" value="{{ $option['price']->id }}">
                             <input type="hidden" name="quote_token" value="{{ $option['token'] }}">
+                            <input type="hidden" name="quoted_at" value="{{ $option['quoted_at'] }}">
                             <label class="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
                                 <input type="checkbox" name="confirm_upgrade" value="1" required>
                                 <span>I agree to the new recurring price of {{ price($option['recurring']) }} / {{ $order->cycle() }} and today's charge of {{ price($option['total']) }} before tax.</span>

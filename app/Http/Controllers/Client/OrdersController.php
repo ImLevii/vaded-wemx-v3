@@ -30,7 +30,7 @@ class OrdersController extends Controller
 
     public function purchaseUpgrade(UpgradeOrderRequest $request, Order $order, OrderUpgradeService $upgrades): RedirectResponse
     {
-        $payment = $upgrades->checkout($order, (int) $request->validated('package_price_id'), $request->validated('quote_token'));
+        $payment = $upgrades->checkout($order, (int) $request->validated('package_price_id'), $request->validated('quote_token'), (int) $request->validated('quoted_at'));
 
         return redirect()->route($payment->isPaid() ? 'orders.upgrade' : 'payments.view', $payment->isPaid() ? $order : $payment->token);
     }

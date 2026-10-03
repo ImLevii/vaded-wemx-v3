@@ -28,6 +28,7 @@ class UpgradeOrderRequest extends FormRequest
         return [
             'package_price_id' => ['required', 'integer', 'exists:package_prices,id'],
             'quote_token' => ['required', 'string', 'size:64'],
+            'quoted_at' => ['required', 'integer', 'min:0'],
             'confirm_upgrade' => ['required', 'accepted'],
         ];
     }

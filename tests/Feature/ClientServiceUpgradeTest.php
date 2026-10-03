@@ -71,9 +71,92 @@ class ClientServiceUpgradeTest extends TestCase
 
     public function test_customer_sees_eligible_upgrade_controls_and_clear_prorated_prices(): void
     {
-        $this->get(route('orders.upgrade', $this->order))->assertOk()->assertSee('Larger')->assertSee('$60.00')->assertSee('$13.00')->assertSee('Existing add-ons are retained')->assertDontSee('$50.00');
+        $this->get(route('orders.upgrade', $this->order))->assertOk()->assertSee('Larger')->assertSee('$60.00')->assertSee('$13.00')->assertSee('Existing add-ons are retained')->assertSee('name="quoted_at"', false)->assertDontSee('$50.00');
         $this->get(route('orders.view', $this->order))->assertOk()->assertSee('Upgrade service');
         Volt::test(client_view_path('orders.livewire.orders-table'))->assertSee('Upgrade')->assertSee(route('orders.upgrade', $this->order), false);
+    }
+
+    public function test_healthy_connection_with_purchase_protection_allows_the_complete_upgrade_flow(): void
+    {
+        $this->order->package->serverConnection->update(['status' => 'healthy', 'prevent_purchasing' => true]);
+
+        $this->get(route('orders.upgrade', $this->order))->assertOk()
+            ->assertSee('Larger')->assertSee('Continue to payment')
+            ->assertDontSee('Self-service upgrades are unavailable');
+        $this->get(route('orders.view', $this->order))->assertOk()->assertSee('Upgrade service');
+        Volt::test(client_view_path('orders.livewire.orders-table'))
+            ->assertSee(route('orders.upgrade', $this->order), false);
+
+        $payment = $this->checkout();
+        app(OrderUpgradeService::class)->assertPayable($payment->fresh());
+        $this->assertSame($this->order->package_id, $this->order->fresh()->package_id);
+        Http::assertNothingSent();
+
+        $this->fakePanel();
+        $payment->completed('TX-protected-connection');
+
+        $this->assertSame($this->larger->id, $this->order->fresh()->package_id);
+        $this->assertNotNull($payment->fresh()->data('upgrade_applied_at'));
+        Http::assertSentCount(2);
+    }
+
+    #[DataProvider('connectionHealthStates')]
+    public function test_connection_purchase_protection_depends_on_health(string $status, bool $preventPurchasing, bool $canUpgrade): void
+    {
+        $input = $this->upgradeInput();
+        $this->order->package->serverConnection->update(['status' => $status, 'prevent_purchasing' => $preventPurchasing]);
+
+        $response = $this->get(route('orders.upgrade', $this->order))->assertOk();
+        if ($canUpgrade) {
+            $response->assertSee('Continue to payment');
+            $this->post(route('orders.upgrade.purchase', $this->order), $input)
+                ->assertRedirect()->assertSessionHasNoErrors();
+            $this->assertSame(1, Payment::query()->count());
+        } else {
+            $response->assertDontSee('Continue to payment');
+            $this->post(route('orders.upgrade.purchase', $this->order), $input)
+                ->assertSessionHasErrors('package_price_id');
+            $this->assertSame(0, Payment::query()->count());
+        }
+        Http::assertNothingSent();
+    }
+
+    /** @return array<string, array{string, bool, bool}> */
+    public static function connectionHealthStates(): array
+    {
+        return [
+            'healthy protected' => ['healthy', true, true],
+            'unavailable protected' => ['unavailable', true, false],
+            'unknown protected' => ['unknown', true, false],
+            'healthy unprotected' => ['healthy', false, true],
+            'unavailable unprotected' => ['unavailable', false, true],
+            'unknown unprotected' => ['unknown', false, true],
+        ];
+    }
+
+    public function test_paid_upgrade_waits_for_protected_connection_to_recover_and_retries_without_another_charge(): void
+    {
+        $this->order->package->serverConnection->update(['status' => 'healthy', 'prevent_purchasing' => true]);
+        $payment = $this->checkout();
+        $this->order->package->serverConnection->update(['status' => 'unavailable']);
+
+        $payment->completed('TX-connection-offline');
+
+        $this->assertSame('paid', $payment->fresh()->status);
+        $this->assertTrue($payment->fresh()->data('upgrade_failed'));
+        $this->assertSame($this->order->package_id, $this->order->fresh()->package_id);
+        Http::assertNothingSent();
+
+        $this->order->package->serverConnection->update(['status' => 'healthy']);
+        $this->fakePanel();
+        $this->post(route('orders.upgrade.retry', ['order' => $this->order, 'payment' => $payment]))
+            ->assertRedirect()->assertSessionHas('success');
+
+        $this->assertSame($this->larger->id, $this->order->fresh()->package_id);
+        $this->assertFalse($payment->fresh()->data('upgrade_failed'));
+        $this->assertSame('TX-connection-offline', $payment->fresh()->transaction_id);
+        $this->assertSame(1, Payment::query()->count());
+        Http::assertSentCount(2);
     }
 
     public function test_checkout_preserves_the_service_until_payment_and_reuses_duplicate_requests(): void
@@ -243,6 +326,78 @@ class ClientServiceUpgradeTest extends TestCase
         $this->assertSame(0, Payment::query()->count());
     }
 
+    public function test_quote_remains_payable_at_the_confirmed_price_while_the_customer_reads_the_page(): void
+    {
+        $quote = $this->get(route('orders.upgrade', $this->order))->assertOk()->viewData('upgradeOptions')->first();
+        $input = ['package_price_id' => $quote['price']->id, 'quote_token' => $quote['token'],
+            'quoted_at' => $quote['quoted_at'], 'confirm_upgrade' => '1'];
+        $this->travel(10)->minutes();
+
+        $this->post(route('orders.upgrade.purchase', $this->order), $input)
+            ->assertRedirect()->assertSessionHasNoErrors();
+
+        $payment = Payment::query()->where('handler', OrderUpgradeHandler::class)->sole();
+        $this->assertSame(13.0, (float) $payment->subtotal);
+        $this->assertSame($this->order->package_id, $this->order->fresh()->package_id);
+        Http::assertNothingSent();
+    }
+
+    public function test_quote_timestamp_is_required_and_cannot_be_in_the_future(): void
+    {
+        $input = $this->upgradeInput();
+        unset($input['quoted_at']);
+        $this->post(route('orders.upgrade.purchase', $this->order), $input)
+            ->assertSessionHasErrors('quoted_at');
+
+        $input = $this->upgradeInput();
+        $input['quoted_at'] = now()->addMinute()->getTimestamp();
+        $this->post(route('orders.upgrade.purchase', $this->order), $input)
+            ->assertSessionHasErrors('package_price_id');
+
+        $this->assertSame(0, Payment::query()->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_expired_quotes_are_rejected_before_creating_an_invoice(): void
+    {
+        $this->target->update(['price' => 30.0001]);
+        $input = $this->upgradeInput();
+        $this->travel(16)->minutes();
+
+        $this->post(route('orders.upgrade.purchase', $this->order), $input)
+            ->assertSessionHasErrors('package_price_id');
+
+        $this->assertSame(0, Payment::query()->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_quote_timestamp_cannot_be_changed_to_extend_its_validity(): void
+    {
+        $input = $this->upgradeInput();
+        $this->travel(2)->seconds();
+        $input['quoted_at'] = now()->getTimestamp();
+
+        $this->post(route('orders.upgrade.purchase', $this->order), $input)
+            ->assertSessionHasErrors('package_price_id');
+
+        $this->assertSame(0, Payment::query()->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_invalid_quotes_cannot_reuse_an_existing_upgrade_invoice(): void
+    {
+        $payment = $this->checkout();
+        $input = $this->upgradeInput();
+        $input['quote_token'] = str_repeat('0', 64);
+
+        $this->post(route('orders.upgrade.purchase', $this->order), $input)
+            ->assertSessionHasErrors('package_price_id');
+
+        $this->assertSame(1, Payment::query()->count());
+        $this->assertNull($payment->fresh()->data('upgrade_superseded_at'));
+        Http::assertNothingSent();
+    }
+
     public function test_service_changes_after_payment_creation_do_not_apply_a_stale_upgrade(): void
     {
         $payment = $this->checkout();
@@ -371,13 +526,13 @@ class ClientServiceUpgradeTest extends TestCase
         return Payment::query()->where('handler', OrderUpgradeHandler::class)->latest('id')->firstOrFail();
     }
 
-    /** @return array{package_price_id: int, quote_token: string, confirm_upgrade: string} */
+    /** @return array{package_price_id: int, quote_token: string, quoted_at: int, confirm_upgrade: string} */
     private function upgradeInput(): array
     {
         $order = $this->order->fresh(['prices', 'package']);
         $quote = app(OrderUpgradeService::class)->quote($order, $this->target->fresh('package'));
 
-        return ['package_price_id' => $this->target->id, 'quote_token' => $quote['token'], 'confirm_upgrade' => '1'];
+        return ['package_price_id' => $this->target->id, 'quote_token' => $quote['token'], 'quoted_at' => $quote['quoted_at'], 'confirm_upgrade' => '1'];
     }
 
     private function fakePanel(): void
