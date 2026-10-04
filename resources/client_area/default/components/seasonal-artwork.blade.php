@@ -32,12 +32,54 @@
     @endif
     @if($edition === null || $edition === 'autumn')
     <g data-edition="autumn">
-        <path class="vh-logo-trail" d="M4 38C-1 19 8 7 23 5M43 58C57 55 63 43 60 29" stroke="#c49365" stroke-width=".7" opacity=".5" />
-        <g transform="translate(11 13)"><g class="vh-logo-leaf"><path d="M0 8-3 3-8 4-6-1-10-4-4-5-4-10 0-7 4-11 5-5 11-4 7 0 8 5 3 4Z" fill="#d99b50" stroke="#f5cb8d" stroke-width=".6" /><path d="M0 11 0-5M0 3-5-1M0 1 5-2" stroke="#a76639" stroke-width=".8" /></g></g>
-        <g transform="translate(54 40)"><g class="vh-logo-leaf vh-logo-phase"><path d="M-2 8C-11 3-9-8 3-10C10-1 9 7-2 8Z" fill="#bc6452" stroke="#eaae85" stroke-width=".6" /><path d="M-4 11 3-7M-1 4-6 0M1-1 6-3" stroke="#8b493b" stroke-width=".8" /></g></g>
-        <g transform="translate(48 8)"><g class="vh-logo-sway"><path d="M-4 0C-6 6-2 11 2 10C7 8 8 4 5 1Z" fill="#c79661" stroke="#f0d0a0" stroke-width=".6" /><path d="M-5 1C-6-5 5-7 7 0Z" fill="#885d43" /><path d="M-3-1 5-2M0-5 1-7" stroke="#bd946a" stroke-width=".7" /></g></g>
-        <g class="vh-logo-mote" fill="#efc182"><circle cx="6" cy="40" r="1" /><circle cx="32" cy="3" r=".8" /><circle cx="47" cy="57" r=".8" /></g>
-        <g transform="translate(14 53)"><path d="M-5 0C-9-4-3-8 2-5C4 0 0 4-5 0Z" fill="#edb568" /><path d="M-6 2 0-4" stroke="#b77c43" stroke-width=".7" /></g>
+        <g class="vh-logo-autumn-wind" stroke="#d0a36a" stroke-width=".55" opacity=".45">
+            <path d="M4 42C-2 34-1 20 4 14M33 3C41 0 49 2 54 7" />
+            <path d="M18 59C32 65 53 60 60 49M20 62C30 66 41 65 48 61" />
+        </g>
+        <path d="M4 24C3 13 9 5 23 5M8 14 4 10M14 7 17 2M19 6 25 9" stroke="#927049" stroke-width=".9" />
+        <g transform="translate(11 8)"><g class="vh-logo-autumn-maple">
+            <path d="M0 8Q-2 4-6 5L-5 2Q-8 1-9-2L-6-3-7-7-3-5Q-2-8 0-10Q2-7 3-5L7-7 6-3 9-2Q8 1 5 2L6 5Q2 4 0 8Z" fill="#cf8244" stroke="#f1c589" stroke-width=".55" />
+            <path d="M0-9Q-1-3 0 7Q-3 2-6 3L-5 0-7-2-4-3-5-5-2-4Z" fill="#e9aa58" />
+            <path d="M0 7Q4 2 6 3L4 1 7-1 4-2 5-5 2-4Z" fill="#b46535" opacity=".8" />
+            <path d="M0 10V-7M0 2-5-2M0 1 5-3M0-2-2-5M0 4 3 2" stroke="#854b2e" stroke-width=".6" />
+            <path d="M-6-5-3-3M1-7 2-5M5-2 7-2" stroke="#f9d49a" stroke-width=".6" />
+        </g></g>
+        <g transform="translate(25 6) rotate(62)"><g class="vh-logo-autumn-oak">
+            <path d="M0 7C-2 5-5 7-5 3C-9 2-7-2-4-1C-7-5-3-7-1-4C-2-10 3-10 3-4C7-7 9-3 5-1C10 0 8 4 5 3C7 7 2 8 0 7Z" fill="#bc7540" stroke="#e5b778" stroke-width=".5" />
+            <path d="M0 9 1-6M1 2-4 0M1 0 4-2" stroke="#805332" stroke-width=".6" />
+            <path d="M0-6Q-1-2 0 6Q-3 2-4 2L-2 0-3-3Z" fill="#e4ac63" opacity=".65" />
+        </g></g>
+        <g transform="translate(53 8) rotate(16)"><g class="vh-logo-autumn-acorn">
+            <path d="M-4 0C-5 5-2 10 0 11C3 9 5 5 4 0Z" fill="#bd8950" stroke="#efc48a" stroke-width=".55" />
+            <path d="M0 2C-1 6 0 9 0 11Q-5 7-4 1Z" fill="#e0b170" />
+            <path d="M2 3Q3 6 1 9" stroke="#946039" stroke-width=".7" />
+            <path d="M-5 1C-7-6 5-7 6 1Q1 4-5 1Z" fill="#745239" stroke="#b38a5e" stroke-width=".55" />
+            <path d="M-3-3 0 0 3-3M-5-1-2 1 1-2 4 1M0-5 0-8" stroke="#be9769" stroke-width=".6" />
+            <path d="M-2-4Q0-5 2-4" stroke="#e3bd85" stroke-width=".6" />
+        </g></g>
+        <path d="M19 56C36 64 57 60 60 44M37 59 40 54M47 58 52 60M53 54 56 49" stroke="#98714b" stroke-width=".85" />
+        <g transform="translate(59 40) rotate(24)"><g class="vh-logo-autumn-russet">
+            <path d="M0 9C-6 6-7 1-3-2Q-6-5-2-7Q-1-10 2-11C6-6 7-2 4 1C7 4 5 8 0 9Z" fill="#a95137" stroke="#d88a60" stroke-width=".55" />
+            <path d="M1-9C-2-4-1 2 0 8Q-4 5-3 2L-1 0-2-3Z" fill="#d17b45" />
+            <path d="M0 12 1-7M0 4-3 1M1 0 4-3" stroke="#703f2d" stroke-width=".6" />
+            <path d="M2-8 4-5M4 4 2 7" stroke="#e0a56c" stroke-width=".6" />
+        </g></g>
+        <g transform="translate(46 57) rotate(72)"><g class="vh-logo-autumn-oak vh-logo-phase">
+            <path d="M0 6C-2 4-5 5-4 2C-7 1-6-2-3-1C-5-4-2-6 0-4C0-8 4-7 3-3C7-5 8-1 4 0C8 2 6 5 3 3C5 7 2 7 0 6Z" fill="#d7a051" stroke="#f2ca86" stroke-width=".5" />
+            <path d="M0 8 1-4M0 2-3 0M1 1 4-1" stroke="#a26c34" stroke-width=".6" />
+        </g></g>
+        <g transform="translate(32 58) rotate(-65)"><g class="vh-logo-autumn-oak vh-logo-phase-late">
+            <path d="M0 6C-6 4-7-3 2-7C7-2 6 5 0 6Z" fill="#aa633e" stroke="#dca576" stroke-width=".5" />
+            <path d="M-1 8 2-5M0 2-3 0M1 0 4-2" stroke="#75452f" stroke-width=".6" />
+        </g></g>
+        <g transform="translate(5 32)"><g class="vh-logo-autumn-falling">
+            <path d="M0 4-2 1-4 1-2-1-3-3 0-2 2-4 2-1 4 0 2 2Z" fill="#dca154" stroke="#edc080" stroke-width=".4" /><path d="M0 5 1-2" stroke="#9d683a" stroke-width=".4" />
+        </g></g>
+        <g transform="translate(60 26)"><g class="vh-logo-autumn-falling vh-logo-phase-late">
+            <path d="M0 3C-5 1-3-5 2-5C5-1 4 3 0 3Z" fill="#bc6a3e" stroke="#e8ae70" stroke-width=".4" /><path d="M-1 4 2-3" stroke="#885332" stroke-width=".4" />
+        </g></g>
+        <g class="vh-logo-autumn-dust" fill="#d8ac65"><circle cx="4" cy="48" r=".7" /><circle cx="38" cy="4" r=".6" /><circle cx="55" cy="54" r=".65" /></g>
+        <g class="vh-logo-autumn-dust vh-logo-phase" fill="#edcb90"><circle cx="3" cy="21" r=".55" /><circle cx="62" cy="37" r=".55" /><circle cx="23" cy="60" r=".5" /></g>
     </g>
     @endif
     @if($edition === null || $edition === 'winter')

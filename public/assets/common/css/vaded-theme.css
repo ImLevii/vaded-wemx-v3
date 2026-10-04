@@ -251,7 +251,7 @@ html:not(.dark):not([data-bs-theme="dark"]) .vaded-theme:not([data-bs-theme="dar
 [data-logo-theme] { --vh-seasonal-color: #c69c69; --vh-seasonal-glow: rgba(198,156,105,.16); }
 [data-logo-theme="spring"] { --vh-seasonal-color: #d78aa9; --vh-seasonal-glow: rgba(215,138,169,.16); }
 [data-logo-theme="summer"] { --vh-seasonal-color: #dca34e; --vh-seasonal-glow: rgba(220,163,78,.16); }
-[data-logo-theme="autumn"] { --vh-seasonal-color: #c78e56; --vh-seasonal-glow: rgba(199,142,86,.18); }
+[data-logo-theme="autumn"] { --vh-seasonal-color: #c99152; --vh-seasonal-glow: rgba(209,145,72,.2); }
 [data-logo-theme="winter"] { --vh-seasonal-color: #91bcd2; --vh-seasonal-glow: rgba(145,188,210,.16); }
 [data-logo-theme="newYear"] { --vh-seasonal-color: #c9a563; --vh-seasonal-glow: rgba(201,165,99,.18); }
 [data-logo-theme="valentines"] { --vh-seasonal-color: #cf87a0; --vh-seasonal-glow: rgba(207,135,160,.16); }
@@ -281,6 +281,8 @@ html:not(.dark):not([data-bs-theme="dark"]) .vaded-theme:not([data-bs-theme="dar
 .vh-logo-artwork :is(.vh-logo-sway, .vh-logo-leaf, .vh-logo-crystal, .vh-logo-heart, .vh-logo-egg, .vh-logo-butterfly, .vh-logo-coin, .vh-logo-firework, .vh-logo-firework-ring, .vh-logo-sun-rays, .vh-logo-flame) { transform-box: fill-box; transform-origin: center; }
 .vh-logo-phase { --vh-logo-delay: -4s; }
 .vh-logo-phase-late { --vh-logo-delay: -7s; }
+.vh-logo-artwork :is(.vh-logo-autumn-maple, .vh-logo-autumn-oak, .vh-logo-autumn-russet, .vh-logo-autumn-acorn, .vh-logo-autumn-falling) { transform-box: fill-box; transform-origin: 50% 85%; }
+.vh-seasonal-logo[data-logo-theme="autumn"]::before { background: radial-gradient(ellipse at 38% 28%, rgba(214,155,77,.19), transparent 64%), radial-gradient(ellipse at 72% 76%, rgba(169,81,55,.12), transparent 65%); }
 @media (prefers-reduced-motion: no-preference) {
     [data-logo-motion="on"] .vh-logo-artwork [class*="vh-logo-"] { animation-delay: var(--vh-logo-delay, 0s); }
     [data-logo-motion="on"] .vh-logo-sway { animation: vh-logo-sway 9s cubic-bezier(.45,0,.55,1) infinite; }
@@ -310,6 +312,20 @@ html:not(.dark):not([data-bs-theme="dark"]) .vaded-theme:not([data-bs-theme="dar
     [data-logo-motion="on"] .vh-logo-twinkle { animation: vh-logo-twinkle 9s ease-in-out infinite; }
     [data-logo-motion="on"] .vh-logo-mote { animation: vh-logo-mote 11s ease-in-out infinite; }
     [data-logo-motion="on"] .vh-logo-trail { stroke-dasharray: 36 12; animation: vh-logo-trail 24s linear infinite; }
+    [data-logo-motion="on"] .vh-logo-autumn-maple { animation: vh-autumn-maple 12s cubic-bezier(.45,0,.55,1) infinite; }
+    [data-logo-motion="on"] .vh-logo-autumn-oak { animation: vh-autumn-oak 15s cubic-bezier(.45,0,.55,1) infinite; }
+    [data-logo-motion="on"] .vh-logo-autumn-russet { animation: vh-autumn-russet 14s cubic-bezier(.45,0,.55,1) infinite; }
+    [data-logo-motion="on"] .vh-logo-autumn-acorn { animation: vh-autumn-acorn 17s cubic-bezier(.45,0,.55,1) infinite; }
+    [data-logo-motion="on"] .vh-logo-autumn-falling { animation: vh-autumn-falling 16s linear infinite; }
+    [data-logo-motion="on"] .vh-logo-autumn-dust { animation: vh-autumn-dust 13s ease-in-out infinite; }
+    [data-logo-motion="on"] .vh-logo-autumn-wind { stroke-dasharray: 22 34; animation: vh-autumn-wind 20s linear infinite; }
+    @keyframes vh-autumn-maple { 0%,100% { transform: rotate(-5deg); } 40% { transform: rotate(4deg) translateY(-.6px); } 70% { transform: rotate(-1deg); } }
+    @keyframes vh-autumn-oak { 0%,100% { transform: rotate(-3deg); } 50% { transform: rotate(5deg) translateX(.5px); } }
+    @keyframes vh-autumn-russet { 0%,100% { transform: rotate(3deg); } 45% { transform: rotate(-5deg) translateY(.8px); } 75% { transform: rotate(-1deg); } }
+    @keyframes vh-autumn-acorn { 0%,100% { transform: rotate(-2deg); } 50% { transform: rotate(3deg); } }
+    @keyframes vh-autumn-falling { 0% { opacity: 0; transform: translate(-1px,-6px) rotate(-15deg); } 15% { opacity: .85; } 45% { transform: translate(1px,0) rotate(8deg); } 70% { opacity: .8; transform: translate(-1px,4px) rotate(-5deg); } 100% { opacity: 0; transform: translate(2px,9px) rotate(20deg); } }
+    @keyframes vh-autumn-dust { 0%,100% { opacity: .2; transform: translate(-.5px,1px); } 50% { opacity: .7; transform: translate(1px,-2px); } }
+    @keyframes vh-autumn-wind { 0% { opacity: .15; stroke-dashoffset: 0; } 40% { opacity: .5; } 100% { opacity: .15; stroke-dashoffset: -112; } }
     @keyframes vh-logo-sway { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(5deg) translateY(-.7px); } }
     @keyframes vh-logo-petal { 0% { opacity: 0; transform: translate(-1px,-5px) rotate(-4deg); } 18%,65% { opacity: .9; } 100% { opacity: 0; transform: translate(3px,9px) rotate(12deg); } }
     @keyframes vh-logo-butterfly { 0%,100% { transform: translateY(1px) rotate(-4deg) scaleX(.85); } 45% { transform: translateY(-2px) rotate(4deg) scaleX(1); } 55% { transform: translateY(-2px) rotate(4deg) scaleX(.8); } }

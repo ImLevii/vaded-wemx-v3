@@ -5,7 +5,7 @@
     const editions = {
         spring: { description: 'Blush blossoms, a fluttering butterfly and petals carried on a gentle breeze.', palette: ['#e99fb9', '#81bca3', '#c4b0e2'] },
         summer: { description: 'A slowly turning sun, sea-glass waves and warm glints of golden light.', palette: ['#efb34d', '#72c5cc', '#c6eece'] },
-        autumn: { description: 'Copper leaves drift around the mark, with an acorn and flecks of amber.', palette: ['#d99b50', '#bc6452', '#c79661'] },
+        autumn: { description: 'Burnished maple and oak leaves frame the mark, with a gilded acorn, drifting foliage and soft amber light.', palette: ['#cf8244', '#a95137', '#d7a051'] },
         winter: { description: 'An icy crown, crystalline snowflakes and two delicate layers of snowfall.', palette: ['#acd6eb', '#deeffa', '#91bcd2'] },
         newYear: { description: 'Champagne-gold fireworks bloom in sequence above a shower of lilac confetti.', palette: ['#f1ca7e', '#c7b7ef', '#fff0bc'] },
         valentines: { description: 'Sculpted rose hearts float above silk-like ribbons and soft champagne sparkles.', palette: ['#d77e99', '#ecb4c8', '#f2d5b3'] },
