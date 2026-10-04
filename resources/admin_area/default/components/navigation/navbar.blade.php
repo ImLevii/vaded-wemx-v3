@@ -1,7 +1,7 @@
 <div class="navbar-nav flex-row ms-auto p-1">
-    <div class="d-none d-lg-flex">
+    <div class="d-flex align-items-center">
         {{-- Language Switcher --}}
-        <div class="dropdown">
+        <div class="dropdown d-none d-sm-block">
             <button class="nav-link px-0 me-2 d-flex align-items-center" id="languageSwitcher" data-bs-toggle="dropdown"
                     aria-expanded="false" data-bs-placement="bottom">
                 <span class="flag flag-xxs flag-country-{{ auth()->user()->language()->flag }} me-1"></span>

@@ -11,7 +11,7 @@
     <h3 class="mb-4 text-lg font-medium text-gray-900 dark:text-white">{{ $title }}</h3>
 @endif
 
-<ul class="select-none grid w-full gap-4 md:grid-cols-3">
+<ul class="select-none grid w-full min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
     @foreach($options as $index => $option)
         @php
             $value = data_get($option, 'value', '');
@@ -21,22 +21,22 @@
             $id = $name . '-' . $index . '-' . \Illuminate\Support\Str::slug((string) $value);
         @endphp
 
-        <li>
+        <li class="min-w-0">
             <input
                 type="radio"
                 id="{{ $id }}"
                 value="{{ $value }}"
                 name="{{ $name }}"
-                class="hidden peer"
+                class="sr-only peer"
                 @if($model) wire:model.change="{{ $model }}" @endif
                 @checked((string) $selected === (string) $value)
                 @required($required)
             >
             <label
                 for="{{ $id }}"
-                class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 peer-checked:border-blue-600 dark:peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-700 dark:hover:bg-gray-700"
+                class="inline-flex h-full min-w-0 items-center justify-between w-full p-4 sm:p-5 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary-500 dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 peer-checked:border-blue-600 dark:peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-700 dark:hover:bg-gray-700"
             >
-                <div class="block">
+                <div class="block min-w-0 [overflow-wrap:anywhere]">
                     @if($iconUrl)
                         <img src="{{ $iconUrl }}" alt="{{ $label }}" class="mb-2 w-7 h-7 object-contain">
                     @endif

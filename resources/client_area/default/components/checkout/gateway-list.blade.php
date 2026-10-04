@@ -18,10 +18,10 @@
         @continue
     @endif
 
-    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 ps-4 dark:border-gray-600 dark:bg-gray-800">
-        <div>
+    <div class="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-800">
+        <div class="min-w-0 flex-1 basis-48 [overflow-wrap:anywhere]">
             <div class="flex items-start">
-                <div class="flex h-5 items-center">
+                <div class="flex h-5 shrink-0 items-center">
                     <input
                         id="gatewayId{{ $gateway->id }}"
                         aria-describedby="{{ $gateway->id }}-gateway-text"
@@ -52,7 +52,7 @@
 
         @if($gateway->icon)
             <div class="shrink-0">
-                <img class="h-8 w-auto" src="{{ $gateway->icon }}" alt="" />
+                <img class="h-8 w-auto max-w-24 object-contain" src="{{ $gateway->icon }}" alt="" />
             </div>
         @endif
     </div>

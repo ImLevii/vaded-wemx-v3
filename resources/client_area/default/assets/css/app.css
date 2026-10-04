@@ -419,7 +419,7 @@
 .vh-currency-trigger:focus-visible, .vh-currency-option:focus-visible { outline: 2px solid var(--vh-accent); outline-offset: 2px; }
 .vh-currency-option:disabled { cursor: wait; opacity: .6; }
 @media (max-width: 639px) {
-    .vh-currency-panel { right: auto; left: -40px; }
+    .vh-currency-panel { right: auto; left: 0; }
     .vh-currency-trigger { padding: 9px 6px; gap: 6px; }
 }
 @media (max-width: 399px) {
@@ -523,4 +523,52 @@
     .vh-purchase-steps li > span { width: 22px; height: 22px; }
     .vh-package-art { width: 56px; height: 56px; }
     .vh-purchase-panel, .vh-package-summary .vh-purchase-panel { padding: 18px; }
+}
+
+.vaded-client :where(.grid, .flex) > * { min-width: 0; }
+.vh-client-header .vh-header-tools { flex-wrap: wrap; }
+.vh-client-header :is(#client-nav-toggle, #cartDropdownButton1, #user-menu-button, .vh-currency-trigger, a[data-tooltip-target], button[data-tooltip-target]) { min-width: 44px; min-height: 44px; }
+.vh-client-header :is(#dropdown, #cartDropdown1) { max-width: calc(100vw - 32px); max-height: calc(100dvh - 180px); overflow-y: auto; overscroll-behavior: contain; }
+.vh-client-header #dropdown :is(a, button) { display: flex; align-items: center; min-height: 44px; }
+.vh-drawer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+.vh-table-scroll { scrollbar-width: thin; scrollbar-color: var(--vh-muted) var(--vh-surface); }
+.vh-table-scroll:focus-visible { outline: 2px solid var(--vh-accent); outline-offset: 2px; }
+.vaded-client .vh-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; max-width: 100%; text-align: center; white-space: normal; overflow-wrap: anywhere; }
+.vaded-client .vh-purchase-steps { flex-wrap: wrap; }
+.vh-package-identity > div:last-child, .vh-summary-product > div { min-width: 0; }
+.vh-package-price-preview, .vh-summary-total > div { overflow-wrap: anywhere; }
+.vh-billing-check { flex-shrink: 0; }
+.vaded-client .vh-package-description :is(pre, table), .vaded-client .vh-kb-prose :is(pre, table) { max-width: 100%; overflow-x: auto; }
+
+@media (max-width: 1023px) {
+    .vh-client-header .vh-client-navigation #client-main-navigation { max-height: calc(100dvh - 180px); }
+    .vh-package-layout { grid-template-columns: minmax(0, 1fr); }
+    .vh-package-summary { position: static; }
+}
+@media (max-width: 767px) {
+    .vaded-client :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]), select, textarea),
+    .vaded-client.vaded-theme .vh-vps-checkout .vh-vps-checkout-main .vh-vps-config-field :is(input:not([type="radio"]), select, textarea) { font-size: 16px; }
+    .vaded-client :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]), select) { min-height: 44px; }
+    .vaded-client [role="alert"].flex { flex-wrap: wrap; gap: 12px; }
+    .vaded-client .vh-dashboard-heading { flex-wrap: wrap; align-items: flex-start; }
+    .vaded-client .vh-responsive-table td[data-label] { flex-wrap: wrap; gap: 8px 16px; white-space: normal; }
+    .vaded-client .vh-responsive-table td[data-label]::before { flex: 1 1 90px; }
+    .vaded-client .vh-responsive-table td[data-label] > * { min-width: 0; max-width: 100%; }
+    .vaded-client :is(.vh-workspace-tabs button, .vh-vps-os-tabs button, .vh-minecraft-tabs button, .vh-catalog-tabs a) { min-height: 44px; }
+}
+@media (max-width: 639px) {
+    .vaded-client .vh-client-main { padding: 24px 16px; }
+    .vh-client-header #cartDropdown1 { position: absolute !important; inset: calc(100% + 12px) 0 auto auto !important; transform: none !important; width: 320px; max-width: 100%; margin: 0 !important; }
+    .vaded-client .vh-dashboard-shortcuts { grid-template-columns: minmax(0, 1fr); }
+    .vaded-client .vh-dashboard-shortcuts a { padding: 16px; }
+    .vaded-client .vh-dashboard-shortcuts strong { font-size: 13px; }
+    .vaded-client .vh-dashboard-shortcuts small { display: block; font-size: 12px; }
+    .vaded-client .vh-dashboard-shortcuts a > span:last-child { display: grid; }
+    .vh-package-heading { padding: 18px; }
+    .vh-package-price-preview { grid-template-columns: minmax(0, 1fr) minmax(0, auto); }
+    .vaded-client .vh-client-navigation :is(.vh-mega-heading, .vh-mega-footer) a { min-height: 44px; }
+}
+@media (max-width: 359px) {
+    .vaded-client .vh-dashboard-stats { grid-template-columns: minmax(0, 1fr); }
+    .vaded-client .vh-header-auth { flex-wrap: wrap; }
 }

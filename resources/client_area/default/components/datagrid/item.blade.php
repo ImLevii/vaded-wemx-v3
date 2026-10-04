@@ -3,7 +3,7 @@
 ])
 
 <div {{ $attributes->merge([
-    'class' => 'relative rounded-lg bg-gray-100 p-3 dark:bg-gray-700'
+    'class' => 'relative min-w-0 break-words rounded-lg bg-gray-100 p-3 dark:bg-gray-700'
     ]) }}>
     @isset($label)
     <h6 {{ $label->attributes->merge([
@@ -13,7 +13,7 @@
     </h6>
     @endisset
 
-    <div class="{{ $stack ? 'flex items-center text-gray-500 dark:text-gray-400' : '' }}">
+    <div class="min-w-0 [overflow-wrap:anywhere] {{ $stack ? 'flex flex-wrap items-center gap-2 text-gray-500 dark:text-gray-400' : '' }}">
         {{ $slot }}
     </div>
 </div>

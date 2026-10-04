@@ -14,19 +14,18 @@ new class extends Component
     <!-- Right Content -->
     <div class="col-span-full xl:col-auto">
         <div class="mb-4 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:p-6 xl:p-8">
-            <div class="items-center sm:flex sm:space-x-4 xl:block xl:space-x-0 2xl:flex 2xl:space-x-4"
-                 style="display: flex;justify-content: space-evenly;">
+            <div class="flex min-w-0 flex-col items-center gap-4 text-center sm:flex-row sm:text-left xl:flex-col xl:text-center 2xl:flex-row 2xl:text-left">
                 @if (auth()->user()->avatar !== null)
-                    <img class="mb-4 h-20 w-20 rounded-lg sm:mb-0 xl:mb-4 2xl:mb-0" src="{{ auth()->user()->getAvatarUrl() }}" alt="user photo">
+                    <img class="h-20 w-20 shrink-0 rounded-lg" src="{{ auth()->user()->getAvatarUrl() }}" alt="user photo">
                 @else
                     <div
-                        class="relative mb-4 inline-flex h-28 w-28 items-center justify-center overflow-hidden rounded-full rounded-lg bg-gray-100 dark:bg-gray-600 sm:mb-0 xl:mb-4 2xl:mb-0">
+                        class="relative inline-flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-600">
                             <span class="font-medium text-gray-600 dark:text-gray-300">
                                 {{ substr(auth()->user()->first_name, 0, 1) . substr(auth()->user()->last_name, 0, 1) }}
                             </span>
                     </div>
                 @endif
-                <div>
+                <div class="min-w-0 [overflow-wrap:anywhere]">
                     <h3 class="mb-1 text-2xl font-bold text-gray-900 dark:text-white">{{ auth()->user()->fullname }}</h3>
                     <div class="mb-4 text-base font-normal text-gray-500 dark:text-gray-400">
                         Member since {{ auth()->user()->created_at->format('M Y') }}
@@ -80,7 +79,7 @@ new class extends Component
 
         @livewire(client_view_path(('account.livewire.view-sessions')))
     </div>
-    <div class="col-span-2">
+    <div class="min-w-0 xl:col-span-2">
         @livewire(client_view_path(('account.livewire.general-settings')))
 
         @livewire(client_view_path(('account.livewire.update-address')))

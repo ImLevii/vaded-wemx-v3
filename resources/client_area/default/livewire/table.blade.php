@@ -101,13 +101,13 @@ new class extends Component
 <div>
     <x-theme::table containerClass="shadow-md sm:rounded-t-lg" class="vh-responsive-table">
         <x-theme::table.caption :description="$description">
-            <div class="flex flex-column justify-between items-center">
-                <div>
+            <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                <div class="min-w-0 [overflow-wrap:anywhere]">
                     {{ $title }}
                 </div>
 
                 @if($searchable)
-                    <div class="flex justify-between items-center space-x-3">
+                    <div class="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
                         @if(!empty($actionButton))
                             <x-theme::button.primary
                                 href="{{ $actionButton['href'] }}"
@@ -115,7 +115,7 @@ new class extends Component
                             />
                         @endif
 
-                        <div class="flex items-center">
+                        <div class="flex min-w-0 items-center">
                             <label for="order-search" class="sr-only">Search</label>
                             <div class="relative w-full">
                                 <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -167,7 +167,7 @@ new class extends Component
     <div class="relative overflow-hidden bg-white rounded-b-lg shadow-md dark:bg-gray-800">
         <nav class="flex flex-col items-start justify-between p-4 space-y-3 md:flex-row md:items-center md:space-y-0"
              aria-label="Table navigation">
-            <div class="flex items-center space-x-3">
+            <div class="flex flex-wrap items-center gap-3">
                 <label for="rows" class="text-sm font-normal text-gray-500 dark:text-gray-400">
                     Rows per page
                 </label>
@@ -202,7 +202,7 @@ new class extends Component
                     <a href="#"
                        wire:click.prevent="previousPage"
                        aria-disabled="{{ $page <= 1 ? 'true' : 'false' }}"
-                       class="flex text-sm w-20 items-center justify-center h-full py-1.5 px-3 ml-0 rounded-l-lg border
+                       class="flex min-h-11 text-sm w-24 items-center justify-center h-full py-1.5 px-3 ml-0 rounded-l-lg border
                  {{ $page <= 1
                     ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-600'
                     : 'text-gray-500 bg-white border-gray-300 hover:bg-primary-100 hover:text-primary-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white' }}">
@@ -213,7 +213,7 @@ new class extends Component
                     <a href="#"
                        wire:click.prevent="nextPage"
                        aria-disabled="{{ $page >= $this->totalPages ? 'true' : 'false' }}"
-                       class="flex text-sm w-20 items-center justify-center h-full py-1.5 px-3 leading-tight rounded-r-lg border
+                       class="flex min-h-11 text-sm w-24 items-center justify-center h-full py-1.5 px-3 leading-tight rounded-r-lg border
                  {{ $page >= $this->totalPages
                     ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed dark:bg-gray-800 dark:border-gray-700 dark:text-gray-600'
                     : 'text-gray-500 bg-white border-gray-300 hover:bg-primary-100 hover:text-primary-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white' }}">

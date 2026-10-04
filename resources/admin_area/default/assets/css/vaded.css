@@ -264,3 +264,40 @@
     .vh-workspace-label { font-size: 9px; letter-spacing: .04em; }
     .vaded-admin .page-header { padding-top: 22px; }
 }
+
+.vaded-admin :is(.row > *, .card-body, .card-header > *, .card-actions, .input-group, .nav-item) { min-width: 0; }
+.vaded-admin .table-responsive { max-width: 100%; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.vaded-admin :is(.dropdown-menu, .popover, .toast) { max-width: calc(100vw - 32px); }
+.vaded-admin .dropdown-item { white-space: normal; overflow-wrap: anywhere; }
+.vaded-admin .modal-dialog { --tblr-modal-margin: 16px; }
+.vaded-admin .modal-body { max-height: calc(100dvh - 180px); overflow-y: auto; overscroll-behavior: contain; }
+.vaded-admin .offcanvas { max-width: 100%; }
+.vaded-admin .pagination { flex-wrap: wrap; gap: 4px; }
+
+@media (max-width: 991px) {
+    .vaded-admin .navbar-vertical .container-fluid { flex-wrap: wrap; gap: 8px; }
+    .vaded-admin .navbar-vertical .navbar-brand { flex: 1; min-width: 0; font-size: 16px; }
+    .vaded-admin .navbar-toggler { min-width: 44px; min-height: 44px; }
+    .vaded-admin #sidebar-menu { max-height: calc(100dvh - 90px); overflow-y: auto; overscroll-behavior: contain; }
+    .vaded-admin .navbar-vertical :is(.nav-link, .dropdown-item) { min-height: 44px; }
+}
+@media (max-width: 767px) {
+    .vaded-admin :is(.form-control, .form-select, .ts-control) { min-height: 44px; font-size: 16px; }
+    .vaded-theme.vaded-admin .btn { --vh-admin-button-height: 44px; white-space: normal; }
+    .vaded-admin .btn.btn-icon { width: 44px; flex-shrink: 0; }
+    .vaded-admin :is(.dropdown-item, .page-link, .vh-topbar .nav-link) { min-height: 44px; }
+    .vaded-admin :is(.nav-tabs, .nav-pills) { flex-wrap: wrap; gap: 4px; }
+    .vaded-admin .nav-tabs .nav-link { min-height: 44px; }
+    .vaded-admin .page-header .col-auto { width: 100%; margin-top: 12px; }
+    .vaded-admin .page-header .btn-list { justify-content: flex-start; }
+    .vaded-admin .card-actions { margin-left: 0; max-width: 100%; }
+    .vaded-admin .modal-footer > .btn { flex: 1 1 120px; }
+}
+@media (max-width: 575px) {
+    .vh-topbar > .container-xl { flex-wrap: wrap; gap: 8px; }
+    .vaded-admin .page-wrapper > :is(.page-header, .page-body, .footer, .vh-topbar) > .container-xl { padding-inline: 16px; }
+    .vaded-admin .page-header::after { margin-left: 16px; }
+    .vaded-admin :is(.card-body, .card-header, .modal-body, .modal-header) { padding: 16px; }
+    .vaded-admin .card-footer { padding: 12px 16px; }
+    .vaded-admin .card-footer .d-flex { flex-wrap: wrap; gap: 12px; }
+}
