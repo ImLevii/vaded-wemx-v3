@@ -76,6 +76,182 @@ class ClientServiceUpgradeTest extends TestCase
         Volt::test(client_view_path('orders.livewire.orders-table'))->assertSee('Upgrade')->assertSee(route('orders.upgrade', $this->order), false);
     }
 
+    public function test_minecraft_plans_with_larger_java_heaps_are_offered_and_applied_after_payment(): void
+    {
+        $this->configureMinecraftPlans();
+        $this->get(route('orders.upgrade', $this->order))->assertOk()
+            ->assertSee('Minecraft | 4GB')->assertSee('4 GB')->assertSee('$11.99')->assertSee('$1.00')
+            ->assertSee('Continue to payment');
+        Volt::test(client_view_path('orders.livewire.orders-table'))
+            ->assertSee(route('orders.upgrade', $this->order), false);
+
+        $payment = $this->checkout();
+        Http::assertNothingSent();
+        $this->fakePanel($this->minecraftPanel());
+        $payment->completed('TX-minecraft');
+
+        $this->assertSame($this->larger->id, $this->order->fresh()->package_id);
+        $this->assertTrue($this->order->fresh()->due_date->equalTo($this->order->due_date));
+        $this->assertNotNull($payment->fresh()->data('upgrade_applied_at'));
+        Http::assertSent(fn ($request): bool => str_ends_with($request->url(), '/101/build')
+            && $request['allocation'] === 77 && $request['limits']['memory'] === 4096
+            && $request['limits']['threads'] === null);
+        Http::assertSent(fn ($request): bool => $request->method() === 'PATCH' && str_ends_with($request->url(), '/101/startup')
+            && $request['startup'] === 'java -Xms4096M -Xmx4096M -XX:+UseG1GC -jar {{SERVER_JARFILE}} nogui'
+            && $request['environment'] === $this->minecraftPanel()['container']['environment']
+            && $request['egg'] === 2 && $request['image'] === 'ghcr.io/pterodactyl/yolks:java_21'
+            && $request['skip_scripts'] === false);
+        Http::assertSentCount(3);
+    }
+
+    public function test_minecraft_startup_failure_can_be_retried_after_the_remote_limits_have_already_changed(): void
+    {
+        $this->configureMinecraftPlans();
+        $payment = $this->checkout();
+        Http::fakeSequence()->push(['attributes' => $this->minecraftPanel()])
+            ->push([], 204)->push([], 500)
+            ->push(['attributes' => array_merge($this->minecraftPanel(), ['limits' => ['memory' => 4096]])])
+            ->push([], 204)->push([], 200);
+
+        $payment->completed('TX-startup-failed');
+        $this->assertSame('paid', $payment->fresh()->status);
+        $this->assertTrue($payment->fresh()->data('upgrade_failed'));
+        $this->assertSame($this->order->package_id, $this->order->fresh()->package_id);
+
+        $this->post(route('orders.upgrade.retry', ['order' => $this->order, 'payment' => $payment]))
+            ->assertRedirect()->assertSessionHas('success');
+
+        $this->assertSame($this->larger->id, $this->order->fresh()->package_id);
+        $this->assertFalse($payment->fresh()->data('upgrade_failed'));
+        $this->assertSame('TX-startup-failed', $payment->fresh()->transaction_id);
+        $this->assertSame(1, Payment::query()->count());
+        Http::assertSentCount(6);
+    }
+
+    #[DataProvider('cpuAffinityChanges')]
+    public function test_cpu_affinity_can_expand_without_excluding_larger_minecraft_plans(?string $oldPinning, ?string $newPinning, bool $allowed): void
+    {
+        $this->configureMinecraftPlans();
+        $this->order->package->update(['data' => array_merge($this->order->package->data, ['cpu_pinning' => $oldPinning])]);
+        $this->larger->update(['data' => array_merge($this->larger->data, ['cpu_pinning' => $newPinning])]);
+
+        $response = $this->get(route('orders.upgrade', $this->order))->assertOk();
+        if ($allowed) {
+            $response->assertSee('Continue to payment');
+            $this->post(route('orders.upgrade.purchase', $this->order), $this->upgradeInput())
+                ->assertRedirect()->assertSessionHasNoErrors();
+        } else {
+            $response->assertDontSee('Continue to payment');
+            $this->post(route('orders.upgrade.purchase', $this->order), $this->upgradeInput())
+                ->assertSessionHasErrors('package_price_id');
+        }
+        Http::assertNothingSent();
+    }
+
+    /** @return array<string, array{?string, ?string, bool}> */
+    public static function cpuAffinityChanges(): array
+    {
+        return [
+            'remove pinning' => ['0-1', null, true],
+            'more cores' => ['0-1', '0,1,3,4', true],
+            'equivalent notation' => ['0-1', '0,1', true],
+            'cover disjoint cores' => ['0,2', '0-3', true],
+            'narrow cores' => ['0-1', '0', false],
+            'restrict previously unpinned' => [null, '0-1', false],
+            'core zero is pinned' => ['0', '1', false],
+            'malformed range' => ['0-1', '3-1', false],
+        ];
+    }
+
+    #[DataProvider('liveJavaStartups')]
+    public function test_java_heap_updates_retain_live_customizations_and_support_retries(string $startup, string $expectedStartup): void
+    {
+        $this->configureMinecraftPlans();
+        $payment = $this->checkout();
+        $panel = $this->minecraftPanel();
+        $panel['container']['startup_command'] = $startup;
+        $this->fakePanel($panel);
+
+        $payment->completed('TX-custom-startup');
+
+        $this->assertSame($this->larger->id, $this->order->fresh()->package_id);
+        if ($startup === $expectedStartup) {
+            Http::assertNotSent(fn ($request): bool => str_ends_with($request->url(), '/startup'));
+            Http::assertSentCount(2);
+        } else {
+            Http::assertSent(fn ($request): bool => str_ends_with($request->url(), '/startup')
+                && $request['startup'] === $expectedStartup);
+            Http::assertSentCount(3);
+        }
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function liveJavaStartups(): array
+    {
+        return [
+            'equivalent gigabyte values' => ['java -Xms3G -Xmx3G -jar server.jar', 'java -Xms4096M -Xmx4096M -jar server.jar'],
+            'custom minimum heap' => ['java -Xms128M -Xmx3072M -jar server.jar', 'java -Xms128M -Xmx4096M -jar server.jar'],
+            'custom maximum heap' => ['java -Xms128M -Xmx2048M -jar server.jar', 'java -Xms128M -Xmx2048M -jar server.jar'],
+            'dynamic heap' => ['java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar', 'java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar'],
+            'already upgraded' => ['java -Xms4096M -Xmx4096M -jar server.jar', 'java -Xms4096M -Xmx4096M -jar server.jar'],
+            'custom flags' => ['java -Xms3072M -Xmx3072M -Dcustom=true -jar customer.jar', 'java -Xms4096M -Xmx4096M -Dcustom=true -jar customer.jar'],
+            'quoted custom arguments' => ['java -Dmessage=" -Xmx3072M " -Xms3072M -Xmx3072M -jar server.jar', 'java -Dmessage=" -Xmx3072M " -Xms4096M -Xmx4096M -jar server.jar'],
+        ];
+    }
+
+    public function test_heap_like_values_in_quoted_arguments_cannot_hide_a_startup_command_change(): void
+    {
+        $this->configureMinecraftPlans();
+        $this->order->package->update(['data' => array_merge($this->order->package->data, [
+            'startup' => 'java -Dmessage=" -Xmx3072M " -Xms3072M -Xmx3072M -jar server.jar',
+        ])]);
+        $this->larger->update(['data' => array_merge($this->larger->data, [
+            'startup' => 'java -Dmessage=" -Xmx4096M " -Xms4096M -Xmx4096M -jar server.jar',
+        ])]);
+
+        $this->get(route('orders.upgrade', $this->order))->assertOk()->assertDontSee('Continue to payment');
+        $this->post(route('orders.upgrade.purchase', $this->order), $this->upgradeInput())
+            ->assertSessionHasErrors('package_price_id');
+
+        $this->assertSame(0, Payment::query()->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_incomplete_live_startup_settings_fail_before_changing_remote_limits(): void
+    {
+        $this->configureMinecraftPlans();
+        $payment = $this->checkout();
+        $panel = $this->minecraftPanel();
+        unset($panel['container']['environment']);
+        $this->fakePanel($panel);
+
+        $payment->completed('TX-invalid-panel');
+
+        $this->assertSame('paid', $payment->fresh()->status);
+        $this->assertTrue($payment->fresh()->data('upgrade_failed'));
+        $this->assertSame($this->order->package_id, $this->order->fresh()->package_id);
+        Http::assertNotSent(fn ($request): bool => $request->method() === 'PATCH');
+        Http::assertSentCount(1);
+    }
+
+    public function test_memory_addons_remain_included_in_the_upgraded_java_heap(): void
+    {
+        $this->configureMinecraftPlans();
+        $this->order->prices()->create(['description' => 'Extra RAM', 'type' => 'config_option',
+            'key' => 'memory_limit', 'value' => '6', 'cycle_price' => 0.1]);
+        $this->larger->update(['data' => array_merge($this->larger->data, ['backup_limit' => 3])]);
+        $payment = $this->checkout();
+        $this->fakePanel($this->minecraftPanel());
+
+        $payment->completed('TX-memory-addon');
+
+        $this->assertSame($this->larger->id, $this->order->fresh()->package_id);
+        $this->assertSame(1, $this->order->prices()->count());
+        Http::assertSent(fn ($request): bool => str_ends_with($request->url(), '/build') && $request['limits']['memory'] === 6144);
+        Http::assertSent(fn ($request): bool => str_ends_with($request->url(), '/startup')
+            && $request['startup'] === 'java -Xms6144M -Xmx6144M -XX:+UseG1GC -jar {{SERVER_JARFILE}} nogui');
+    }
+
     public function test_healthy_connection_with_purchase_protection_allows_the_complete_upgrade_flow(): void
     {
         $this->order->package->serverConnection->update(['status' => 'healthy', 'prevent_purchasing' => true]);
@@ -287,6 +463,8 @@ class ClientServiceUpgradeTest extends TestCase
             'restricted plan' => [['status' => 'restricted'], []], 'inactive price' => [[], ['is_active' => false]],
             'different cycle' => [[], ['period_in_days' => 365]], 'cheaper plan' => [[], ['price' => 15]],
             'same price' => [[], ['price' => 30]], 'different egg' => [['data' => ['egg_id' => 99]], []],
+            'different image' => [['data' => ['docker_image' => 'java:17']], []],
+            'different startup command' => [['data' => ['startup' => 'java -jar other.jar']], []],
             'less disk' => [['data' => ['disk_limit' => 10]], []], 'less backup' => [['data' => ['backup_limit' => 1]], []],
             'no larger resources' => [['data' => ['memory_limit' => 2, 'cpu_limit' => 100]], []],
             'sold out' => [['global_quantity' => 0], []], 'no client capacity' => [['client_quantity' => 0], []],
@@ -535,9 +713,39 @@ class ClientServiceUpgradeTest extends TestCase
         return ['package_price_id' => $this->target->id, 'quote_token' => $quote['token'], 'quoted_at' => $quote['quoted_at'], 'confirm_upgrade' => '1'];
     }
 
-    private function fakePanel(): void
+    private function configureMinecraftPlans(): void
     {
-        Http::fake(['https://panel.example.test/api/application/servers/101' => Http::response(['attributes' => ['allocation' => 77]], 200),
-            'https://panel.example.test/api/application/servers/101/build' => Http::response([], 200)]);
+        $this->order->package->serverConnection->update(['status' => 'healthy', 'prevent_purchasing' => true]);
+        $data = array_merge($this->order->package->data, [
+            'memory_limit' => 3, 'disk_limit' => 0, 'cpu_limit' => 0, 'cpu_pinning' => '0-1', 'block_io_weight' => 500,
+            'docker_image' => 'ghcr.io/pterodactyl/yolks:java_21',
+            'startup' => 'java -Xms3072M -Xmx3072M -XX:+UseG1GC -jar {{SERVER_JARFILE}} nogui',
+        ]);
+        $this->order->package->update(['name' => 'Minecraft | 3GB', 'data' => $data]);
+        PackagePrice::query()->findOrFail($this->order->package_price_id)->update(['price' => 8.99]);
+        $this->order->update(['cycle_price' => 8.99 / 30]);
+        $this->larger->update(['name' => 'Minecraft | 4GB', 'data' => array_merge($data, [
+            'memory_limit' => 4, 'cpu_pinning' => null,
+            'startup' => 'java -Xms4096M -Xmx4096M -XX:+UseG1GC -jar {{SERVER_JARFILE}} nogui',
+        ])]);
+        $this->target->update(['price' => 11.99, 'upgrade_fee' => 0]);
+    }
+
+    /** @return array<string, mixed> */
+    private function minecraftPanel(): array
+    {
+        return ['allocation' => 77, 'egg' => 2, 'container' => [
+            'startup_command' => 'java -Xms3072M -Xmx3072M -XX:+UseG1GC -jar {{SERVER_JARFILE}} nogui',
+            'image' => 'ghcr.io/pterodactyl/yolks:java_21', 'skip_scripts' => false,
+            'environment' => ['SERVER_JARFILE' => 'custom.jar', 'MINECRAFT_VERSION' => '1.20.4', 'CUSTOM_VARIABLE' => 'keep-me'],
+        ]];
+    }
+
+    /** @param array<string, mixed> $attributes */
+    private function fakePanel(array $attributes = []): void
+    {
+        Http::fake(['https://panel.example.test/api/application/servers/101' => Http::response(['attributes' => array_merge(['allocation' => 77], $attributes)], 200),
+            'https://panel.example.test/api/application/servers/101/build' => Http::response([], 200),
+            'https://panel.example.test/api/application/servers/101/startup' => Http::response([], 200)]);
     }
 }

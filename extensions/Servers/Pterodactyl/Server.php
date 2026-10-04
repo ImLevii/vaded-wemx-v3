@@ -10,6 +10,7 @@ use App\Models\ServerAccount;
 use App\Models\ServerConnection;
 use App\Models\User;
 use App\Services\CustomerServerCredentials;
+use App\Support\PterodactylUpgradeOptions;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
@@ -815,10 +816,32 @@ class Server extends ServerExtension
         $serverId = $this->provisionedServerId($order);
         $server = Server::makeRequest($connection->config, '/api/application/servers/'.$serverId)->json('attributes');
         $option = fn (string $key, mixed $default = null): mixed => $order->prices->firstWhere('key', $key)?->value ?? $newPrice->package->data($key, $default);
+        if (! is_array($server) || ! is_numeric($server['allocation'] ?? null) || (int) $server['allocation'] < 1) {
+            throw new RuntimeException('The panel returned an invalid server allocation for this upgrade.');
+        }
+        $memory = $this->megabytes($option('memory_limit', 0));
+        $sourceStartup = (string) $order->option('startup', '');
+        $targetStartup = (string) $option('startup', '');
+        $startup = data_get($server, 'container.startup_command');
+        if ($sourceStartup !== $targetStartup && (! is_string($startup) || $startup === '')) {
+            throw new RuntimeException('The panel did not return the current startup command for this upgrade.');
+        }
+        $startup = is_string($startup) ? $startup : '';
+        $upgradedStartup = PterodactylUpgradeOptions::resizedStartup($startup, $sourceStartup, $targetStartup, $memory);
+        $startupPayload = null;
+        if ($upgradedStartup !== $startup) {
+            $container = $server['container'];
+            if (! is_array($container['environment'] ?? null) || ! is_string($container['image'] ?? null)
+                || ! is_numeric($server['egg'] ?? null) || (int) $server['egg'] < 1) {
+                throw new RuntimeException('The panel returned incomplete startup settings for this upgrade.');
+            }
+            $startupPayload = ['startup' => $upgradedStartup, 'environment' => $container['environment'],
+                'egg' => (int) $server['egg'], 'image' => $container['image'], 'skip_scripts' => (bool) ($container['skip_scripts'] ?? true)];
+        }
         Server::makeRequest($connection->config, '/api/application/servers/'.$serverId.'/build', 'patch', [
             'allocation' => $server['allocation'],
             'limits' => [
-                'memory' => $this->megabytes($option('memory_limit', 0)),
+                'memory' => $memory,
                 'disk' => $this->megabytes($option('disk_limit', 0)),
                 'swap' => $this->megabytes($option('swap_limit', 0)),
                 'cpu' => $option('cpu_limit', 0), 'io' => $option('block_io_weight', 500),
@@ -830,6 +853,9 @@ class Server extends ServerExtension
                 'backups' => (int) $option('backup_limit', 0),
             ],
         ]);
+        if ($startupPayload !== null) {
+            Server::makeRequest($connection->config, '/api/application/servers/'.$serverId.'/startup', 'patch', $startupPayload);
+        }
     }
 
     public function upgrade(Order $order)

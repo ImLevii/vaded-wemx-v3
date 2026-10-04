@@ -6,7 +6,7 @@
     <div class="flex flex-col gap-5">
         <x-theme::card>
             <h1 class="mb-3 text-2xl font-bold text-gray-900 dark:text-white">Upgrade your service</h1>
-            <p class="text-gray-600 dark:text-gray-300">Choose a larger plan for {{ $order->package->name }}. Your existing server, files, and renewal date stay the same. The upgrade takes effect after payment.</p>
+            <p class="text-gray-600 dark:text-gray-300">Choose a larger plan for {{ $order->package->name }}. Your existing server, files, and renewal date stay the same. The upgrade takes effect after payment. For Java servers, restart after upgrading to use the additional memory.</p>
             @if(! $order->requiresBillingReview())
                 <p class="mt-3 text-gray-600 dark:text-gray-300">Current price: <strong>{{ price($order->price) }} / {{ $order->cycle() }}</strong>. Renewal date: {{ $order->due_date?->format('d M Y') ?? 'None' }}.</p>
             @endif

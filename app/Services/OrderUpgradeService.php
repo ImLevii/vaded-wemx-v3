@@ -10,6 +10,7 @@ use App\Models\Package;
 use App\Models\PackagePrice;
 use App\Models\Payment;
 use App\Models\Subscription;
+use App\Support\PterodactylUpgradeOptions;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -122,10 +123,22 @@ class OrderUpgradeService
                 return false;
             }
         }
-        foreach (['nest_id', 'egg_id', 'docker_image', 'startup', 'cpu_pinning', 'block_io_weight'] as $key) {
+        foreach (['nest_id', 'egg_id', 'docker_image'] as $key) {
             if ((string) $order->package->data($key) !== (string) $package->data($key)) {
                 return false;
             }
+        }
+        $targetStartup = $order->prices->firstWhere('key', 'startup')?->value ?? $package->data('startup', '');
+        if (PterodactylUpgradeOptions::normalizedStartup((string) $order->option('startup', '')) !== PterodactylUpgradeOptions::normalizedStartup((string) $targetStartup)) {
+            return false;
+        }
+        $targetPinning = $order->prices->firstWhere('key', 'cpu_pinning')?->value ?? $package->data('cpu_pinning');
+        if (! PterodactylUpgradeOptions::allowsCpuPinning($order->option('cpu_pinning'), $targetPinning)) {
+            return false;
+        }
+        $targetIoWeight = $order->prices->firstWhere('key', 'block_io_weight')?->value ?? $package->data('block_io_weight', 500);
+        if ((float) $targetIoWeight < (float) $order->option('block_io_weight', 500)) {
+            return false;
         }
         $increased = false;
         foreach (['memory_limit', 'disk_limit', 'cpu_limit', 'swap_limit', 'database_limit', 'allocation_limit', 'backup_limit'] as $key) {
