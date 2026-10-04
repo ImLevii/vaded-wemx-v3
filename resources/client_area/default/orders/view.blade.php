@@ -3,20 +3,26 @@
 ])
 
 @section('container')
-<div>
+<div class="vh-service-overview flex flex-col gap-5">
     @if($order->termination_requested_at && ! $order->isTerminated())
         <x-theme::alert.warning text="{{ $order->terminate_at?->isFuture() ? 'This service will be terminated on '.$order->terminate_at->format('d M Y H:i').'. Automatic renewal is disabled.' : 'Termination is being processed. Automatic renewal is disabled.' }}" />
     @endif
     @if((int) $order->user_id === auth()->id() && ! $order->isTerminated())
-        <div class="mb-4 flex flex-wrap gap-3">
-            @if($canUpgrade)
-                <x-theme::button.primary href="{{ route('orders.upgrade', $order) }}" wire:navigate text="Upgrade service" />
-            @endif
-            @if($order->package->serverConnection?->extension_identifier === 'server-pterodactyl' && $order->external_id)
-                <x-theme::button.primary href="{{ route('orders.panel', $order) }}" target="_blank" rel="noopener noreferrer" text="Open panel" />
-            @endif
-            <x-theme::button.danger href="{{ route('orders.termination', $order) }}" text="Terminate service" />
-        </div>
+        <x-theme::card class="vh-service-controls">
+            <div class="vh-service-panel-heading">
+                <span class="vh-service-panel-icon"><x-theme::icon name="sliders" /></span>
+                <div><h2>Service controls</h2><p>Manage your service and plan.</p></div>
+            </div>
+            <div class="vh-service-actions flex flex-wrap gap-3">
+                @if($order->package->serverConnection?->extension_identifier === 'server-pterodactyl' && $order->external_id)
+                    <x-theme::button.primary href="{{ route('orders.panel', $order) }}" target="_blank" rel="noopener noreferrer" class="vh-service-button"><x-theme::icon name="console" /> Open panel <x-theme::icon name="arrow" class="vh-service-button-arrow" /></x-theme::button.primary>
+                @endif
+                @if($canUpgrade)
+                    <x-theme::button.primary href="{{ route('orders.upgrade', $order) }}" wire:navigate class="vh-service-button vh-action-secondary"><x-theme::icon name="cpu" /> Upgrade service</x-theme::button.primary>
+                @endif
+                <x-theme::button.danger href="{{ route('orders.termination', $order) }}" class="vh-service-button vh-action-secondary vh-service-button-danger">Terminate service</x-theme::button.danger>
+            </div>
+        </x-theme::card>
     @endif
     @if($order->requiresBillingReview())
         <x-theme::alert.warning text="Billing review pending. Your existing service is connected; renewal charges are on hold while we restore the original billing details." />
@@ -63,11 +69,14 @@
         </div>
     @endif
 
-    <x-theme::card class="mb-4">
-        <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            {{ $order->data['name'] ?? $order->package->name }}
-        </h5>
-        <x-theme::datagrid.grid :cols="3" :gap="4">
+    <x-theme::card class="vh-service-summary">
+        <div class="vh-service-summary-heading">
+            <div><span class="vh-kicker">PLAN &amp; BILLING</span><h2>{{ $order->data['name'] ?? $order->package->name }}</h2></div>
+            @if(!$order->termination_requested_at && !$order->isTerminated() && !$order->requiresBillingReview())
+                <x-theme::button.success type="button" class="vh-service-button vh-action-secondary" data-drawer-target="renew-order-drawer" data-drawer-show="renew-order-drawer" data-drawer-placement="right" aria-controls="renew-order-drawer"><x-theme::icon name="receipt" /> Renew</x-theme::button.success>
+            @endif
+        </div>
+        <x-theme::datagrid.grid :cols="3" :gap="4" class="vh-service-details-grid">
             <x-theme::datagrid.item>
                 <x-slot:label>Package</x-slot:label>
                 {{ $order->package->name }}
@@ -116,7 +125,7 @@
             </x-theme::datagrid.item>
 
             <x-theme::datagrid.item>
-                <x-slot:label>Next Invoice</x-slot:label>
+                <x-slot:label>Next invoice</x-slot:label>
                 @if($order->termination_requested_at || $order->isTerminated())
                     No further renewals
                 @elseif($order->requiresBillingReview())
@@ -128,9 +137,6 @@
                 @endif
             </x-theme::datagrid.item>
         </x-theme::datagrid.grid>
-        @if(!$order->termination_requested_at && !$order->isTerminated() && !$order->requiresBillingReview())
-            <x-theme::button.success type="button" data-drawer-target="renew-order-drawer" data-drawer-show="renew-order-drawer" data-drawer-placement="right" aria-controls="renew-order-drawer" text="Renew" />
-        @endif
     </x-theme::card>
 
     @livewire(client_view_path('orders.livewire.server-account-block'), ['order_id' => $order->id])
