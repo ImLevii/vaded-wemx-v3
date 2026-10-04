@@ -21,11 +21,11 @@ new class extends Component
     }
 
     #[Computed]
-    public function upgradeableOrderIds(): array
+    public function upgradePageOrderIds(): array
     {
         $upgrades = app(OrderUpgradeService::class);
 
-        return $upgrades->upgradeableOrderIds($this->orders);
+        return $upgrades->upgradePageOrderIds($this->orders);
     }
 }
 
@@ -206,7 +206,7 @@ new class extends Component
                         <td class="px-4 py-3">
                             <div class="flex flex-wrap items-center gap-2">
                             <a href="{{ route('orders.view', $order->id) }}" wire:navigate @click.stop class="vh-action vh-action-secondary">Manage <x-theme::icon name="arrow" /></a>
-                            @if(in_array($order->id, $this->upgradeableOrderIds, true))
+                            @if(in_array($order->id, $this->upgradePageOrderIds, true))
                                 <a href="{{ route('orders.upgrade', $order) }}" wire:navigate @click.stop class="vh-action vh-action-secondary">Upgrade</a>
                             @endif
                             @if(! $order->isTerminated())

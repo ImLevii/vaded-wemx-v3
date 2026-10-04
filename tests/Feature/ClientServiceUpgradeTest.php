@@ -156,9 +156,9 @@ class ClientServiceUpgradeTest extends TestCase
             'more cores' => ['0-1', '0,1,3,4', true],
             'equivalent notation' => ['0-1', '0,1', true],
             'cover disjoint cores' => ['0,2', '0-3', true],
-            'narrow cores' => ['0-1', '0', false],
-            'restrict previously unpinned' => [null, '0-1', false],
-            'core zero is pinned' => ['0', '1', false],
+            'narrow cores retain existing access' => ['0-1', '0', true],
+            'retain previously unpinned access' => [null, '0-1', true],
+            'retain core zero' => ['0', '1', true],
             'malformed range' => ['0-1', '3-1', false],
         ];
     }
@@ -616,18 +616,140 @@ class ClientServiceUpgradeTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_different_connections_categories_and_unsupported_providers_are_rejected(): void
+    public function test_different_connections_service_types_and_unsupported_providers_are_rejected(): void
     {
         $input = $this->upgradeInput();
         $connection = ServerConnection::query()->create(['alias' => 'different', 'extension_identifier' => 'server-pterodactyl']);
         $this->larger->update(['connection_id' => $connection->id]);
         $this->post(route('orders.upgrade.purchase', $this->order), $input)->assertSessionHasErrors('package_price_id');
         $category = Category::query()->create(['name' => 'Other', 'slug' => 'other', 'status' => 'active', 'icon' => 'server']);
-        $this->larger->update(['connection_id' => $this->order->package->connection_id, 'category_id' => $category->id]);
+        $this->larger->update(['connection_id' => $this->order->package->connection_id, 'category_id' => $category->id,
+            'data' => array_merge($this->larger->data, ['egg_id' => 99])]);
         $this->post(route('orders.upgrade.purchase', $this->order), $input)->assertSessionHasErrors('package_price_id');
         $this->order->package->serverConnection->update(['extension_identifier' => 'server-universal']);
         $this->post(route('orders.upgrade.purchase', $this->order), $input)->assertSessionHasErrors('package_price_id');
         $this->assertSame(0, Payment::query()->count());
+    }
+
+    public function test_compatible_plans_in_other_catalog_categories_are_offered_and_applied(): void
+    {
+        $category = Category::query()->create(['name' => 'Premium', 'slug' => 'premium', 'status' => 'active', 'icon' => 'server']);
+        $this->larger->update(['category_id' => $category->id]);
+        $this->get(route('orders.upgrade', $this->order))->assertOk()->assertSee('Larger')->assertSee('Continue to payment');
+        $this->fakePanel();
+        $payment = $this->checkout();
+        $payment->completed('TX-cross-category');
+        $this->assertSame($this->larger->id, $this->order->fresh()->package_id);
+        $this->assertNotNull($payment->fresh()->data('upgrade_applied_at'));
+    }
+
+    #[DataProvider('serviceTypes')]
+    public function test_upgrades_work_for_each_hosted_service_type(string $name, int $egg, string $startup): void
+    {
+        $data = array_merge($this->order->package->data, ['egg_id' => $egg, 'startup' => $startup]);
+        $this->order->package->update(['name' => $name.' Starter', 'data' => $data]);
+        $this->larger->update(['name' => $name.' Larger', 'data' => array_merge($data, ['memory_limit' => 4, 'cpu_limit' => 200])]);
+        $dueDate = $this->order->due_date;
+        Volt::test(client_view_path('orders.livewire.orders-table'))->assertSee(route('orders.upgrade', $this->order), false);
+        $this->get(route('orders.upgrade', $this->order))->assertOk()->assertSee($name.' Larger')->assertSee('Continue to payment');
+        $this->fakePanel();
+        $payment = $this->checkout();
+        $payment->completed('TX-'.$egg);
+        $upgraded = $this->order->fresh();
+        $this->assertSame($this->larger->id, $upgraded->package_id);
+        $this->assertSame('101', $upgraded->external_id);
+        $this->assertTrue($dueDate->equalTo($upgraded->due_date));
+        Http::assertSent(fn ($request): bool => str_ends_with($request->url(), '/servers/101/build')
+            && $request['limits']['memory'] === 4096 && $request['limits']['cpu'] === 200);
+        Http::assertSentCount(2);
+        $this->assertNotNull($payment->fresh()->data('upgrade_applied_at'));
+    }
+
+    /** @return array<string, array{string, int, string}> */
+    public static function serviceTypes(): array
+    {
+        return [
+            'VPS' => ['VPS', 44, '/home/container/.vaded-runtime/start.mjs'],
+            'Discord bots' => ['Bot Hosting', 20, 'node {{BOT_JS_FILE}}'],
+            'Lavalink' => ['Lavalink', 41, 'java -jar Lavalink.jar'],
+            'Rust' => ['Rust', 26, './RustDedicated -batchmode +server.port {{SERVER_PORT}}'],
+            'Unturned' => ['Unturned', 22, './Unturned_Headless.x86_64 -port {{SERVER_PORT}}'],
+            'DayZ' => ['DayZ', 42, './DayZServer -port={{SERVER_PORT}}'],
+        ];
+    }
+
+    #[DataProvider('minecraftTiers')]
+    public function test_every_minecraft_tier_with_a_larger_plan_can_upgrade_without_losing_cpu_access(int $sourceMemory, int $targetMemory, ?string $sourcePinning, ?string $targetPinning, ?string $expectedPinning): void
+    {
+        $this->configureMinecraftPlans();
+        $sourceStartup = 'java -Xms'.($sourceMemory * 1024).'M -Xmx'.($sourceMemory * 1024).'M -jar {{SERVER_JARFILE}} nogui';
+        $this->larger->update(['name' => 'Larger Minecraft tier']);
+        $this->order->package->update(['name' => 'Minecraft | '.$sourceMemory.'GB', 'data' => array_merge($this->order->package->data, [
+            'memory_limit' => $sourceMemory, 'startup' => $sourceStartup, 'cpu_pinning' => $sourcePinning,
+        ])]);
+        $this->larger->update(['name' => 'Minecraft | '.$targetMemory.'GB', 'data' => array_merge($this->larger->data, [
+            'memory_limit' => $targetMemory, 'cpu_pinning' => $targetPinning,
+            'startup' => 'java -Xms'.($targetMemory * 1024).'M -Xmx'.($targetMemory * 1024).'M -jar {{SERVER_JARFILE}} nogui',
+        ])]);
+        $this->get(route('orders.upgrade', $this->order))->assertOk()->assertSee('Continue to payment');
+        $panel = $this->minecraftPanel();
+        $panel['container']['startup_command'] = $sourceStartup;
+        $this->fakePanel($panel);
+        $payment = $this->checkout();
+        $payment->completed('TX-tier-'.$sourceMemory);
+        Http::assertSent(fn ($request): bool => str_ends_with($request->url(), '/build')
+            && $request['limits']['memory'] === $targetMemory * 1024 && $request['limits']['threads'] === $expectedPinning);
+        $upgraded = $this->order->fresh();
+        $this->assertSame($this->larger->id, $upgraded->package_id);
+        $pinning = $upgraded->option('cpu_pinning');
+        $this->assertSame($expectedPinning, trim($pinning ?? '') === '' ? null : $pinning);
+        $this->assertSame(0.0, (float) $upgraded->prices->sum('cycle_price'));
+        $this->assertNotNull($payment->fresh()->data('upgrade_applied_at'));
+    }
+
+    /** @return array<string, array{int, int, ?string, ?string, ?string}> */
+    public static function minecraftTiers(): array
+    {
+        return [
+            '1GB to 2GB' => [1, 2, '0-1', '0-1', '0-1'],
+            '2GB to 3GB' => [2, 3, '0-1', '0-1', '0-1'],
+            '3GB to 4GB' => [3, 4, '0-1', null, null],
+            '4GB to 6GB' => [4, 6, null, '0-1', null],
+            '6GB to 8GB' => [6, 8, '0-1', '0-1', '0-1'],
+            '8GB to 9GB' => [8, 9, '0-1', '0-1', '0-1'],
+            '9GB to 10GB' => [9, 10, '0-1', '0,1,3,4', '0,1,3,4'],
+            '10GB to 12GB' => [10, 12, '0,1,3,4', '0,1,3,4', '0,1,3,4'],
+            '12GB to 16GB' => [12, 16, '0,1,3,4', '0,1,3,4', '0,1,3,4'],
+            'retain existing cores' => [4, 6, '0-3', '0-1', '0-3'],
+            'retain core zero' => [4, 6, '0', '1', '0'],
+        ];
+    }
+
+    #[DataProvider('upgradePageStates')]
+    public function test_upgrade_entry_remains_available_when_no_upgrade_can_be_purchased(string $status, string $provider, string $message): void
+    {
+        $this->order->update(['status' => $status]);
+        $this->order->package->serverConnection->update(['extension_identifier' => $provider]);
+        $this->target->update(['is_active' => false]);
+        Volt::test(client_view_path('orders.livewire.orders-table'))->assertSee(route('orders.upgrade', $this->order), false);
+        if ($status !== 'pending') {
+            $this->get(route('orders.view', $this->order))->assertOk()->assertSee('Upgrade service');
+        }
+        $this->get(route('orders.upgrade', $this->order))->assertOk()->assertSee('Upgrade your service')
+            ->assertSee($message)->assertDontSee('Continue to payment');
+        $this->assertSame(0, Payment::query()->count());
+        Http::assertNothingSent();
+    }
+
+    /** @return array<string, array{string, string, string}> */
+    public static function upgradePageStates(): array
+    {
+        return [
+            'highest tier' => ['active', 'server-pterodactyl', 'No compatible larger plans'],
+            'suspended' => ['suspended', 'server-pterodactyl', 'Only active, provisioned services'],
+            'pending' => ['pending', 'server-pterodactyl', 'Only active, provisioned services'],
+            'manual services' => ['active', 'server-universal', 'Self-service upgrades are unavailable'],
+        ];
     }
 
     public function test_unlimited_resources_cannot_be_downgraded_to_finite_limits(): void

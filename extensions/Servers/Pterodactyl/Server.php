@@ -845,7 +845,7 @@ class Server extends ServerExtension
                 'disk' => $this->megabytes($option('disk_limit', 0)),
                 'swap' => $this->megabytes($option('swap_limit', 0)),
                 'cpu' => $option('cpu_limit', 0), 'io' => $option('block_io_weight', 500),
-                'threads' => $option('cpu_pinning'),
+                'threads' => PterodactylUpgradeOptions::upgradedCpuPinning($order->option('cpu_pinning'), $option('cpu_pinning')),
             ],
             'feature_limits' => [
                 'databases' => (int) $option('database_limit', 0),

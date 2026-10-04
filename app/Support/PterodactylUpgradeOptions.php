@@ -71,6 +71,18 @@ REGEX;
         return true;
     }
 
+    public static function validCpuPinning(?string $pinning): bool
+    {
+        return self::cpuRanges($pinning) !== null;
+    }
+
+    public static function upgradedCpuPinning(?string $source, ?string $target): ?string
+    {
+        $pinning = self::allowsCpuPinning($source, $target) ? $target : $source;
+
+        return trim($pinning ?? '') === '' ? null : $pinning;
+    }
+
     private static function isJavaStartup(string $startup): bool
     {
         return preg_match('/^(?:\S*\/)?java(?:\.exe)?\s/', ltrim($startup)) === 1;

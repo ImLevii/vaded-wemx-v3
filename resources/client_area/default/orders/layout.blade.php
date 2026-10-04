@@ -4,7 +4,7 @@
 
 @section('title', $order->package->name.' | Service')
 
-@if(in_array($order->status, ['pending', 'processing', 'failed']))
+@if(in_array($order->status, ['pending', 'processing', 'failed']) && $activeTab !== 'upgrade')
     @section('content')
         @livewire(client_view_path('orders.livewire.waiting-screen'), ['order' => $order])
     @endsection
@@ -36,7 +36,7 @@
                                 </x-slot:icon>
                             </x-theme::navlist.item>
 
-                            @if((int) $order->user_id === auth()->id() && $order->package->serverConnection?->extension_identifier === 'server-pterodactyl' && $order->isActive())
+                            @if((int) $order->user_id === auth()->id() && ! $order->isTerminated())
                                 <x-theme::navlist.item wire:navigate text="Upgrade" href="{{ route('orders.upgrade', $order) }}" :active="$activeTab == 'upgrade'" />
                             @endif
 

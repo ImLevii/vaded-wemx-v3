@@ -6,7 +6,10 @@
     <div class="flex flex-col gap-5">
         <x-theme::card>
             <h1 class="mb-3 text-2xl font-bold text-gray-900 dark:text-white">Upgrade your service</h1>
-            <p class="text-gray-600 dark:text-gray-300">Choose a larger plan for {{ $order->package->name }}. Your existing server, files, and renewal date stay the same. The upgrade takes effect after payment. For Java servers, restart after upgrading to use the additional memory.</p>
+            <p class="text-gray-600 dark:text-gray-300">Choose a larger plan for {{ $order->package->name }}. Your existing service and renewal date stay the same. The upgrade takes effect after payment.</p>
+            @if($order->package->serverConnection?->extension_identifier === 'server-pterodactyl')
+                <p class="mt-3 text-gray-600 dark:text-gray-300">Your server and files are preserved, along with your current plan's CPU access. For Java servers, restart after upgrading to use the additional memory.</p>
+            @endif
             @if(! $order->requiresBillingReview())
                 <p class="mt-3 text-gray-600 dark:text-gray-300">Current price: <strong>{{ price($order->price) }} / {{ $order->cycle() }}</strong>. Renewal date: {{ $order->due_date?->format('d M Y') ?? 'None' }}.</p>
             @endif

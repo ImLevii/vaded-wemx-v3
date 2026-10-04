@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Handlers\OrderRenewalHandler;
 use App\Handlers\OrderUpgradeHandler;
 use App\Models\Order;
-use App\Models\OrderSubscription;
 use App\Models\Package;
 use App\Models\PackagePrice;
 use App\Models\Payment;
@@ -21,33 +20,10 @@ class OrderUpgradeService
     /** @var array<string, Collection<int, PackagePrice>> */
     private array $candidates = [];
 
-    /** @var Collection<int, int>|null */
-    private ?Collection $billingPriceIds = null;
-
-    /** @var Collection<int, int>|null */
-    private ?Collection $subscribedOrderIds = null;
-
-    /** @var Collection<int, int>|null */
-    private ?Collection $renewalOrderIds = null;
-
-    /** @var Collection<string, int>|null */
-    private ?Collection $packageCounts = null;
-
     /** @param Collection<int, Order> $orders */
-    public function upgradeableOrderIds(Collection $orders): array
+    public function upgradePageOrderIds(Collection $orders): array
     {
-        $orders->loadMissing(['package.serverConnection.server', 'prices']);
-        $this->billingPriceIds = PackagePrice::query()->whereIn('id', $orders->pluck('package_price_id'))->get()->mapWithKeys(fn (PackagePrice $price): array => [$price->id => $price->package_id]);
-        $this->subscribedOrderIds = Subscription::query()->where('subscribable_type', (new Order)->getMorphClass())
-            ->whereIn('subscribable_id', $orders->pluck('id'))->whereNull('cancelled_at')->whereIn('status', ['active', 'pending'])->pluck('subscribable_id')
-            ->merge(OrderSubscription::query()->whereIn('order_id', $orders->pluck('id'))->whereIn('status', ['active', 'pending'])->pluck('order_id'));
-        $this->renewalOrderIds = Payment::query()->where('payable_type', (new Order)->getMorphClass())->whereIn('payable_id', $orders->pluck('id'))
-            ->where('handler', OrderRenewalHandler::class)->where('status', 'unpaid')->pluck('payable_id');
-        $this->packageCounts = Order::query()->whereIn('user_id', $orders->pluck('user_id'))->where('status', '!=', 'terminated')
-            ->selectRaw('user_id, package_id, COUNT(*) as service_count')->groupBy('user_id', 'package_id')->get()
-            ->mapWithKeys(fn (Order $order): array => [$order->user_id.':'.$order->package_id => (int) $order->service_count]);
-
-        return $orders->filter(fn (Order $order): bool => $this->options($order)->isNotEmpty())->pluck('id')->all();
+        return $orders->reject(fn (Order $order): bool => $order->isTerminated())->pluck('id')->all();
     }
 
     public function unavailableReason(Order $order): ?string
@@ -66,21 +42,17 @@ class OrderUpgradeService
         if ($connection->prevent_purchasing && ! $connection->isHealthy()) {
             return 'The server connection is currently unavailable. Please try your upgrade again later or contact support.';
         }
-        $hasOriginalPrice = $this->billingPriceIds !== null
-            ? (int) $this->billingPriceIds->get($order->package_price_id) === (int) $order->package_id
-            : PackagePrice::query()->whereKey($order->package_price_id)->where('package_id', $order->package_id)->exists();
+        $hasOriginalPrice = PackagePrice::query()->whereKey($order->package_price_id)->where('package_id', $order->package_id)->exists();
         if (! $hasOriginalPrice) {
             return 'The original billing plan needs to be restored before this service can be upgraded. Please contact support.';
         }
-        $hasSubscription = $this->subscribedOrderIds !== null ? $this->subscribedOrderIds->contains($order->id)
-            : Subscription::query()->whereMorphedTo('subscribable', $order)->whereNull('cancelled_at')->whereIn('status', ['active', 'pending'])->exists()
+        $hasSubscription = Subscription::query()->whereMorphedTo('subscribable', $order)->whereNull('cancelled_at')->whereIn('status', ['active', 'pending'])->exists()
                 || $order->orderSubscriptions()->whereIn('status', ['active', 'pending'])->exists();
         if ($hasSubscription) {
             return 'Cancel the recurring subscription before upgrading. You can set it up again at the new price afterwards.';
         }
 
-        $hasRenewalInvoice = $this->renewalOrderIds !== null ? $this->renewalOrderIds->contains($order->id)
-            : $order->payments()->where('handler', OrderRenewalHandler::class)->where('status', 'unpaid')->exists();
+        $hasRenewalInvoice = $order->payments()->where('handler', OrderRenewalHandler::class)->where('status', 'unpaid')->exists();
         if ($hasRenewalInvoice) {
             return 'Complete the outstanding renewal invoice before upgrading so your billing period and upgrade price are correct.';
         }
@@ -94,11 +66,11 @@ class OrderUpgradeService
         if ($this->unavailableReason($order)) {
             return collect();
         }
-        $key = $order->package->connection_id.':'.$order->package->category_id.':'.$order->period_in_days;
+        $key = $order->package->connection_id.':'.$order->period_in_days;
         $prices = $this->candidates[$key] ??= PackagePrice::query()->with('package')
             ->where('is_active', true)->where('period_in_days', $order->period_in_days)
             ->whereHas('package', fn ($query) => $query->where('connection_id', $order->package->connection_id)
-                ->where('category_id', $order->package->category_id)->where('status', 'active'))
+                ->where('status', 'active'))
             ->orderBy('price')->get();
 
         return $prices->filter(fn (PackagePrice $price): bool => $this->compatible($order, $price))
@@ -110,15 +82,13 @@ class OrderUpgradeService
         $package = $price->package;
         if (! $price->is_active || $package->status !== 'active' || (int) $package->id === (int) $order->package_id
             || (int) $package->connection_id !== (int) $order->package->connection_id
-            || (int) $package->category_id !== (int) $order->package->category_id
             || (int) $price->period_in_days !== (int) $order->period_in_days
             || (float) $price->getDailyPrice() <= (float) $order->cycle_price || (float) $price->upgrade_fee < 0
             || ($package->global_quantity !== -1 && $package->global_quantity <= 0)) {
             return false;
         }
         if ($package->client_quantity !== -1) {
-            $serviceCount = $this->packageCounts !== null ? $this->packageCounts->get($order->user_id.':'.$package->id, 0)
-                : Order::query()->where('user_id', $order->user_id)->where('package_id', $package->id)->where('status', '!=', 'terminated')->count();
+            $serviceCount = Order::query()->where('user_id', $order->user_id)->where('package_id', $package->id)->where('status', '!=', 'terminated')->count();
             if ($serviceCount >= $package->client_quantity) {
                 return false;
             }
@@ -133,7 +103,7 @@ class OrderUpgradeService
             return false;
         }
         $targetPinning = $order->prices->firstWhere('key', 'cpu_pinning')?->value ?? $package->data('cpu_pinning');
-        if (! PterodactylUpgradeOptions::allowsCpuPinning($order->option('cpu_pinning'), $targetPinning)) {
+        if (! PterodactylUpgradeOptions::validCpuPinning($order->option('cpu_pinning')) || ! PterodactylUpgradeOptions::validCpuPinning($targetPinning)) {
             return false;
         }
         $targetIoWeight = $order->prices->firstWhere('key', 'block_io_weight')?->value ?? $package->data('block_io_weight', 500);
@@ -266,6 +236,15 @@ class OrderUpgradeService
             }
             $oldPrice = PackagePrice::query()->findOrFail($order->package_price_id);
             $order->package->serverConnection->server->functions()->upgradeOrDowngrade($order, $oldPrice, $price, $order->package->serverConnection);
+            $sourcePinning = $order->option('cpu_pinning');
+            $targetPinning = $order->prices->firstWhere('key', 'cpu_pinning')?->value ?? $package->data('cpu_pinning');
+            if (! PterodactylUpgradeOptions::allowsCpuPinning($sourcePinning, $targetPinning)) {
+                $order->prices()->create([
+                    'description' => 'CPU access retained after upgrade', 'type' => 'config_option',
+                    'key' => 'cpu_pinning', 'value' => $sourcePinning ?? '',
+                    'cycle_price' => 0, 'upgrade_fee' => 0, 'is_active' => false,
+                ]);
+            }
             if ($package->global_quantity > 0) {
                 $package->decrement('global_quantity');
             }

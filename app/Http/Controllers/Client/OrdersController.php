@@ -76,9 +76,9 @@ class OrdersController extends Controller
         return redirect()->away($hostname.$path)->withHeaders(['Cache-Control' => 'no-store', 'Referrer-Policy' => 'no-referrer']);
     }
 
-    public function view(Order $order, OrderUpgradeService $upgrades): View
+    public function view(Order $order): View
     {
-        $canUpgrade = (int) $order->user_id === auth()->id() && $upgrades->options($order)->isNotEmpty();
+        $canUpgrade = (int) $order->user_id === auth()->id() && ! $order->isTerminated();
 
         return view('theme::orders.view', compact('order', 'canUpgrade'));
     }
