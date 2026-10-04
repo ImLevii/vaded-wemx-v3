@@ -10,19 +10,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <!-- Meta Description Tag: Affects click-through rates from search results -->
-    <meta name="description" content="{{ html_entity_decode(trim($__env->yieldContent('description', 'Game server and cloud hosting. Compare plans, configure your server, and manage your community with Vaded Hosting.')), ENT_QUOTES, 'UTF-8') }}">
     <meta name="theme-color" content="#030405">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-
-    <!-- Meta Robots Tag: Controls search engine crawling and indexing -->
-    <meta name="robots" content="@settings('seo::robots', 'index, follow')">
-
-    <!-- Open Graph Tags: Enhances visibility and engagement on social media platforms -->
-    <meta property="og:title" content="{{ html_entity_decode(trim($__env->yieldContent('title')), ENT_QUOTES, 'UTF-8') }} - @settings('seo::title', 'Vaded Hosting')">
-    <meta property="og:description" content="{{ html_entity_decode(trim($__env->yieldContent('description', 'Game server and cloud hosting. Compare plans, configure your server, and manage your community with Vaded Hosting.')), ENT_QUOTES, 'UTF-8') }}">
-    <meta property="og:image" content="@settings('seo::image', '/assets/common/img/vaded-social.png')">
+    <x-theme::social-meta
+        :title="html_entity_decode(trim($__env->yieldContent('title')), ENT_QUOTES, 'UTF-8')"
+        :description="html_entity_decode(trim($__env->yieldContent('description')), ENT_QUOTES, 'UTF-8')"
+    />
 
     <meta name="wemx-theme-control" content="{{ auth()->user()?->hasPermission('admin.dashboard') ? 'manual' : 'automatic' }}">
     <script src="{{ asset('assets/common/js/vaded-theme.js') }}?v={{ filemtime(public_path('assets/common/js/vaded-theme.js')) }}" data-navigate-once></script>
