@@ -3,7 +3,7 @@
 
 <head>
     <title>{{ settings('app_name', config('app.name')) }}@hasSection('title') | {{ html_entity_decode(trim($__env->yieldContent('title')), ENT_QUOTES, 'UTF-8') }}@endif</title>
-    <link rel="icon" href="@settings('favicon', '/assets/common/img/vaded-favicon.svg')">
+    <link rel="icon" href="@settings('favicon', '/assets/common/img/vaded-app-logo.png')">
 
     {{-- meta tags --}}
     <meta charset="utf-8">

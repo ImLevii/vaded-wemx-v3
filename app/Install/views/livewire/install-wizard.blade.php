@@ -2,7 +2,7 @@
     <div class="row container container-xl py-8 mx-auto">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div class="d-flex align-items-center">
-                <span class="avatar avatar-lg me-2" style="background-image: url(/assets/common/img/vaded-logo.png)"></span>
+                <span class="avatar avatar-lg me-2" style="background-image: url(/assets/common/img/vaded-app-logo.png)"></span>
                 <h1 class="mb-0">Vaded Hosting</h1>
             </div>
             <div>

@@ -63,9 +63,21 @@ new class extends Component
         <section aria-labelledby="seasonal-logo-heading">
             <h3 id="seasonal-logo-heading">Seasonal logo</h3>
             <div class="vh-seasonal-preview" wire:ignore x-data="{ theme: $wire.entangle('seasonal'), logoMotion: $wire.entangle('logoMotion'), motion: $wire.entangle('motion') }" x-effect="window.WemxTheme.preview($el, theme, logoMotion && motion)">
-                <x-theme::brand-logo data-logo-preview="auto" />
-                <div><span class="vh-appearance-eyebrow">Live preview</span><h4 data-logo-theme-name aria-live="polite">Following the calendar</h4><p class="text-secondary mb-0">Preview your selection before saving.</p></div>
-                <button type="button" class="btn btn-icon btn-outline-secondary" data-logo-replay aria-label="Replay logo animation"><x-admin::icon icon="refresh" /></button>
+                <div class="vh-seasonal-stage">
+                    <span class="vh-seasonal-stage-label">Vaded seasonal collection</span>
+                    <x-theme::brand-logo data-logo-preview="auto" />
+                    <span class="vh-seasonal-motion-status" data-logo-motion-status>Live preview</span>
+                </div>
+                <div class="vh-seasonal-preview-copy">
+                    <span class="vh-appearance-eyebrow">Edition preview</span>
+                    <h4 data-logo-theme-name aria-live="polite">Following the calendar</h4>
+                    <p data-logo-theme-description>Choose an edition to explore its artwork and motion.</p>
+                    <div class="vh-seasonal-preview-footer">
+                        <span class="vh-seasonal-palette" aria-hidden="true"><i></i><i></i><i></i></span>
+                        <span>Made for your brand</span>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary" data-logo-replay><x-admin::icon icon="refresh" /> Replay animation</button>
+                </div>
             </div>
             <div class="row g-4 mt-1 mb-4">
                 <div class="col-12 col-sm-6"><label for="seasonal-selection" class="form-label">Theme selection</label><select id="seasonal-selection" class="form-select" wire:model="seasonal"><option value="auto">Automatic (local calendar)</option><option value="disabled">Off — original logo</option>@foreach(['season' => 'Seasons', 'holiday' => 'Holidays'] as $kind => $group)<optgroup label="{{ $group }}">@foreach(config('appearance.themes') as $key => $theme)@if($theme['kind'] === $kind)<option value="{{ $key }}">{{ $theme['name'] }}</option>@endif @endforeach</optgroup>@endforeach</select>@error('seasonal')<x-admin::form.error :message="$message" />@enderror</div>
@@ -76,9 +88,10 @@ new class extends Component
                 <fieldset class="vh-seasonal-group mb-4"><legend>{{ $group }}</legend><div class="vh-seasonal-grid">
                     @foreach(config('appearance.themes') as $key => $theme)
                         @if($theme['kind'] === $kind)
-                            <button type="button" class="vh-seasonal-choice" x-on:click="$wire.seasonal = @js($key)" x-bind:aria-pressed="$wire.seasonal === @js($key)" aria-label="Use {{ $theme['name'] }} theme">
-                                <x-theme::brand-logo :data-logo-preview="$key" data-logo-static="true" />
+                            <button type="button" class="vh-seasonal-choice" data-logo-theme="{{ $key }}" x-on:click="$wire.seasonal = @js($key)" x-bind:aria-pressed="$wire.seasonal === @js($key)" aria-label="Use {{ $theme['name'] }} theme">
+                                <span class="vh-seasonal-swatch"><x-theme::brand-logo :data-logo-preview="$key" data-logo-static="true" /></span>
                                 <span><strong>{{ $theme['name'] }}</strong><small>{{ $theme['window'] }}</small></span>
+                                <span class="vh-seasonal-choice-check" aria-hidden="true"><x-admin::icon icon="check" /></span>
                             </button>
                         @endif
                     @endforeach

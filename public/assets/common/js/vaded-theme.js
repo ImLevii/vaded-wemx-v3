@@ -2,6 +2,20 @@
     if (window.WemxTheme) { window.WemxTheme.apply(); return; }
     const themes = ['spring', 'summer', 'autumn', 'winter', 'newYear', 'valentines', 'stPatrickDay', 'easter', 'july4', 'halloween', 'thanksgiving', 'christmas'];
     const names = ['Spring', 'Summer', 'Autumn', 'Winter', 'New Year’s', 'Valentine’s Day', 'St. Patrick’s Day', 'Easter', 'July 4th', 'Halloween', 'Thanksgiving', 'Christmas'];
+    const editions = {
+        spring: { description: 'Blush blossoms, a fluttering butterfly and petals carried on a gentle breeze.', palette: ['#e99fb9', '#81bca3', '#c4b0e2'] },
+        summer: { description: 'A slowly turning sun, sea-glass waves and warm glints of golden light.', palette: ['#efb34d', '#72c5cc', '#c6eece'] },
+        autumn: { description: 'Copper leaves drift around the mark, with an acorn and flecks of amber.', palette: ['#d99b50', '#bc6452', '#c79661'] },
+        winter: { description: 'An icy crown, crystalline snowflakes and two delicate layers of snowfall.', palette: ['#acd6eb', '#deeffa', '#91bcd2'] },
+        newYear: { description: 'Champagne-gold fireworks bloom in sequence above a shower of lilac confetti.', palette: ['#f1ca7e', '#c7b7ef', '#fff0bc'] },
+        valentines: { description: 'Sculpted rose hearts float above silk-like ribbons and soft champagne sparkles.', palette: ['#d77e99', '#ecb4c8', '#f2d5b3'] },
+        stPatrickDay: { description: 'A jade shamrock sways beside a turning gold coin and tiny lucky stars.', palette: ['#59a580', '#c49a50', '#b7d59c'] },
+        easter: { description: 'Porcelain bunny ears, a gently rocking patterned egg and pastel spring details.', palette: ['#b8a3d4', '#f4d6a6', '#e9b3c5'] },
+        july4: { description: 'Ruby and sapphire fireworks unfold in staggered bursts, framed by silver stars.', palette: ['#da8681', '#9fbde8', '#dceaff'] },
+        halloween: { description: 'A velvet-winged bat, a floating little ghost and a candle glowing through the mist.', palette: ['#9e82b8', '#edb86a', '#e9e1ef'] },
+        thanksgiving: { description: 'A golden lattice pie releases curls of steam beneath wheat and harvest leaves.', palette: ['#d8a36a', '#dbc18b', '#c98b50'] },
+        christmas: { description: 'A plush Santa hat, evergreen garland and individually twinkling lights under falling snow.', palette: ['#b95d60', '#88aa83', '#e3b96c'] },
+    };
     const modes = ['site', 'auto', 'system', 'light', 'dark'];
     const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const systemPreference = window.matchMedia('(prefers-color-scheme: dark)');
@@ -49,12 +63,29 @@
         return 'winter';
     };
     const motionAllowed = () => !motionPreference.matches && !navigator.connection?.saveData && document.visibilityState !== 'hidden';
+    const updatePreview = (element, logo) => {
+        const resolved = logo.dataset.logoTheme;
+        const edition = editions[resolved];
+        element.dataset.logoTheme = resolved;
+        const name = element.querySelector('[data-logo-theme-name]');
+        if (name) name.textContent = (logo.dataset.logoPreview === 'auto' ? 'Automatic · ' : '') + (names[themes.indexOf(resolved)] || 'Original logo');
+        const description = element.querySelector('[data-logo-theme-description]');
+        if (description) description.textContent = edition?.description || 'Your original logo, with seasonal artwork switched off.';
+        const status = element.querySelector('[data-logo-motion-status]');
+        const playing = logo.dataset.logoMotion === 'on';
+        element.dataset.previewPlaying = String(playing);
+        if (status) status.textContent = resolved === 'none' ? 'Original branding' : playing ? 'Motion playing' : motionPreference.matches ? 'Reduced motion' : 'Still artwork';
+        const replay = element.querySelector('[data-logo-replay]');
+        if (replay) replay.disabled = !playing || resolved === 'none';
+        element.querySelectorAll('.vh-seasonal-palette i').forEach((swatch, index) => { swatch.style.backgroundColor = edition?.palette[index] || 'var(--vh-muted)'; });
+    };
     const updateLogo = logo => {
         const config = settings();
         logo.dataset.logoTheme = resolveLogoTheme(new Date(), logo.dataset.logoPreview ?? config.seasonal);
         const preview = logo.closest('[data-preview-motion]');
         const enabled = preview ? preview.dataset.previewMotion === 'on' : config.motion && config.logoMotion;
         logo.dataset.logoMotion = enabled && motionAllowed() && logo.dataset.logoStatic !== 'true' && logo.dataset.logoVisible !== 'false' ? 'on' : 'off';
+        if (preview) updatePreview(preview, logo);
     };
     const refreshLogos = () => {
         document.querySelectorAll('[data-brand-logo]').forEach(logo => {
@@ -119,11 +150,6 @@
     const preview = (element, theme, enabled) => {
         element.dataset.previewMotion = enabled ? 'on' : 'off';
         element.querySelectorAll('[data-brand-logo]').forEach(logo => { logo.dataset.logoPreview = theme; updateLogo(logo); });
-        const name = element.querySelector('[data-logo-theme-name]');
-        const resolved = resolveLogoTheme(new Date(), theme);
-        if (name) name.textContent = (theme === 'auto' ? 'Automatic · ' : '') + (names[themes.indexOf(resolved)] || 'Original logo');
-        const replay = element.querySelector('[data-logo-replay]');
-        if (replay) replay.disabled = !enabled || !motionAllowed() || resolved === 'none';
     };
     window.WemxTheme = { apply, setMode, resolveLogoTheme, refreshLogos, preview };
     window.toggleDarkmode = () => setMode(document.documentElement.classList.contains('dark') ? 'light' : 'dark');

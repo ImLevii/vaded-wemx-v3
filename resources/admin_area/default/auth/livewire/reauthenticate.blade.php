@@ -30,7 +30,7 @@ new class extends Component {
 <div class="container container-tight py-4">
     <div class="text-center mb-4">
         <a href="{{ route('dashboard') }}" aria-label="Vaded Hosting" class="navbar-brand navbar-brand-autodark">
-            <img src="{{ settings('app_logo', '/assets/common/img/vaded-logo.png') }}" height="32" alt="{{ settings('app_name', config('app.name')) }}">
+            <img src="{{ settings('app_logo', '/assets/common/img/vaded-app-logo.png') }}" height="32" alt="{{ settings('app_name', config('app.name')) }}">
         </a>
     </div>
 

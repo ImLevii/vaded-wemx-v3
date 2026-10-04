@@ -28,7 +28,7 @@
                     </svg>
                 </button>
                 <a href="{{ route('categories.index') }}" class="vh-brand flex mr-4 min-w-0 items-center" aria-label="{{ settings('app_name', config('app.name')) }} home">
-                    <img src="{{ asset('assets/common/img/vaded-logo.png') }}" width="48" height="48" class="shrink-0" alt="" />
+                    <x-theme::brand-logo width="48" height="48" class="shrink-0" />
                     <span
                         class="font-semibold truncate dark:text-white"
                     >@foreach (preg_split('/(\bhosting\b)/i', settings('app_name', config('app.name')), -1, PREG_SPLIT_DELIM_CAPTURE) as $brandPart)<span @class(['vh-brand-hosting' => strtolower($brandPart) === 'hosting'])>{{ $brandPart }}</span>@endforeach</span

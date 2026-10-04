@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
 
     <title>Vaded Hosting | Installer</title>
-    <link rel="icon" href="{{ asset(settings('favicon', '/assets/common/img/vaded-logo.png')) }}">
+    <link rel="icon" href="{{ asset(settings('favicon', '/assets/common/img/vaded-app-logo.png')) }}">
     <!-- CSS files -->
     <link href="{{ admin_asset('css/tabler.min.css?1692870487') }}" rel="stylesheet"/>
     <link href="{{ admin_asset('css/tabler-flags.min.css?1692870487') }}" rel="stylesheet">
