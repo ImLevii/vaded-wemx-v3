@@ -6,6 +6,13 @@
 
 @section('content')
 
+    @perm('admin.settings.index')
+        <div class="vh-appearance-shortcut mb-3">
+            <div><strong>Make it yours</strong><p class="text-secondary mb-0">Manage site colors, motion and seasonal logo editions.</p></div>
+            <a href="{{ route('admin.settings.index', ['page' => 'appearance']) }}" wire:navigate class="btn btn-outline-secondary">Theme &amp; appearance <x-admin::icon icon="palette" /></a>
+        </div>
+    @endperm
+
     @php
         $subscriptionStats = [
             'active' => \App\Models\Subscription::all()->filter(fn ($subscription) => $subscription->isActive())->count(),

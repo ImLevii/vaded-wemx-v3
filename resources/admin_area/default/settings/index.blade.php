@@ -14,6 +14,10 @@
         'name' => 'Branding',
         'livewire' => admin_view_path('settings.livewire.branding'),
       ],
+      'appearance' => [
+        'name' => 'Theme & Appearance',
+        'livewire' => admin_view_path('settings.livewire.appearance'),
+      ],
       'metrics' => [
         'name' => 'Metrics & Options',
         'livewire' => admin_view_path('settings.livewire.metrics'),

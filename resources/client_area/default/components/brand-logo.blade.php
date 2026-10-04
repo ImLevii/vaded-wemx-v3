@@ -5,4 +5,7 @@
         $logo = '/assets/common/img/vaded-logo.png';
     }
 @endphp
-<img src="{{ $logo }}" alt="" {{ $attributes->merge(['width' => 32, 'height' => 32]) }} onerror="this.onerror = null; this.src = '/assets/common/img/vaded-logo.png'">
+<span class="vh-seasonal-logo" data-brand-logo {{ $attributes->only(['data-logo-preview', 'data-logo-static']) }}>
+    <img src="{{ $logo }}" alt="" {{ $attributes->except(['data-logo-preview', 'data-logo-static'])->merge(['width' => 32, 'height' => 32]) }} onerror="this.onerror = null; this.src = '/assets/common/img/vaded-logo.png'">
+    <x-theme::seasonal-artwork />
+</span>

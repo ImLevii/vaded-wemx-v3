@@ -30,12 +30,20 @@
         </a>
 
         @if(auth()->user()?->hasPermission('admin.dashboard'))
-        <a wire:navigate href="?theme=dark" class="nav-link px-0 hide-theme-dark me-2" data-bs-toggle="tooltip"
+        <div class="dropdown vh-theme-controls">
+            <button type="button" class="nav-link me-2" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Theme controls"><x-admin::icon icon="palette" /></button>
+            <div class="dropdown-menu dropdown-menu-end">
+                <label for="quick-theme-mode" class="form-label">Your display</label>
+                <select id="quick-theme-mode" class="form-select" data-personal-theme><option value="site">Site default</option><option value="auto">Day / night</option><option value="system">Device preference</option><option value="light">Light</option><option value="dark">Dark</option></select>
+                @perm('admin.settings.index')<a href="{{ route('admin.settings.index', ['page' => 'appearance']) }}" wire:navigate class="dropdown-item mt-2">Site appearance &amp; seasonal logo <x-admin::icon icon="arrow-right" /></a>@endperm
+            </div>
+        </div>
+        <a href="?theme=dark" data-theme-mode="dark" class="nav-link px-0 hide-theme-dark me-2" data-bs-toggle="tooltip"
            data-bs-placement="bottom"
            aria-label="{{ __('messages.enable_dark') }}" data-bs-original-title="{{ __('messages.enable_dark') }}">
             <x-admin::icon icon="moon" class="icon"/>
         </a>
-        <a wire:navigate href="?theme=light" class="nav-link px-0 hide-theme-light me-2" data-bs-toggle="tooltip"
+        <a href="?theme=light" data-theme-mode="light" class="nav-link px-0 hide-theme-light me-2" data-bs-toggle="tooltip"
            data-bs-placement="bottom"
            aria-label="{{ __('messages.enable_light') }}" data-bs-original-title="{{ __('messages.enable_light') }}">
             <x-admin::icon icon="sun" class="icon"/>

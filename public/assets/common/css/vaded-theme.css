@@ -246,3 +246,53 @@ html:not(.dark):not([data-bs-theme="dark"]) .vaded-theme:not([data-bs-theme="dar
     .vh-auth-footer { flex-wrap: wrap; }
     .vh-auth-theme { min-height: 44px; }
 }
+
+.vh-seasonal-logo { position: relative; display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; isolation: isolate; }
+.vaded-theme .vh-brand > .vh-seasonal-logo { background: none; -webkit-text-fill-color: currentColor; }
+.vh-seasonal-logo > img { display: block; margin: 0; object-fit: contain; }
+.vh-logo-artwork { position: absolute; inset: -18%; width: 136%; height: 136%; max-width: none !important; overflow: visible; pointer-events: none; }
+.vh-logo-artwork > [data-edition] { display: none; }
+.vh-seasonal-logo[data-logo-theme="spring"] [data-edition="spring"],
+.vh-seasonal-logo[data-logo-theme="summer"] [data-edition="summer"],
+.vh-seasonal-logo[data-logo-theme="autumn"] [data-edition="autumn"],
+.vh-seasonal-logo[data-logo-theme="winter"] [data-edition="winter"],
+.vh-seasonal-logo[data-logo-theme="newYear"] [data-edition="newYear"],
+.vh-seasonal-logo[data-logo-theme="valentines"] [data-edition="valentines"],
+.vh-seasonal-logo[data-logo-theme="stPatrickDay"] [data-edition="stPatrickDay"],
+.vh-seasonal-logo[data-logo-theme="easter"] [data-edition="easter"],
+.vh-seasonal-logo[data-logo-theme="july4"] [data-edition="july4"],
+.vh-seasonal-logo[data-logo-theme="halloween"] [data-edition="halloween"],
+.vh-seasonal-logo[data-logo-theme="thanksgiving"] [data-edition="thanksgiving"],
+.vh-seasonal-logo[data-logo-theme="christmas"] [data-edition="christmas"] { display: inline; }
+.vh-logo-phase { animation-delay: -3s !important; }
+@media (prefers-reduced-motion: no-preference) {
+    [data-logo-motion="on"] .vh-logo-drift { animation: vh-logo-drift 10s ease-in-out infinite; }
+    [data-logo-motion="on"] .vh-logo-snow { animation: vh-logo-snow 12s linear infinite; }
+    [data-logo-motion="on"] :is(.vh-logo-spark, .vh-logo-lights) { animation: vh-logo-spark 5s ease-in-out infinite; }
+    [data-logo-motion="on"] .vh-logo-glint { animation: vh-logo-glint 9s ease-in-out infinite; }
+    [data-logo-motion="on"] .vh-logo-burst { transform-box: fill-box; transform-origin: center; animation: vh-logo-burst 8s ease-out infinite; }
+    [data-logo-motion="on"] .vh-logo-heart { animation: vh-logo-heart 7s ease-in-out infinite; }
+    [data-logo-motion="on"] .vh-logo-wobble { animation: vh-logo-wobble 8s ease-in-out infinite; }
+    [data-logo-motion="on"] .vh-logo-ghost { animation: vh-logo-ghost 9s ease-in-out infinite; }
+    [data-logo-motion="on"] .vh-logo-wings { transform-origin: 32px 15px; animation: vh-logo-wobble 7s ease-in-out infinite; }
+    [data-logo-motion="on"] .vh-logo-steam { animation: vh-logo-steam 6s ease-out infinite; }
+    @keyframes vh-logo-drift { 0%,100% { opacity: .3; transform: translate(0,-3px) rotate(-10deg); } 45% { opacity: 1; transform: translate(2px,6px) rotate(15deg); } }
+    @keyframes vh-logo-snow { 0% { opacity: .2; transform: translate(0,-3px); } 45% { opacity: .9; } 100% { opacity: .2; transform: translate(2px,8px); } }
+    @keyframes vh-logo-spark { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+    @keyframes vh-logo-glint { 0%,70%,100% { opacity: 0; } 30% { opacity: .55; } }
+    @keyframes vh-logo-burst { 0%,80%,100% { opacity: .25; transform: scale(.6); } 20% { opacity: 1; transform: scale(1.1); } 45% { opacity: .7; transform: scale(1); } }
+    @keyframes vh-logo-heart { 0%,100% { opacity: .6; transform: translateY(2px); } 50% { opacity: 1; transform: translateY(-4px); } }
+    @keyframes vh-logo-wobble { 0%,70%,100% { transform: rotate(0); } 20% { transform: rotate(-7deg); } 40% { transform: rotate(4deg); } }
+    @keyframes vh-logo-ghost { 0%,100% { transform: translateY(3px); } 40%,60% { transform: translateY(-3px); } }
+    @keyframes vh-logo-steam { 0%,100% { opacity: .3; transform: translateY(2px); } 50% { opacity: .8; transform: translateY(-2px); } }
+}
+.vaded-theme[data-motion="off"]::after,
+.vaded-theme[data-motion="off"] :is([data-vh-reveal], .vh-hero-art img, .vh-technology-track, .vh-payment-check, .vh-payment-ripple, .vh-payment-check-ring, .vh-payment-check-tick) { animation: none !important; }
+:is(html, body)[data-accent="emerald"] { --vh-accent: #15803d; --vh-accent-soft: rgba(21,128,61,.12); }
+:is(html, body)[data-accent="violet"] { --vh-accent: #7c3aed; --vh-accent-soft: rgba(124,58,237,.12); }
+:is(html, body)[data-accent="amber"] { --vh-accent: #b45309; --vh-accent-soft: rgba(180,83,9,.12); }
+:is(html, body)[data-bs-theme="dark"][data-accent="emerald"] { --vh-accent: #4ade80; }
+:is(html, body)[data-bs-theme="dark"][data-accent="violet"] { --vh-accent: #c4b5fd; }
+:is(html, body)[data-bs-theme="dark"][data-accent="amber"] { --vh-accent: #fbbf24; }
+.vaded-theme[data-accent]:not([data-accent="vaded"]) :is(.vh-action:not(.vh-action-secondary), .btn-primary, :where(a,button)[class*="bg-primary-"]) { background: var(--vh-accent); border-color: var(--vh-accent); color: #111827; }
+.vaded-theme[data-bs-theme="light"][data-accent]:not([data-accent="vaded"]) :is(.vh-action:not(.vh-action-secondary), .btn-primary, :where(a,button)[class*="bg-primary-"]) { color: #fff; }
