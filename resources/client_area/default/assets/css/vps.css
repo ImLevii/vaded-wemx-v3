@@ -30,45 +30,14 @@
 .vh-vps-link-muted .vh-icon { color: var(--vh-muted); }
 
 /* A. Hero ------------------------------------------------------------------ */
-.vh-vps-hero { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 500px; padding: 76px 0 64px; text-align: center; }
-.vh-vps-hero::before { content: ''; position: absolute; z-index: -1; inset: -48px 0 0; pointer-events: none; background: radial-gradient(ellipse 42% 50% at 50% 45%, var(--vh-accent-soft), transparent 100%); }
+.vh-vps-hero { position: relative; isolation: isolate; padding: 76px 0 60px; text-align: center; }
+.vh-vps-hero::before { content: ''; position: absolute; z-index: -1; inset: 0 10% 10%; pointer-events: none; background: radial-gradient(ellipse at 50% 20%, var(--vh-accent-soft), transparent 62%); }
 .vh-vps-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--vps-accent-line); border-radius: var(--vps-radius-sm); background: var(--vh-accent-soft); color: var(--vh-accent); font: 600 12px/1 var(--vh-mono); letter-spacing: .12em; text-transform: uppercase; }
 .vh-vps-eyebrow .vh-icon { width: 16px; height: 16px; }
 .vaded-client .vh-vps-hero h1 { margin: 24px auto 18px; max-width: 900px; color: var(--vh-text); font: 750 clamp(36px, 4.2vw, 52px)/1.08 var(--vh-display); letter-spacing: -.035em; text-wrap: balance; }
 .vh-vps-hero p { max-width: 640px; margin: 0 auto; color: var(--vh-muted); font-size: 17px; line-height: 1.65; text-wrap: pretty; }
 .vh-vps-hero-note { display: inline-flex; align-items: center; justify-content: center; gap: 10px; margin-top: 26px; color: var(--vh-muted); font: 500 12px/1.5 var(--vh-mono); letter-spacing: .1em; text-transform: uppercase; }
 .vh-vps-hero-note > span { width: 6px; height: 6px; border-radius: 2px; background: var(--vh-accent); }
-
-/* Ambient server rack scene behind the hero: an aisle of racks either side of the headline */
-.vh-vps-hero-scene { position: absolute; z-index: -1; top: -48px; bottom: 0; left: calc(50% - 50vw); right: calc(50% - 50vw); overflow: hidden; pointer-events: none; mask-image: linear-gradient(180deg, transparent, #000 16%, #000 70%, transparent); }
-.vh-vps-hero-scene::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 30% 58% at 50% 52%, var(--vh-background) 15%, transparent 100%); opacity: .7; }
-.vh-vps-rack { position: absolute; aspect-ratio: 595 / 900; }
-.vh-vps-rack img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.vh-vps-rack-near { bottom: 2%; height: 104%; opacity: .62; }
-.vh-vps-rack-far { bottom: 15%; height: 74%; opacity: .3; filter: blur(2px) brightness(.85); }
-.vh-vps-rack-left.vh-vps-rack-near { right: calc(50% + 455px); }
-.vh-vps-rack-left.vh-vps-rack-far { right: calc(50% + 385px); }
-.vh-vps-rack-right.vh-vps-rack-near { left: calc(50% + 455px); transform: scaleX(-1); }
-.vh-vps-rack-right.vh-vps-rack-far { left: calc(50% + 385px); transform: scaleX(-1); }
-.vh-vps-rack-near::before { content: ''; position: absolute; z-index: -1; inset: 6% -30% 0 -10%; background: radial-gradient(ellipse at 60% 50%, rgba(239, 48, 56, .3), transparent 62%); animation: vh-vps-rack-breathe 7s ease-in-out infinite alternate; }
-.vh-vps-rack-near::after { content: ''; position: absolute; top: 0; left: 44%; right: 12%; height: 14%; opacity: 0; background: linear-gradient(180deg, transparent, rgba(255, 92, 100, .26), transparent); mix-blend-mode: screen; animation: vh-vps-rack-sweep 9s linear infinite; }
-.vh-vps-rack-right.vh-vps-rack-near::after { animation-delay: -4.5s; }
-.vh-vps-rack-led { position: absolute; left: 70.8%; width: 6.6%; height: .8%; transform: translate(-50%, -50%); border-radius: 2px; background: #6cb8ff; box-shadow: 0 0 6px 2px rgba(84, 164, 255, .55); mix-blend-mode: screen; opacity: .2; animation: vh-vps-rack-led 3.2s steps(1, end) infinite; }
-.vh-vps-rack-led:nth-of-type(1) { top: 15.9%; animation-duration: 2.7s; }
-.vh-vps-rack-led:nth-of-type(2) { top: 24%; animation-duration: 3.9s; animation-delay: -1.2s; }
-.vh-vps-rack-led:nth-of-type(3) { top: 32.2%; animation-duration: 3.1s; animation-delay: -2.4s; }
-.vh-vps-rack-led:nth-of-type(4) { top: 40.4%; animation-duration: 4.6s; animation-delay: -.7s; }
-.vh-vps-rack-led:nth-of-type(5) { top: 48.8%; animation-duration: 2.3s; animation-delay: -1.9s; }
-.vh-vps-rack-led:nth-of-type(6) { top: 57.3%; animation-duration: 3.6s; animation-delay: -3.1s; }
-.vh-vps-rack-led:nth-of-type(7) { top: 65.9%; animation-duration: 4.2s; animation-delay: -.3s; }
-.vh-vps-rack-led:nth-of-type(8) { top: 74.6%; animation-duration: 2.9s; animation-delay: -2.2s; }
-.vh-vps-rack-led:nth-of-type(9) { top: 83.1%; animation-duration: 3.4s; animation-delay: -1.5s; }
-.vh-vps-rack-right .vh-vps-rack-led { animation-direction: reverse; }
-.vaded-client[data-bs-theme="light"] .vh-vps-rack-near { opacity: .34; }
-.vaded-client[data-bs-theme="light"] .vh-vps-rack-far { opacity: .16; }
-@keyframes vh-vps-rack-led { 0% { opacity: .95; } 9% { opacity: .2; } 15% { opacity: .9; } 38% { opacity: .9; } 42% { opacity: .15; } 48% { opacity: .95; } 71% { opacity: .95; } 75% { opacity: .3; } 81% { opacity: .9; } }
-@keyframes vh-vps-rack-breathe { from { opacity: .55; } to { opacity: 1; } }
-@keyframes vh-vps-rack-sweep { 0% { transform: translateY(40%); opacity: 0; } 10% { opacity: 1; } 75% { opacity: 1; } 90%, 100% { transform: translateY(580%); opacity: 0; } }
 
 /* B. Product selection ----------------------------------------------------- */
 .vh-vps-catalog { scroll-margin-top: 100px; }
@@ -277,33 +246,18 @@
     .vh-vps-faq { grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); gap: 64px; }
     .vh-vps-faq-intro { position: sticky; top: 120px; align-self: start; }
 }
-@media (min-width: 1024px) and (max-width: 1279px) {
-    .vh-vps-rack-near { height: 96%; }
-    .vh-vps-rack-left.vh-vps-rack-near { right: calc(50% + 370px); }
-    .vh-vps-rack-right.vh-vps-rack-near { left: calc(50% + 370px); }
-    .vh-vps-rack-left.vh-vps-rack-far { right: calc(50% + 330px); }
-    .vh-vps-rack-right.vh-vps-rack-far { left: calc(50% + 330px); }
-}
 @media (min-width: 1360px) {
     .vh-vps-grid:not([data-single-plan]) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 1023px) {
-    .vh-vps-hero { min-height: 440px; padding-top: 56px; }
-    .vh-vps-rack-far { display: none; }
-    .vh-vps-rack-near { height: 92%; opacity: .45; }
-    .vh-vps-rack-left.vh-vps-rack-near { right: calc(50% + 300px); }
-    .vh-vps-rack-right.vh-vps-rack-near { left: calc(50% + 300px); }
+    .vh-vps-hero { padding-top: 56px; }
     .vh-vps-cfg-os { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
     .vh-vps-cycles { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
     .vh-vps-cycles label:last-child:nth-child(odd) { grid-column: auto; }
 }
 @media (max-width: 639px) {
     .vh-vps-store { padding-bottom: 56px; }
-    .vh-vps-hero { min-height: 0; padding: 44px 0 40px; }
-    .vh-vps-rack-near { height: 76%; opacity: .26; }
-    .vh-vps-rack-left.vh-vps-rack-near { right: calc(50% + 105px); }
-    .vh-vps-rack-right.vh-vps-rack-near { left: calc(50% + 105px); }
-    .vh-vps-hero-scene::after { background: radial-gradient(ellipse 48% 60% at 50% 50%, var(--vh-background) 20%, transparent 100%); }
+    .vh-vps-hero { padding: 44px 0 40px; }
     .vh-vps-hero p { font-size: 16px; }
     .vh-vps-hero-note { font-size: 11px; letter-spacing: .06em; }
     .vh-vps-options { padding: 18px; }
@@ -327,8 +281,6 @@
 @media (prefers-reduced-motion: reduce) {
     .vh-vps-plan-card, .vh-vps-workload, .vh-vps-distro-card, .vh-vps-cfg-os-tile, .vh-vps-cfg-versions span, .vh-vps-cycles span, .vh-vps-question-toggle, .vh-vps-question-toggle::before, .vh-vps-question-toggle::after, .vh-vps-deploy .vh-icon, .vh-vps-cta-action .vh-icon, .vh-vps-link, .vh-vps-question::details-content { transition: none; }
     .vh-vps-question[open] p { animation: none; }
-    .vh-vps-rack-near::before, .vh-vps-rack-near::after, .vh-vps-rack-led { animation: none; }
-    .vh-vps-rack-led { opacity: .55; }
 }
 @media (max-width: 359px) {
     .vaded-client:has(.vh-vps-store) .vh-header-auth { padding-left: 0; gap: 2px; }

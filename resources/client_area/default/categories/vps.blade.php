@@ -1,14 +1,5 @@
 <div class="vh-store vh-vps-store">
     <section class="vh-vps-hero" aria-labelledby="vps-title">
-        <div class="vh-vps-hero-scene" aria-hidden="true">
-            @foreach(['left', 'right'] as $side)
-                <div class="vh-vps-rack vh-vps-rack-far vh-vps-rack-{{ $side }}"><img src="{{ asset('assets/common/img/vps-hero-rack.webp') }}" alt="" width="595" height="900" decoding="async"></div>
-                <div class="vh-vps-rack vh-vps-rack-near vh-vps-rack-{{ $side }}">
-                    <img src="{{ asset('assets/common/img/vps-hero-rack.webp') }}" alt="" width="595" height="900" @if($side === 'left') fetchpriority="high" @endif decoding="async">
-                    @for($led = 0; $led < 9; $led++)<span class="vh-vps-rack-led"></span>@endfor
-                </div>
-            @endforeach
-        </div>
         <span class="vh-vps-eyebrow"><x-theme::icon name="cloud" /> Cloud VPS</span>
         <h1 id="vps-title">Your cloud. <em>At full power.</em></h1>
         <p>{{ $selectedCategory->description ?: 'A home for your applications, projects, and next big idea. Choose your resources and make your server your own.' }}</p>
