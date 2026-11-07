@@ -86,8 +86,6 @@ body.vaded-client[data-bs-theme="dark"]:has(:is(.vh-dashboard, .vh-service-shell
 .vh-hero-detail { max-width: 530px; margin: 17px 0 28px; color: var(--vh-muted); font-size: 14px; line-height: 1.8; }
 .vh-hero-lead strong, .vh-hero-detail strong { color: var(--vh-text); font-weight: 700; }
 .vh-cta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.vh-hero-footnote { display: flex; align-items: center; gap: 9px; margin-top: 25px; font-size: 11px; color: var(--vh-muted); }
-.vh-hero-footnote .vh-icon { width: 15px; height: 15px; }
 .vh-node { position: relative; isolation: isolate; min-width: 0; padding: 24px 28px; overflow: hidden; border: 1px solid var(--vh-border); border-radius: 18px; background: radial-gradient(ellipse at 50% 40%,rgba(239,65,73,.11),transparent 67%),var(--vh-surface); }
 .vh-node-grid { position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(var(--vh-border) 1px,transparent 1px),linear-gradient(90deg,var(--vh-border) 1px,transparent 1px); background-size: 32px 32px; opacity: .4; mask-image: radial-gradient(ellipse,#000,transparent 80%); }
 .vh-node-top, .vh-node figcaption { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--vh-muted); font: 9px/1.6 var(--vh-mono); letter-spacing: .06em; }
