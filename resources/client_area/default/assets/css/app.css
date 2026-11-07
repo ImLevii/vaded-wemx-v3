@@ -190,9 +190,9 @@
     border-radius: 8px;
     background: transparent;
     color: var(--vh-muted);
-    font-family: var(--vh-display);
+    font-family: 'Orbitron', var(--vh-display);
     font-size: 12px;
-    font-weight: 650;
+    font-weight: 600;
     letter-spacing: 0;
     white-space: nowrap;
     transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease;
