@@ -8,7 +8,7 @@
         <div class="vh-vps-setting">
             <h2 class="vh-vps-control-label">Deployment</h2>
             <div class="vh-vps-region"><span class="vh-vps-icon-chip"><x-theme::icon name="pin" /></span><div class="vh-vps-option-copy"><strong>Make it your own</strong><span>Review options with your plan</span></div></div>
-            <p class="vh-vps-setting-note">Check your plan for available regions and operating systems.</p>
+            <p class="vh-vps-setting-note">Install Rocky, Alma, Debian, Ubuntu, Fedora, or Windows Server with one click. <a href="#operating-systems" class="vh-vps-inline-link">See all operating systems</a></p>
         </div>
         @if($vpsBillingCycles->isNotEmpty())
             <fieldset class="vh-vps-setting vh-vps-billing"><legend class="vh-vps-control-label">Billing cycle</legend>

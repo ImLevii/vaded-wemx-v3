@@ -147,6 +147,34 @@
 .vaded-client .vh-vps-section h2 { margin: 12px 0 0; color: var(--vh-text); font: 700 clamp(30px, 3vw, 38px)/1.15 var(--vh-display); letter-spacing: -.03em; text-wrap: balance; }
 .vh-vps-section-heading p, .vh-vps-faq-intro p { max-width: 520px; margin-top: 12px; color: var(--vh-muted); font-size: 15px; line-height: 1.6; }
 
+/* Operating systems -------------------------------------------------------- */
+.vh-vps-inline-link { color: var(--vh-accent); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.vh-vps-inline-link:hover { color: var(--vh-text); }
+.vh-vps-distro-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.vh-vps-distro-card { --os: var(--vh-accent); display: flex; align-items: flex-start; gap: 16px; min-width: 0; padding: 22px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); transition: border-color 180ms ease; }
+.vh-vps-distro-card:hover { border-color: color-mix(in srgb, var(--os) 45%, var(--vh-border)); }
+.vh-vps-distro-card[data-os="rocky"] { --os: #10b981; }
+.vh-vps-distro-card[data-os="alma"] { --os: #f59e0b; }
+.vh-vps-distro-card[data-os="windows"] { --os: #0a84ff; }
+.vh-vps-distro-card[data-os="debian"] { --os: #d70a53; }
+.vh-vps-distro-card[data-os="ubuntu"] { --os: #e95420; }
+.vh-vps-distro-card[data-os="fedora"] { --os: #51a2da; }
+.vh-vps-distro-card[data-os="pterodactyl"] { --os: var(--vh-accent); }
+.vh-vps-distro-mark { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border: 1px solid color-mix(in srgb, var(--os) 40%, var(--vh-border)); border-radius: var(--vps-radius-md); background: color-mix(in srgb, var(--os) 14%, var(--vh-surface)); color: color-mix(in srgb, var(--os) 75%, var(--vh-text)); font: 700 18px/1 var(--vh-display); }
+.vh-vps-distro-copy { min-width: 0; flex: 1; }
+.vh-vps-distro-label { display: block; color: var(--vh-muted); font: 600 11px/1.4 var(--vh-mono); letter-spacing: .12em; text-transform: uppercase; }
+.vaded-client .vh-vps-distro-card h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; color: var(--vh-text); font-size: 18px; font-weight: 650; line-height: 1.3; letter-spacing: -.01em; }
+.vh-vps-distro-badge { display: inline-flex; align-items: center; padding: 3px 7px; border: 1px solid var(--vps-accent-line); border-radius: 6px; background: var(--vh-accent-soft); color: var(--vh-accent); font: 600 10px/1.3 var(--vh-mono); letter-spacing: .08em; }
+.vh-vps-distro-versions { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.vh-vps-distro-versions li { padding: 5px 10px; border: 1px solid var(--vps-line-soft); border-radius: 6px; background: var(--vps-tile); color: var(--vh-text); font-size: 13px; font-weight: 600; line-height: 1.3; font-variant-numeric: tabular-nums; }
+.vh-vps-distro-preinstall { grid-column: 1 / -1; flex-wrap: wrap; align-items: center; background: linear-gradient(115deg, var(--vh-accent-soft), transparent 55%), var(--vh-surface); }
+.vaded-client .vh-vps-distro-preinstall h3 { margin-bottom: 4px; }
+.vh-vps-distro-preinstall p { color: var(--vh-muted); font-size: 14px; line-height: 1.6; }
+.vh-vps-distro-preinstall .vh-vps-distro-versions { margin-left: 60px; }
+.vh-vps-distro-note { display: flex; align-items: flex-start; gap: 10px; margin-top: 20px; color: var(--vh-muted); font-size: 14px; line-height: 1.6; }
+.vh-vps-distro-note .vh-vps-distro-badge { flex-shrink: 0; margin-top: 1px; }
+.vh-vps-distro-note strong { color: var(--vh-text); font-weight: 600; }
+
 /* E. Workloads ------------------------------------------------------------- */
 .vh-vps-workload-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 .vh-vps-workload { padding: 28px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); transition: border-color 180ms ease; }
@@ -190,6 +218,9 @@
 /* Responsive --------------------------------------------------------------- */
 @media (min-width: 640px) {
     .vh-vps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .vh-vps-distro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .vh-vps-distro-preinstall { flex-wrap: nowrap; }
+    .vh-vps-distro-preinstall .vh-vps-distro-versions { flex-shrink: 0; margin-left: auto; }
 }
 @media (min-width: 768px) {
     .vh-vps-grid[data-single-plan] { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); }
@@ -200,6 +231,7 @@
     .vh-vps-benefits { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .vh-vps-benefit + .vh-vps-benefit { border-top: 0; border-left: 1px solid var(--vh-border); }
     .vh-vps-workload-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .vh-vps-distro-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .vh-vps-settings { position: sticky; top: 104px; }
     .vh-vps-faq { grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); gap: 64px; }
     .vh-vps-faq-intro { position: sticky; top: 120px; align-self: start; }
@@ -234,13 +266,14 @@
     .vh-vps-section { padding-top: 64px; }
     .vh-vps-section-heading { margin-bottom: 24px; }
     .vh-vps-workload { padding: 22px; }
+    .vh-vps-distro-card { padding: 18px; gap: 14px; }
     .vh-vps-question summary { padding: 18px 0; font-size: 15px; }
     .vh-vps-question p { padding-right: 0; font-size: 14px; }
     .vh-vps-cta { margin-top: 64px; padding: 28px 22px; }
     .vaded-theme .vh-vps-cta-action { width: 100%; justify-content: space-between; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .vh-vps-plan-card, .vh-vps-workload, .vh-vps-cycles span, .vh-vps-question-toggle, .vh-vps-question-toggle::before, .vh-vps-question-toggle::after, .vh-vps-deploy .vh-icon, .vh-vps-cta-action .vh-icon, .vh-vps-link, .vh-vps-question::details-content { transition: none; }
+    .vh-vps-plan-card, .vh-vps-workload, .vh-vps-distro-card, .vh-vps-cycles span, .vh-vps-question-toggle, .vh-vps-question-toggle::before, .vh-vps-question-toggle::after, .vh-vps-deploy .vh-icon, .vh-vps-cta-action .vh-icon, .vh-vps-link, .vh-vps-question::details-content { transition: none; }
     .vh-vps-question[open] p { animation: none; }
 }
 @media (max-width: 359px) {

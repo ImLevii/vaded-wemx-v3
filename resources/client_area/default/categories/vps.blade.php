@@ -20,6 +20,46 @@
         @endforeach
     </section>
 
+    <section id="operating-systems" class="vh-vps-section vh-vps-distro" aria-labelledby="vps-os-title">
+        <div class="vh-vps-section-heading">
+            <div><span class="vh-vps-label">One-click installs</span><h2 id="vps-os-title">VPS Operating Systems</h2><p>We offer a variety of operating systems installed via one click using your control panel.</p></div>
+            <a href="#pricing" class="vh-vps-link">Choose your VPS <x-theme::icon name="arrow" /></a>
+        </div>
+        <div class="vh-vps-distro-grid">
+            @foreach([
+                ['rocky', 'R', 'Rocky Linux', ['8', '9'], null],
+                ['alma', 'A', 'Alma Linux', ['8', '9'], null],
+                ['windows', 'W', 'Windows Server', ['2019', '2022'], 'BYOL'],
+                ['debian', 'D', 'Debian', ['10', '11'], null],
+                ['ubuntu', 'U', 'Ubuntu', ['18.04', '20.04', '22.04'], null],
+                ['fedora', 'F', 'Fedora', ['36', '37', '38'], null],
+            ] as [$key, $mark, $name, $versions, $badge])
+                <article class="vh-vps-distro-card" data-os="{{ $key }}">
+                    <span class="vh-vps-distro-mark" aria-hidden="true">{{ $mark }}</span>
+                    <div class="vh-vps-distro-copy">
+                        <span class="vh-vps-distro-label">VPS OS</span>
+                        <h3>{{ $name }} @if($badge)<span class="vh-vps-distro-badge" title="Bring Your Own License">{{ $badge }}</span>@endif</h3>
+                        <ul class="vh-vps-distro-versions" aria-label="{{ $name }} versions">
+                            @foreach($versions as $version)<li>{{ $version }}</li>@endforeach
+                        </ul>
+                    </div>
+                </article>
+            @endforeach
+            <article class="vh-vps-distro-card vh-vps-distro-preinstall" data-os="pterodactyl">
+                <span class="vh-vps-distro-mark" aria-hidden="true">P</span>
+                <div class="vh-vps-distro-copy">
+                    <span class="vh-vps-distro-label">VPS OS</span>
+                    <h3>Pterodactyl Preinstall</h3>
+                    <p>Panel Preinstalls use Rocky Linux as the Base OS.</p>
+                </div>
+                <ul class="vh-vps-distro-versions" aria-label="Pterodactyl preinstall base">
+                    <li>Rocky Linux base</li>
+                </ul>
+            </article>
+        </div>
+        <p class="vh-vps-distro-note"><span class="vh-vps-distro-badge">BYOL</span> <span><strong>Bring Your Own License</strong> means the operating system/game panel will not come with a license key.</span></p>
+    </section>
+
     <section id="vps-details" class="vh-vps-section vh-vps-workloads" aria-labelledby="vps-workloads-title">
         <div class="vh-vps-section-heading">
             <div><span class="vh-vps-label">A small server. Big possibilities.</span><h2 id="vps-workloads-title">What will you build?</h2><p>Start with your workload. Choose the resources to match.</p></div>
@@ -41,7 +81,8 @@
         <div class="vh-vps-faq-list">
             @foreach([
                 ['What resources come with my VPS?', 'Each plan lists its included resources and features. Open the plan configuration to review the full details, available options, and final price before ordering.'],
-                ['Which operating systems and regions can I choose?', 'The options depend on your chosen plan and its server integration. Review the available operating systems and deployment options on the configuration page.'],
+                ['Which operating systems can I choose?', 'Rocky Linux 8 & 9, Alma Linux 8 & 9, Windows Server 2019 & 2022 (BYOL), Debian 10 & 11, Ubuntu 18.04, 20.04 & 22.04, Fedora 36, 37 & 38, or a Pterodactyl preinstall built on Rocky Linux. Each one installs with one click from your control panel.'],
+                ['What does BYOL mean?', 'Bring Your Own License. A BYOL operating system or game panel is installed without a license key, so you activate it with your own.'],
                 ['How does VPS billing work?', 'Choose one of the billing cycles offered for your plan. The listed price covers that cycle; any setup fees, configurable extras, and applicable taxes appear before checkout.'],
                 ['Where do I manage my server?', 'Your client dashboard keeps your services and payments in one place. Open your VPS service to see its details, available controls, and any linked management panel.'],
             ] as [$question, $answer])
