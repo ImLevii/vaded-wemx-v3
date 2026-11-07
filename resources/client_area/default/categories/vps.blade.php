@@ -29,7 +29,7 @@
             @foreach(config('hosting.vps_operating_systems', []) as $key => $system)
                 @if(count($system['versions']) > 1)
                     <article class="vh-vps-distro-card" data-os="{{ $key }}">
-                        <span class="vh-vps-distro-mark" aria-hidden="true">{{ $system['mark'] }}</span>
+                        <span class="vh-vps-distro-mark" aria-hidden="true">@if($system['logo'] ?? null)<img src="{{ asset($system['logo']) }}" alt="" width="26" height="26" loading="lazy" decoding="async">@else{{ $system['mark'] }}@endif</span>
                         <div class="vh-vps-distro-copy">
                             <span class="vh-vps-distro-label">VPS OS</span>
                             <h3>{{ $system['name'] }} @isset($system['badge'])<span class="vh-vps-distro-badge" title="Bring Your Own License">{{ $system['badge'] }}</span>@endisset</h3>
@@ -40,7 +40,7 @@
                     </article>
                 @else
                     <article class="vh-vps-distro-card vh-vps-distro-preinstall" data-os="{{ $key }}">
-                        <span class="vh-vps-distro-mark" aria-hidden="true">{{ $system['mark'] }}</span>
+                        <span class="vh-vps-distro-mark" aria-hidden="true">@if($system['logo'] ?? null)<img src="{{ asset($system['logo']) }}" alt="" width="26" height="26" loading="lazy" decoding="async">@else{{ $system['mark'] }}@endif</span>
                         <div class="vh-vps-distro-copy">
                             <span class="vh-vps-distro-label">VPS OS</span>
                             <h3>{{ $system['name'] }}</h3>

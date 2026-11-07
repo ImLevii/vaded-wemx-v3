@@ -20,17 +20,17 @@ return [
     ]),
     /*
      * One-click VPS operating systems shown on the VPS page (OS picker + "VPS Operating Systems").
-     * `match` words are used to find the same OS in a package's checkout OS option so the
+     * `logo` is a path under public/. `match` words are used to find the same OS in a package's checkout OS option so the
      * picker can pre-select it; versions are listed oldest to newest (the newest is the default).
      */
     'vps_operating_systems' => [
-        'rocky' => ['name' => 'Rocky Linux', 'mark' => 'R', 'versions' => ['8', '9'], 'match' => ['rocky']],
-        'alma' => ['name' => 'Alma Linux', 'mark' => 'A', 'versions' => ['8', '9'], 'match' => ['alma']],
-        'windows' => ['name' => 'Windows Server', 'mark' => 'W', 'versions' => ['2019', '2022'], 'match' => ['windows'], 'badge' => 'BYOL'],
-        'debian' => ['name' => 'Debian', 'mark' => 'D', 'versions' => ['10', '11'], 'match' => ['debian']],
-        'ubuntu' => ['name' => 'Ubuntu', 'mark' => 'U', 'versions' => ['18.04', '20.04', '22.04'], 'match' => ['ubuntu']],
-        'fedora' => ['name' => 'Fedora', 'mark' => 'F', 'versions' => ['36', '37', '38'], 'match' => ['fedora']],
-        'pterodactyl' => ['name' => 'Pterodactyl Preinstall', 'short' => 'Pterodactyl', 'mark' => 'P', 'versions' => ['Rocky Linux base'], 'match' => ['pterodactyl'], 'note' => 'Panel Preinstalls use Rocky Linux as the Base OS.'],
+        'rocky' => ['name' => 'Rocky Linux', 'logo' => 'assets/common/img/os/rockylinux.svg', 'mark' => 'R', 'versions' => ['8', '9'], 'match' => ['rocky']],
+        'alma' => ['name' => 'Alma Linux', 'logo' => 'assets/common/img/os/almalinux-color.svg', 'mark' => 'A', 'versions' => ['8', '9'], 'match' => ['alma']],
+        'windows' => ['name' => 'Windows Server', 'logo' => 'assets/common/img/os/windows.svg', 'mark' => 'W', 'versions' => ['2019', '2022'], 'match' => ['windows'], 'badge' => 'BYOL'],
+        'debian' => ['name' => 'Debian', 'logo' => 'assets/common/img/os/debian-color.svg', 'mark' => 'D', 'versions' => ['10', '11'], 'match' => ['debian']],
+        'ubuntu' => ['name' => 'Ubuntu', 'logo' => 'assets/common/img/os/ubuntu.svg', 'mark' => 'U', 'versions' => ['18.04', '20.04', '22.04'], 'match' => ['ubuntu']],
+        'fedora' => ['name' => 'Fedora', 'logo' => 'assets/common/img/os/fedora.svg', 'mark' => 'F', 'versions' => ['36', '37', '38'], 'match' => ['fedora']],
+        'pterodactyl' => ['name' => 'Pterodactyl Preinstall', 'logo' => 'assets/common/img/os/pterodactyl.svg', 'short' => 'Pterodactyl', 'mark' => 'P', 'versions' => ['Rocky Linux base'], 'match' => ['pterodactyl'], 'note' => 'Panel Preinstalls use Rocky Linux as the Base OS.'],
     ],
     'vps_default_os' => ['ubuntu', '22.04'],
 

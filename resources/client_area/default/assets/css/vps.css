@@ -56,7 +56,7 @@
 .vh-vps-cfg-os-choice { position: relative; min-width: 0; }
 .vh-vps-cfg-os-choice input, .vh-vps-cfg-versions input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .vh-vps-cfg-os-tile { position: relative; display: flex; align-items: center; gap: 10px; height: 100%; min-height: 50px; padding: 9px 10px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-md); background: var(--vps-tile); cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease; }
-.vh-vps-cfg-os-tile .vh-vps-distro-mark { width: 30px; height: 30px; border-radius: 7px; font-size: 14px; }
+.vh-vps-cfg-os-tile .vh-vps-distro-mark { width: 34px; height: 34px; border-radius: 8px; font-size: 14px; }
 .vh-vps-cfg-os-name { min-width: 0; color: var(--vh-text); font-size: 13px; font-weight: 600; line-height: 1.25; overflow-wrap: normal; word-break: normal; }
 .vh-vps-cfg-os-tile .vh-vps-distro-badge { position: absolute; top: -8px; right: 8px; padding: 1px 5px; font-size: 9px; background: var(--vh-surface); }
 .vh-vps-cfg-os-choice:hover .vh-vps-cfg-os-tile { border-color: var(--vps-accent-line); }
@@ -159,7 +159,10 @@
 .vh-vps-store [data-os="ubuntu"] { --os: #e95420; }
 .vh-vps-store [data-os="fedora"] { --os: #51a2da; }
 .vh-vps-store [data-os="pterodactyl"] { --os: var(--vh-accent); }
-.vh-vps-distro-mark { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border: 1px solid color-mix(in srgb, var(--os, var(--vh-accent)) 40%, var(--vh-border)); border-radius: var(--vps-radius-md); background: color-mix(in srgb, var(--os, var(--vh-accent)) 14%, var(--vh-surface)); color: color-mix(in srgb, var(--os, var(--vh-accent)) 75%, var(--vh-text)); font: 700 18px/1 var(--vh-display); }
+.vh-vps-distro-mark { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-md); background: var(--vh-raised); color: color-mix(in srgb, var(--os, var(--vh-accent)) 75%, var(--vh-text)); font: 700 18px/1 var(--vh-display); }
+.vh-vps-distro-mark img { width: 60%; height: 60%; object-fit: contain; }
+.vh-vps-cfg-os-tile .vh-vps-distro-mark img { width: 66%; height: 66%; }
+.vh-vps-store [data-os="pterodactyl"] .vh-vps-distro-mark img { width: 82%; height: 82%; }
 .vh-vps-distro-copy { min-width: 0; flex: 1; }
 .vh-vps-distro-label { display: block; color: var(--vh-muted); font: 600 11px/1.4 var(--vh-mono); letter-spacing: .12em; text-transform: uppercase; }
 .vaded-client .vh-vps-distro-card h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; color: var(--vh-text); font-size: 18px; font-weight: 650; line-height: 1.3; letter-spacing: -.01em; }
@@ -229,7 +232,7 @@
     .vh-vps-layout:not(.vh-vps-layout-single) { grid-template-columns: 320px minmax(0, 1fr); }
     .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-options { padding: 20px; }
     .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-tile { gap: 8px; padding: 8px; }
-    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-tile .vh-vps-distro-mark { width: 28px; height: 28px; font-size: 13px; }
+    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-tile .vh-vps-distro-mark { width: 30px; height: 30px; font-size: 13px; }
     .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-name { font-size: 12.5px; }
     .vh-vps-layout-single { grid-template-columns: minmax(0, 1fr) minmax(380px, 460px); }
     .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-options { position: sticky; top: 104px; }
