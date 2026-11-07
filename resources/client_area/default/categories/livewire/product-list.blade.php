@@ -166,6 +166,7 @@ new class extends Component
             'memory' => '/\b(ram|ddr[345]|memory)\b/i',
             'storage' => '/\b(storage|ssd|nvme|disk)\b/i',
             'network' => '/\b(bandwidth|traffic|gbps|mbps|transfer)\b/i',
+            'os' => '/\b(os|operating system|ubuntu|debian|centos|almalinux|rocky linux|fedora|windows server)\b/i',
         ] as $resource => $pattern) {
             if (preg_match($pattern, $description)) {
                 return $resource;
