@@ -42,7 +42,7 @@
                         <label class="vh-vps-cfg-os-choice" data-os="{{ $key }}">
                             <input type="radio" name="vps-os-family" value="{{ $key }}" x-model="osFamily" @change="pickFamily('{{ $key }}')" @checked($key === $defaultOsFamily)>
                             <span class="vh-vps-cfg-os-tile">
-                                <span class="vh-vps-distro-mark" aria-hidden="true">@if($system['logo'] ?? null)<img src="{{ asset($system['logo']) }}" alt="" width="26" height="26" loading="lazy" decoding="async">@else{{ $system['mark'] }}@endif</span>
+                                <span class="vh-vps-distro-mark" aria-hidden="true">@if($system['logo'] ?? null)<img src="{{ asset($system['logo']) }}" alt="" width="26" height="26">@else{{ $system['mark'] }}@endif</span>
                                 <span class="vh-vps-cfg-os-name">{{ $system['short'] }}</span>
                                 @if($system['badge'])<span class="vh-vps-distro-badge" title="Bring Your Own License">{{ $system['badge'] }}</span>@endif
                             </span>
