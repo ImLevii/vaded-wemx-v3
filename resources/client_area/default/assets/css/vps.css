@@ -43,18 +43,33 @@
 .vh-vps-catalog { scroll-margin-top: 100px; }
 .vh-vps-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 24px; }
 
-/* Left: plan options panel */
-.vh-vps-settings { display: flex; flex-direction: column; padding: 22px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); }
-.vh-vps-setting { min-width: 0; margin: 0; padding: 0 0 20px; border: 0; border-bottom: 1px solid var(--vps-line-soft); }
-.vh-vps-setting + .vh-vps-setting, .vh-vps-setting + .vh-vps-sidebar-foot { padding-top: 20px; }
+/* Left: configurable options (OS picker + billing cycle) */
+.vh-vps-store [x-cloak] { display: none !important; }
+.vh-vps-options { display: flex; flex-direction: column; min-width: 0; padding: 24px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); }
+.vh-vps-options-head { display: flex; align-items: center; gap: 14px; padding-bottom: 20px; border-bottom: 1px solid var(--vps-line-soft); }
+.vaded-client .vh-vps-options-head h2 { margin: 0; color: var(--vh-text); font: 650 18px/1.3 var(--vh-display); letter-spacing: -.01em; }
+.vh-vps-options-head p { margin-top: 2px; color: var(--vh-muted); font-size: 13px; line-height: 1.5; }
+.vh-vps-cfg-group { min-width: 0; margin: 0; padding: 20px 0; border: 0; border-bottom: 1px solid var(--vps-line-soft); }
+.vh-vps-cfg-group:last-child { padding-bottom: 0; border-bottom: 0; }
 .vh-vps-store .vh-vps-control-label { display: block; float: left; width: 100%; margin: 0 0 12px; padding: 0; color: var(--vh-muted); font: 600 11px/1.4 var(--vh-mono); letter-spacing: .12em; text-transform: uppercase; }
-.vh-vps-platform, .vh-vps-region { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-md); background: var(--vps-tile); }
-.vh-vps-platform { border-color: var(--vps-accent-line); background: linear-gradient(115deg, var(--vh-accent-soft), transparent 70%), var(--vps-tile); }
-.vh-vps-option-copy { min-width: 0; flex: 1; }
-.vh-vps-option-copy strong { display: block; color: var(--vh-text); font-size: 14px; font-weight: 650; line-height: 1.35; }
-.vh-vps-option-copy span { display: block; margin-top: 2px; color: var(--vh-muted); font-size: 12px; line-height: 1.45; }
-.vh-vps-selected { display: grid; place-items: center; width: 20px; height: 20px; flex-shrink: 0; border-radius: 6px; background: var(--vh-accent); color: #fff; }
-.vh-vps-selected .vh-icon { width: 13px; height: 13px; }
+.vh-vps-cfg-os { clear: both; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.vh-vps-cfg-os-choice { position: relative; min-width: 0; }
+.vh-vps-cfg-os-choice input, .vh-vps-cfg-versions input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.vh-vps-cfg-os-tile { position: relative; display: flex; align-items: center; gap: 10px; height: 100%; min-height: 50px; padding: 9px 10px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-md); background: var(--vps-tile); cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease; }
+.vh-vps-cfg-os-tile .vh-vps-distro-mark { width: 30px; height: 30px; border-radius: 7px; font-size: 14px; }
+.vh-vps-cfg-os-name { min-width: 0; color: var(--vh-text); font-size: 13px; font-weight: 600; line-height: 1.25; overflow-wrap: normal; word-break: normal; }
+.vh-vps-cfg-os-tile .vh-vps-distro-badge { position: absolute; top: -8px; right: 8px; padding: 1px 5px; font-size: 9px; background: var(--vh-surface); }
+.vh-vps-cfg-os-choice:hover .vh-vps-cfg-os-tile { border-color: var(--vps-accent-line); }
+.vh-vps-cfg-os-choice input:checked + .vh-vps-cfg-os-tile { border-color: var(--vh-accent); background: linear-gradient(115deg, var(--vh-accent-soft), transparent 80%), var(--vps-tile); box-shadow: inset 0 0 0 1px var(--vh-accent); }
+.vh-vps-cfg-os-choice input:focus-visible + .vh-vps-cfg-os-tile, .vh-vps-cfg-versions input:focus-visible + span { outline: 2px solid var(--vh-accent); outline-offset: 2px; }
+.vh-vps-cfg-versions { clear: both; display: flex; flex-wrap: wrap; gap: 6px; }
+.vh-vps-cfg-versions label { position: relative; }
+.vh-vps-cfg-versions span { display: block; padding: 8px 14px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-sm); background: var(--vh-input); color: var(--vh-muted); font-size: 13px; font-weight: 600; line-height: 1.3; font-variant-numeric: tabular-nums; cursor: pointer; transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease; }
+.vh-vps-cfg-versions label:hover span { color: var(--vh-text); border-color: var(--vps-accent-line); }
+.vh-vps-cfg-versions input:checked + span { border-color: var(--vh-accent); background: var(--vh-accent); color: #fff; }
+.vh-vps-cfg-hint { display: flex; align-items: center; gap: 8px; margin-top: 12px; color: var(--vh-muted); font-size: 13px; line-height: 1.5; }
+.vh-vps-cfg-hint .vh-icon { width: 15px; height: 15px; flex-shrink: 0; color: var(--vh-accent); }
+.vh-vps-cfg-hint .vh-vps-distro-badge { flex-shrink: 0; }
 .vh-vps-setting-note { margin-top: 10px; color: var(--vh-muted); font-size: 13px; line-height: 1.55; }
 .vh-vps-cycles { clear: both; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-md); background: var(--vh-input); }
 .vh-vps-cycles-single { grid-template-columns: minmax(0, 1fr); }
@@ -65,7 +80,6 @@
 .vh-vps-cycles label:hover span { color: var(--vh-text); }
 .vh-vps-cycles input:checked + span { background: var(--vh-accent); color: #fff; }
 .vh-vps-cycles input:focus-visible + span { outline: 2px solid var(--vh-accent); outline-offset: 2px; }
-.vh-vps-sidebar-foot { display: flex; flex-direction: column; gap: 12px; }
 
 /* Center: plan card(s) */
 .vh-vps-main { min-width: 0; }
@@ -109,7 +123,8 @@
 .vh-vps-grid:not([data-single-plan]) .vh-vps-plan-description { min-height: calc(3 * 1.6em); }
 .vh-vps-grid:not([data-single-plan]) .vh-vps-plan-price strong { font-size: 40px; }
 
-/* Single plan: larger configuration card with a spec grid, plus the promo panel */
+/* Single plan: larger configuration card with a spec grid */
+.vh-vps-grid[data-single-plan] { grid-template-columns: minmax(0, 1fr); }
 .vh-vps-grid[data-single-plan] .vh-vps-plan-card { padding: 32px; }
 .vaded-client .vh-vps-grid[data-single-plan] .vh-vps-plan-heading h3 { font-size: 20px; }
 .vh-vps-grid[data-single-plan] .vh-vps-plan-price strong { font-size: 52px; }
@@ -119,20 +134,6 @@
 .vh-vps-grid[data-single-plan] .vh-vps-spec dd { text-align: left; font-size: 15px; }
 .vh-vps-grid[data-single-plan] .vh-vps-spec-wide { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
 .vh-vps-grid[data-single-plan] .vh-vps-spec-wide dd { text-align: right; }
-
-/* Right: promotional panel */
-.vh-vps-build-panel { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; overflow: hidden; padding: 32px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: linear-gradient(180deg, var(--vh-accent-soft), transparent 55%), var(--vh-surface); }
-.vh-vps-build-panel::before { content: ''; position: absolute; z-index: -1; inset: 0; opacity: .4; pointer-events: none; background-image: linear-gradient(var(--vps-line-soft) 1px, transparent 1px), linear-gradient(90deg, var(--vps-line-soft) 1px, transparent 1px); background-size: 36px 36px; mask-image: linear-gradient(180deg, transparent 35%, #000 90%); }
-.vaded-client .vh-vps-build-panel h3 { margin: 14px 0 14px; color: var(--vh-text); font-size: clamp(26px, 2.3vw, 32px); font-weight: 700; line-height: 1.15; letter-spacing: -.03em; }
-.vh-vps-build-panel p { max-width: 320px; color: var(--vh-muted); font-size: 15px; line-height: 1.6; }
-.vh-vps-server-art { width: min(100%, 250px); margin: 0 auto; transform: perspective(900px) rotateY(-12deg) rotateX(6deg); }
-.vh-vps-server-art > div { display: flex; align-items: center; gap: 12px; height: 46px; margin-bottom: 8px; padding: 0 16px; border: 1px solid var(--vh-border); border-left: 2px solid var(--vh-accent); border-radius: 6px; background: var(--vh-raised); box-shadow: 0 12px 24px -16px rgba(0, 0, 0, .55); }
-.vh-vps-server-art .vh-icon { width: 18px; height: 18px; color: var(--vh-muted); }
-.vh-vps-server-art > div > span { width: 42%; height: 3px; margin-left: auto; border-radius: 2px; background: var(--vh-border); }
-.vh-vps-server-art > div > span:last-child { width: 5px; height: 5px; margin-left: 4px; border-radius: 50%; background: var(--vh-accent); }
-.vh-vps-art-label { display: block; margin-top: 16px; color: var(--vh-muted); text-align: center; font: 500 10px/1.6 var(--vh-mono); letter-spacing: .14em; text-transform: uppercase; }
-.vh-vps-build-note { display: inline-flex; align-items: center; gap: 8px; color: var(--vh-muted); font-size: 13px; }
-.vh-vps-build-note .vh-icon { width: 15px; height: 15px; color: var(--vh-accent); }
 
 /* D. Benefits -------------------------------------------------------------- */
 .vh-vps-benefits { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: 72px; overflow: hidden; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); }
@@ -148,19 +149,17 @@
 .vh-vps-section-heading p, .vh-vps-faq-intro p { max-width: 520px; margin-top: 12px; color: var(--vh-muted); font-size: 15px; line-height: 1.6; }
 
 /* Operating systems -------------------------------------------------------- */
-.vh-vps-inline-link { color: var(--vh-accent); font-weight: 600; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
-.vh-vps-inline-link:hover { color: var(--vh-text); }
 .vh-vps-distro-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .vh-vps-distro-card { --os: var(--vh-accent); display: flex; align-items: flex-start; gap: 16px; min-width: 0; padding: 22px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); transition: border-color 180ms ease; }
 .vh-vps-distro-card:hover { border-color: color-mix(in srgb, var(--os) 45%, var(--vh-border)); }
-.vh-vps-distro-card[data-os="rocky"] { --os: #10b981; }
-.vh-vps-distro-card[data-os="alma"] { --os: #f59e0b; }
-.vh-vps-distro-card[data-os="windows"] { --os: #0a84ff; }
-.vh-vps-distro-card[data-os="debian"] { --os: #d70a53; }
-.vh-vps-distro-card[data-os="ubuntu"] { --os: #e95420; }
-.vh-vps-distro-card[data-os="fedora"] { --os: #51a2da; }
-.vh-vps-distro-card[data-os="pterodactyl"] { --os: var(--vh-accent); }
-.vh-vps-distro-mark { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border: 1px solid color-mix(in srgb, var(--os) 40%, var(--vh-border)); border-radius: var(--vps-radius-md); background: color-mix(in srgb, var(--os) 14%, var(--vh-surface)); color: color-mix(in srgb, var(--os) 75%, var(--vh-text)); font: 700 18px/1 var(--vh-display); }
+.vh-vps-store [data-os="rocky"] { --os: #10b981; }
+.vh-vps-store [data-os="alma"] { --os: #f59e0b; }
+.vh-vps-store [data-os="windows"] { --os: #0a84ff; }
+.vh-vps-store [data-os="debian"] { --os: #d70a53; }
+.vh-vps-store [data-os="ubuntu"] { --os: #e95420; }
+.vh-vps-store [data-os="fedora"] { --os: #51a2da; }
+.vh-vps-store [data-os="pterodactyl"] { --os: var(--vh-accent); }
+.vh-vps-distro-mark { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border: 1px solid color-mix(in srgb, var(--os, var(--vh-accent)) 40%, var(--vh-border)); border-radius: var(--vps-radius-md); background: color-mix(in srgb, var(--os, var(--vh-accent)) 14%, var(--vh-surface)); color: color-mix(in srgb, var(--os, var(--vh-accent)) 75%, var(--vh-text)); font: 700 18px/1 var(--vh-display); }
 .vh-vps-distro-copy { min-width: 0; flex: 1; }
 .vh-vps-distro-label { display: block; color: var(--vh-muted); font: 600 11px/1.4 var(--vh-mono); letter-spacing: .12em; text-transform: uppercase; }
 .vaded-client .vh-vps-distro-card h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 12px; color: var(--vh-text); font-size: 18px; font-weight: 650; line-height: 1.3; letter-spacing: -.01em; }
@@ -223,16 +222,24 @@
     .vh-vps-distro-preinstall .vh-vps-distro-versions { flex-shrink: 0; margin-left: auto; }
 }
 @media (min-width: 768px) {
-    .vh-vps-grid[data-single-plan] { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); }
     .vh-vps-cta { flex-direction: row; align-items: center; justify-content: space-between; padding: 48px 52px; }
 }
 @media (min-width: 1024px) {
-    .vh-vps-layout { grid-template-columns: 288px minmax(0, 1fr); gap: 28px; }
+    .vh-vps-layout { grid-template-columns: 300px minmax(0, 1fr); gap: 28px; }
+    .vh-vps-layout:not(.vh-vps-layout-single) { grid-template-columns: 320px minmax(0, 1fr); }
+    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-options { padding: 20px; }
+    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-tile { gap: 8px; padding: 8px; }
+    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-tile .vh-vps-distro-mark { width: 28px; height: 28px; font-size: 13px; }
+    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-name { font-size: 12.5px; }
+    .vh-vps-layout-single { grid-template-columns: minmax(0, 1fr) minmax(380px, 460px); }
+    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-options { position: sticky; top: 104px; }
+    .vh-vps-layout-single .vh-vps-main { position: sticky; top: 104px; }
+    .vh-vps-layout-single .vh-vps-options { padding: 28px; }
+    .vh-vps-layout-single .vh-vps-cfg-os { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
     .vh-vps-benefits { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .vh-vps-benefit + .vh-vps-benefit { border-top: 0; border-left: 1px solid var(--vh-border); }
     .vh-vps-workload-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .vh-vps-distro-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .vh-vps-settings { position: sticky; top: 104px; }
     .vh-vps-faq { grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); gap: 64px; }
     .vh-vps-faq-intro { position: sticky; top: 120px; align-self: start; }
 }
@@ -241,26 +248,22 @@
 }
 @media (max-width: 1023px) {
     .vh-vps-hero { padding-top: 56px; }
-    .vh-vps-settings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; }
-    .vh-vps-setting, .vh-vps-setting + .vh-vps-setting { padding: 0; border-bottom: 0; }
-    .vh-vps-billing { grid-column: 1 / -1; }
+    .vh-vps-cfg-os { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
     .vh-vps-cycles { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
     .vh-vps-cycles label:last-child:nth-child(odd) { grid-column: auto; }
-    .vh-vps-sidebar-foot, .vh-vps-setting + .vh-vps-sidebar-foot { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; justify-content: space-between; gap: 12px 24px; padding-top: 18px; border-top: 1px solid var(--vps-line-soft); }
 }
 @media (max-width: 639px) {
     .vh-vps-store { padding-bottom: 56px; }
     .vh-vps-hero { padding: 44px 0 40px; }
     .vh-vps-hero p { font-size: 16px; }
     .vh-vps-hero-note { font-size: 11px; letter-spacing: .06em; }
-    .vh-vps-settings { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+    .vh-vps-options { padding: 18px; }
+    .vh-vps-cfg-os { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .vh-vps-cycles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .vh-vps-cycles label:last-child:nth-child(odd) { grid-column: 1 / -1; }
     .vh-vps-plan-card, .vh-vps-grid[data-single-plan] .vh-vps-plan-card { padding: 22px; }
     .vh-vps-plan-price strong, .vh-vps-grid[data-single-plan] .vh-vps-plan-price strong { font-size: 42px; }
     .vh-vps-grid[data-single-plan] .vh-vps-spec { padding: 12px; }
-    .vh-vps-build-panel { padding: 24px; }
-    .vh-vps-server-art { display: none; }
     .vh-vps-benefits { margin-top: 48px; }
     .vh-vps-benefit { padding: 22px; }
     .vh-vps-section { padding-top: 64px; }
@@ -273,7 +276,7 @@
     .vaded-theme .vh-vps-cta-action { width: 100%; justify-content: space-between; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .vh-vps-plan-card, .vh-vps-workload, .vh-vps-distro-card, .vh-vps-cycles span, .vh-vps-question-toggle, .vh-vps-question-toggle::before, .vh-vps-question-toggle::after, .vh-vps-deploy .vh-icon, .vh-vps-cta-action .vh-icon, .vh-vps-link, .vh-vps-question::details-content { transition: none; }
+    .vh-vps-plan-card, .vh-vps-workload, .vh-vps-distro-card, .vh-vps-cfg-os-tile, .vh-vps-cfg-versions span, .vh-vps-cycles span, .vh-vps-question-toggle, .vh-vps-question-toggle::before, .vh-vps-question-toggle::after, .vh-vps-deploy .vh-icon, .vh-vps-cta-action .vh-icon, .vh-vps-link, .vh-vps-question::details-content { transition: none; }
     .vh-vps-question[open] p { animation: none; }
 }
 @media (max-width: 359px) {

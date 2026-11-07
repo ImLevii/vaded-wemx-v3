@@ -6,7 +6,10 @@ use App\Models\Category;
 use App\Models\Package;
 use App\Models\PackagePrice;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use App\Support\MinecraftOrderOptions;
+use App\Support\OperatingSystemOptions;
+use App\Models\PackageConfigOption;
 use Livewire\Attributes\Computed;
 use Illuminate\Validation\Rule;
 
@@ -149,6 +152,7 @@ new class extends Component
                 'prices' => $package->prices->sortBy('price')->unique('period_in_days')->values(),
                 'resources' => $resources,
                 'features' => $features,
+                'os' => $this->vpsOperatingSystemOption($package),
             ];
         });
 
@@ -157,6 +161,38 @@ new class extends Component
             'vpsBillingCycles' => $billingCycles,
             'defaultVpsPeriod' => (string) ($billingCycles->firstWhere('period_in_days', 30)?->period_in_days ?? $billingCycles->first()?->period_in_days ?? 'all'),
         ];
+    }
+
+    /**
+     * Map each OS picker choice ("family|version") to the value of the package's own checkout OS option,
+     * so "Configure VPS" can pre-select the operating system the visitor picked.
+     *
+     * @return array{key: string, values: array<string, string>}|null
+     */
+    private function vpsOperatingSystemOption(Package $package): ?array
+    {
+        $option = $package->configOptions->first(fn (PackageConfigOption $option): bool => OperatingSystemOptions::recognizes($option));
+
+        if (! $option) {
+            return null;
+        }
+
+        $values = [];
+
+        foreach (config('hosting.vps_operating_systems', []) as $family => $system) {
+            foreach ($system['versions'] as $version) {
+                foreach ($option->data['options'] ?? [] as $choice) {
+                    $haystack = strtolower(($choice['name'] ?? '').' '.($choice['value'] ?? ''));
+
+                    if (Str::contains($haystack, $system['match']) && (count($system['versions']) === 1 || str_contains($haystack, strtolower($version)))) {
+                        $values[$family.'|'.$version] = (string) $choice['value'];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return ['key' => $option->key, 'values' => $values];
     }
 
     private function resourceType(string $description): ?string

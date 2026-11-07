@@ -26,36 +26,32 @@
             <a href="#pricing" class="vh-vps-link">Choose your VPS <x-theme::icon name="arrow" /></a>
         </div>
         <div class="vh-vps-distro-grid">
-            @foreach([
-                ['rocky', 'R', 'Rocky Linux', ['8', '9'], null],
-                ['alma', 'A', 'Alma Linux', ['8', '9'], null],
-                ['windows', 'W', 'Windows Server', ['2019', '2022'], 'BYOL'],
-                ['debian', 'D', 'Debian', ['10', '11'], null],
-                ['ubuntu', 'U', 'Ubuntu', ['18.04', '20.04', '22.04'], null],
-                ['fedora', 'F', 'Fedora', ['36', '37', '38'], null],
-            ] as [$key, $mark, $name, $versions, $badge])
-                <article class="vh-vps-distro-card" data-os="{{ $key }}">
-                    <span class="vh-vps-distro-mark" aria-hidden="true">{{ $mark }}</span>
-                    <div class="vh-vps-distro-copy">
-                        <span class="vh-vps-distro-label">VPS OS</span>
-                        <h3>{{ $name }} @if($badge)<span class="vh-vps-distro-badge" title="Bring Your Own License">{{ $badge }}</span>@endif</h3>
-                        <ul class="vh-vps-distro-versions" aria-label="{{ $name }} versions">
-                            @foreach($versions as $version)<li>{{ $version }}</li>@endforeach
+            @foreach(config('hosting.vps_operating_systems', []) as $key => $system)
+                @if(count($system['versions']) > 1)
+                    <article class="vh-vps-distro-card" data-os="{{ $key }}">
+                        <span class="vh-vps-distro-mark" aria-hidden="true">{{ $system['mark'] }}</span>
+                        <div class="vh-vps-distro-copy">
+                            <span class="vh-vps-distro-label">VPS OS</span>
+                            <h3>{{ $system['name'] }} @isset($system['badge'])<span class="vh-vps-distro-badge" title="Bring Your Own License">{{ $system['badge'] }}</span>@endisset</h3>
+                            <ul class="vh-vps-distro-versions" aria-label="{{ $system['name'] }} versions">
+                                @foreach($system['versions'] as $version)<li>{{ $version }}</li>@endforeach
+                            </ul>
+                        </div>
+                    </article>
+                @else
+                    <article class="vh-vps-distro-card vh-vps-distro-preinstall" data-os="{{ $key }}">
+                        <span class="vh-vps-distro-mark" aria-hidden="true">{{ $system['mark'] }}</span>
+                        <div class="vh-vps-distro-copy">
+                            <span class="vh-vps-distro-label">VPS OS</span>
+                            <h3>{{ $system['name'] }}</h3>
+                            @isset($system['note'])<p>{{ $system['note'] }}</p>@endisset
+                        </div>
+                        <ul class="vh-vps-distro-versions" aria-label="{{ $system['name'] }} base">
+                            @foreach($system['versions'] as $version)<li>{{ $version }}</li>@endforeach
                         </ul>
-                    </div>
-                </article>
+                    </article>
+                @endif
             @endforeach
-            <article class="vh-vps-distro-card vh-vps-distro-preinstall" data-os="pterodactyl">
-                <span class="vh-vps-distro-mark" aria-hidden="true">P</span>
-                <div class="vh-vps-distro-copy">
-                    <span class="vh-vps-distro-label">VPS OS</span>
-                    <h3>Pterodactyl Preinstall</h3>
-                    <p>Panel Preinstalls use Rocky Linux as the Base OS.</p>
-                </div>
-                <ul class="vh-vps-distro-versions" aria-label="Pterodactyl preinstall base">
-                    <li>Rocky Linux base</li>
-                </ul>
-            </article>
         </div>
         <p class="vh-vps-distro-note"><span class="vh-vps-distro-badge">BYOL</span> <span><strong>Bring Your Own License</strong> means the operating system/game panel will not come with a license key.</span></p>
     </section>

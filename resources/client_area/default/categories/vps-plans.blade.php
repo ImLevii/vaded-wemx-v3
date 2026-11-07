@@ -1,17 +1,75 @@
-<section @class(['vh-vps-layout', 'vh-vps-layout-single' => $vpsPlans->count() === 1]) x-data="{ period: @js($defaultVpsPeriod) }" aria-label="{{ $category->name }} plans">
-    <aside class="vh-vps-settings" aria-label="VPS plan options">
-        <div class="vh-vps-setting">
-            <h2 class="vh-vps-control-label">Compute platform</h2>
-            <div class="vh-vps-platform"><span class="vh-vps-icon-chip"><x-theme::icon name="cpu" /></span><div class="vh-vps-option-copy"><strong>Cloud VPS</strong><span>Virtual private server</span></div><span class="vh-vps-selected" title="Selected"><x-theme::icon name="check" /></span></div>
-            <p class="vh-vps-setting-note">Resources for your own corner of the cloud.</p>
-        </div>
-        <div class="vh-vps-setting">
-            <h2 class="vh-vps-control-label">Deployment</h2>
-            <div class="vh-vps-region"><span class="vh-vps-icon-chip"><x-theme::icon name="pin" /></span><div class="vh-vps-option-copy"><strong>Make it your own</strong><span>Review options with your plan</span></div></div>
-            <p class="vh-vps-setting-note">Install Rocky, Alma, Debian, Ubuntu, Fedora, or Windows Server with one click. <a href="#operating-systems" class="vh-vps-inline-link">See all operating systems</a></p>
-        </div>
+@php
+    $vpsSystems = collect(config('hosting.vps_operating_systems', []))->map(fn (array $system): array => [
+        'name' => $system['name'],
+        'short' => $system['short'] ?? $system['name'],
+        'mark' => $system['mark'],
+        'versions' => $system['versions'],
+        'badge' => $system['badge'] ?? null,
+        'note' => $system['note'] ?? null,
+    ]);
+    [$defaultOsFamily, $defaultOsVersion] = config('hosting.vps_default_os', ['ubuntu', '22.04']);
+    if (! $vpsSystems->has($defaultOsFamily)) {
+        $defaultOsFamily = $vpsSystems->keys()->first();
+        $defaultOsVersion = collect($vpsSystems->get($defaultOsFamily)['versions'] ?? [])->last();
+    }
+    $defaultOsLabel = $defaultOsFamily ? (count($vpsSystems[$defaultOsFamily]['versions']) > 1 ? $vpsSystems[$defaultOsFamily]['name'].' '.$defaultOsVersion : $vpsSystems[$defaultOsFamily]['name']) : null;
+@endphp
+<section @class(['vh-vps-layout', 'vh-vps-layout-single' => $vpsPlans->count() === 1]) aria-label="{{ $category->name }} plans"
+    x-data="{
+        period: @js($defaultVpsPeriod),
+        systems: @js($vpsSystems),
+        osFamily: @js($defaultOsFamily),
+        osVersion: @js($defaultOsVersion),
+        pickFamily(family) { this.osFamily = family; const versions = this.systems[family].versions; this.osVersion = versions[versions.length - 1]; },
+        get osLabel() { const system = this.systems[this.osFamily]; return system ? (system.versions.length > 1 ? system.name + ' ' + this.osVersion : system.name) : ''; },
+        configureHref(base, os) {
+            const value = os && os.values[this.osFamily + '|' + this.osVersion];
+            return value ? base + (base.includes('?') ? '&' : '?') + encodeURIComponent('config_options[' + os.key + ']') + '=' + encodeURIComponent(value) : base;
+        },
+    }">
+    <aside class="vh-vps-options" aria-labelledby="vps-options-title">
+        <header class="vh-vps-options-head">
+            <span class="vh-vps-icon-chip"><x-theme::icon name="sliders" /></span>
+            <div><h2 id="vps-options-title">Configurable Options</h2><p>Choose your operating system and billing cycle.</p></div>
+        </header>
+
+        @if($vpsSystems->isNotEmpty())
+            <fieldset class="vh-vps-cfg-group">
+                <legend class="vh-vps-control-label">Operating system</legend>
+                <div class="vh-vps-cfg-os">
+                    @foreach($vpsSystems as $key => $system)
+                        <label class="vh-vps-cfg-os-choice" data-os="{{ $key }}">
+                            <input type="radio" name="vps-os-family" value="{{ $key }}" x-model="osFamily" @change="pickFamily('{{ $key }}')" @checked($key === $defaultOsFamily)>
+                            <span class="vh-vps-cfg-os-tile">
+                                <span class="vh-vps-distro-mark" aria-hidden="true">{{ $system['mark'] }}</span>
+                                <span class="vh-vps-cfg-os-name">{{ $system['short'] }}</span>
+                                @if($system['badge'])<span class="vh-vps-distro-badge" title="Bring Your Own License">{{ $system['badge'] }}</span>@endif
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+            </fieldset>
+
+            <fieldset class="vh-vps-cfg-group">
+                <legend class="vh-vps-control-label">Version</legend>
+                @foreach($vpsSystems as $key => $system)
+                    <div class="vh-vps-cfg-versions" x-show="osFamily === '{{ $key }}'" @if($key !== $defaultOsFamily) x-cloak @endif>
+                        @foreach($system['versions'] as $version)
+                            <label><input type="radio" name="vps-os-version-{{ $key }}" value="{{ $version }}" x-model="osVersion" @checked($key === $defaultOsFamily && $version === $defaultOsVersion)><span>{{ $version }}</span></label>
+                        @endforeach
+                    </div>
+                @endforeach
+                <p class="vh-vps-cfg-hint" x-show="osFamily === 'windows'" x-cloak><span class="vh-vps-distro-badge">BYOL</span> Bring Your Own License: Windows Server is installed without a license key.</p>
+                @foreach($vpsSystems->filter(fn ($system) => $system['note']) as $key => $system)
+                    <p class="vh-vps-cfg-hint" x-show="osFamily === '{{ $key }}'" x-cloak><x-theme::icon name="console" /> {{ $system['note'] }}</p>
+                @endforeach
+                <p class="vh-vps-cfg-hint" x-show="osFamily !== 'windows' && ! systems[osFamily]?.note"><x-theme::icon name="check" /> Installs with one click from your control panel.</p>
+            </fieldset>
+        @endif
+
         @if($vpsBillingCycles->isNotEmpty())
-            <fieldset class="vh-vps-setting vh-vps-billing"><legend class="vh-vps-control-label">Billing cycle</legend>
+            <fieldset class="vh-vps-cfg-group">
+                <legend class="vh-vps-control-label">Billing cycle</legend>
                 <div @class(['vh-vps-cycles', 'vh-vps-cycles-single' => $vpsBillingCycles->count() === 1])>
                     @foreach($vpsBillingCycles as $billingCycle)
                         <label><input type="radio" name="vps-billing-cycle" value="{{ $billingCycle->period_in_days }}" x-model="period" @checked((string) $billingCycle->period_in_days === $defaultVpsPeriod)><span>{{ $billingCycle->cycle() }}</span></label>
@@ -21,10 +79,6 @@
                 <p class="vh-vps-setting-note">Prices are per billing cycle. Review your total before checkout.</p>
             </fieldset>
         @endif
-        <div class="vh-vps-sidebar-foot">
-            <a href="#vps-details" class="vh-vps-link"><x-theme::icon name="sliders" /> Explore the possibilities</a>
-            <a href="{{ route('categories.index') }}#services" wire:navigate class="vh-vps-link vh-vps-link-muted"><x-theme::icon name="arrow" /> Explore all hosting</a>
-        </div>
     </aside>
 
     <div class="vh-vps-main">
@@ -49,46 +103,36 @@
                     @if($prices->isNotEmpty())
                         <div class="vh-vps-cycle-unavailable" x-show="period !== 'all' && ! @js($prices->pluck('period_in_days')->map(fn ($days) => (string) $days)->values()).includes(period)" x-cloak>This plan is not offered on the selected billing cycle.</div>
                     @endif
-                    @if($plan['resources'])
-                        <dl class="vh-vps-resources">
-                            @foreach(['cpu' => ['cpu', 'CPU cores'], 'memory' => ['memory', 'Memory'], 'storage' => ['storage', 'Storage'], 'network' => ['network', 'Bandwidth'], 'os' => ['console', 'Operating system']] as $resource => [$icon, $label])
-                                @isset($plan['resources'][$resource])
-                                    <div @class(['vh-vps-spec', 'vh-vps-spec-wide' => $resource === 'os'])><dt><x-theme::icon :name="$icon" />{{ $label }}</dt><dd>{{ implode(' · ', $plan['resources'][$resource]) }}</dd></div>
-                                @endisset
-                            @endforeach
-                        </dl>
-                    @endif
-                    @if($plan['features'] || ! $plan['resources'])
+                    <dl class="vh-vps-resources">
+                        @foreach(['cpu' => ['cpu', 'CPU cores'], 'memory' => ['memory', 'Memory'], 'storage' => ['storage', 'Storage'], 'network' => ['network', 'Bandwidth']] as $resource => [$icon, $label])
+                            @isset($plan['resources'][$resource])
+                                <div class="vh-vps-spec"><dt><x-theme::icon :name="$icon" />{{ $label }}</dt><dd>{{ implode(' · ', $plan['resources'][$resource]) }}</dd></div>
+                            @endisset
+                        @endforeach
+                        @if($defaultOsLabel)
+                            <div class="vh-vps-spec vh-vps-spec-wide"><dt><x-theme::icon name="console" />Operating system</dt><dd x-text="osLabel">{{ $defaultOsLabel }}</dd></div>
+                        @elseif(isset($plan['resources']['os']))
+                            <div class="vh-vps-spec vh-vps-spec-wide"><dt><x-theme::icon name="console" />Operating system</dt><dd>{{ implode(' · ', $plan['resources']['os']) }}</dd></div>
+                        @endif
+                    </dl>
+                    @if($plan['features'])
                         <ul class="vh-vps-features">
-                            @forelse($plan['features'] as $feature)
+                            @foreach($plan['features'] as $feature)
                                 <li><x-theme::icon name="check" /><span>{{ $feature }}</span></li>
-                            @empty
-                                <li><x-theme::icon name="sliders" /><span>View all details and available configuration.</span></li>
-                            @endforelse
+                            @endforeach
                         </ul>
                     @endif
                     <div class="vh-vps-plan-footer">
                         <span class="vh-vps-config-note"><x-theme::icon name="sliders" /> Your configuration. Your server.</span>
                         @foreach($prices as $planPrice)
-                            <a class="vh-action vh-vps-deploy" href="{{ route('packages.view', ['package' => $package->slug, 'packagePriceId' => $planPrice->id]) }}" wire:navigate x-show="period === '{{ $planPrice->period_in_days }}' || (period === 'all' && {{ $loop->first ? 'true' : 'false' }})" @if((string) $planPrice->period_in_days !== $defaultVpsPeriod) x-cloak @endif aria-label="Configure {{ $package->name }}, {{ $planPrice->cycle() }}">Configure VPS <x-theme::icon name="arrow" /></a>
+                            @php($configureUrl = route('packages.view', ['package' => $package->slug, 'packagePriceId' => $planPrice->id]))
+                            <a class="vh-action vh-vps-deploy" href="{{ $configureUrl }}" :href="configureHref(@js($configureUrl), @js($plan['os']))" wire:navigate x-show="period === '{{ $planPrice->period_in_days }}' || (period === 'all' && {{ $loop->first ? 'true' : 'false' }})" @if((string) $planPrice->period_in_days !== $defaultVpsPeriod) x-cloak @endif aria-label="Configure {{ $package->name }}, {{ $planPrice->cycle() }}">Configure VPS <x-theme::icon name="arrow" /></a>
                         @endforeach
                     </div>
                 </article>
             @empty
                 <div class="vh-vps-empty"><x-theme::empty-state title="More VPS plans are on the way." description="No plans are currently available. Explore our other services or check back soon." action-text="Explore hosting" :action-href="route('categories.index').'#services'" /></div>
             @endforelse
-            @if($vpsPlans->count() === 1)
-                <div class="vh-vps-build-panel" aria-label="A home for your next project">
-                    <div><span class="vh-vps-label">Your next chapter</span><h3>A little space.<br><em>A lot of potential.</em></h3><p>Your app. Your development environment. Your side project that could become something bigger.</p></div>
-                    <div class="vh-vps-server-art" aria-hidden="true">
-                        <div><x-theme::icon name="server" /><span></span><span></span></div>
-                        <div><x-theme::icon name="server" /><span></span><span></span></div>
-                        <div><x-theme::icon name="server" /><span></span><span></span></div>
-                        <span class="vh-vps-art-label">VADED / Cloud infrastructure</span>
-                    </div>
-                    <span class="vh-vps-build-note"><x-theme::icon name="cloud" /> Built around what you want to run.</span>
-                </div>
-            @endif
         </div>
         <p class="vh-vps-catalog-note">Included resources are listed per plan. Configuration, billing, and any extras are reviewed before you order.</p>
     </div>
