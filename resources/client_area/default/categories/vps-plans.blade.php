@@ -92,40 +92,21 @@
                 <div class="vh-vps-panel vh-vps-options" aria-labelledby="vps-options-title">
                     <header class="vh-vps-options-head">
                         <span class="vh-vps-icon-chip"><x-theme::icon name="sliders" /></span>
-                        <div><h3 id="vps-options-title">Configurable Options</h3><p>Choose your operating system and billing cycle.</p></div>
+                        <div><h3 id="vps-options-title">Configurable Options</h3><p>Choose your billing cycle. Your operating system is selected in the server console after checkout.</p></div>
                     </header>
 
                     @if($vpsSystems->isNotEmpty())
                         <fieldset class="vh-vps-cfg-group">
                             <legend class="vh-vps-control-label">Operating system</legend>
-                            <div class="vh-vps-cfg-os">
+                            <div class="vh-vps-cfg-os vh-vps-cfg-os-static">
                                 @foreach($vpsSystems as $key => $system)
-                                    <label class="vh-vps-cfg-os-choice" data-os="{{ $key }}">
-                                        <input type="radio" name="vps-os-family" value="{{ $key }}" x-model="osFamily" @change="pickFamily('{{ $key }}')" @checked($key === $defaultOsFamily)>
-                                        <span class="vh-vps-cfg-os-tile">
-                                            <span class="vh-vps-distro-mark" aria-hidden="true">@if($system['logo'] ?? null)<img src="{{ asset($system['logo']) }}" alt="" width="26" height="26">@else{{ $system['mark'] }}@endif</span>
-                                            <span class="vh-vps-cfg-os-name">{{ $system['short'] }}</span>
-                                            @if($system['badge'])<span class="vh-vps-distro-badge" title="Bring Your Own License">{{ $system['badge'] }}</span>@endif
-                                        </span>
-                                    </label>
+                                    <span class="vh-vps-cfg-os-tile" data-os="{{ $key }}">
+                                        <span class="vh-vps-distro-mark" aria-hidden="true">@if($system['logo'] ?? null)<img src="{{ asset($system['logo']) }}" alt="" width="26" height="26">@else{{ $system['mark'] }}@endif</span>
+                                        <span class="vh-vps-cfg-os-name">{{ $system['short'] }}</span>
+                                    </span>
                                 @endforeach
                             </div>
-                        </fieldset>
-
-                        <fieldset class="vh-vps-cfg-group">
-                            <legend class="vh-vps-control-label">Version</legend>
-                            @foreach($vpsSystems as $key => $system)
-                                <div class="vh-vps-cfg-versions" x-show="osFamily === '{{ $key }}'" @if($key !== $defaultOsFamily) x-cloak @endif>
-                                    @foreach($system['versions'] as $version)
-                                        <label><input type="radio" name="vps-os-version-{{ $key }}" value="{{ $version }}" x-model="osVersion" @checked($key === $defaultOsFamily && $version === $defaultOsVersion)><span>{{ $version }}</span></label>
-                                    @endforeach
-                                </div>
-                            @endforeach
-                            <p class="vh-vps-cfg-hint" x-show="osFamily === 'windows'" x-cloak><span class="vh-vps-distro-badge">BYOL</span> Bring Your Own License: Windows is installed without a license key.</p>
-                            @foreach($vpsSystems->filter(fn ($system) => $system['note']) as $key => $system)
-                                <p class="vh-vps-cfg-hint" x-show="osFamily === '{{ $key }}'" x-cloak><x-theme::icon name="console" /> {{ $system['note'] }}</p>
-                            @endforeach
-                            <p class="vh-vps-cfg-hint" x-show="osFamily !== 'windows' && ! systems[osFamily]?.note"><x-theme::icon name="check" /> Installed automatically when your server is created.</p>
+                            <p class="vh-vps-cfg-hint"><x-theme::icon name="console" /> Pick your OS from a menu in the server console the first time it starts &mdash; 20+ Linux distributions are available.</p>
                         </fieldset>
                     @endif
 
@@ -155,11 +136,7 @@
                             @foreach($specCards as $resource => $card)
                                 @isset($plan['specs'][$resource])<li><span>{{ $card['bullet'] }}:</span> {{ $plan['specs'][$resource]['value'] }}</li>@endisset
                             @endforeach
-                            @if($defaultOsLabel)
-                                <li><span>Operating system:</span> <span x-text="osLabel">{{ $defaultOsLabel }}</span></li>
-                            @elseif(isset($plan['resources']['os']))
-                                <li><span>Operating system:</span> {{ implode(' · ', $plan['resources']['os']) }}</li>
-                            @endif
+                            <li><span>Operating system:</span> Chosen in console</li>
                         </ul>
                         <div class="vh-vps-current-total">
                             @forelse($prices as $planPrice)

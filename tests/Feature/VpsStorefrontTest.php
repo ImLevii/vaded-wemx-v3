@@ -52,7 +52,7 @@ class VpsStorefrontTest extends TestCase
             ->assertSeeInOrder(['VPS Cores', '2 vCores', 'Virtual CPU cores', 'Server Memory', '4 GB', 'DDR4 RAM'])
             ->assertSeeInOrder(['VPS Storage', '25 GB', 'SSD Storage', 'Server Bandwidth', 'Unlimited', 'Bandwidth'])
             ->assertSeeInOrder(['Current Configuration', 'Cores:', '2 vCores', 'Memory:', '4 GB', 'Disk:', '25 GB', 'Bandwidth:', 'Unlimited'])
-            ->assertSee('Operating system')->assertSee('Ubuntu 22.04')
+            ->assertSee('Operating system')->assertSee('Chosen in console')->assertSee('Ubuntu')
             ->assertSee('No setup fee')
             ->assertSee(route('packages.view', ['package' => $this->package->slug, 'packagePriceId' => $monthly->id]), false)
             ->assertSee('Order Now')->assertDontSee('Configure VPS')

@@ -51,6 +51,7 @@
 .vh-vps-cfg-group:last-child { padding-bottom: 0; border-bottom: 0; }
 .vh-vps-store .vh-vps-control-label { display: block; float: left; width: 100%; margin: 0 0 12px; padding: 0; color: var(--vh-muted); font: 600 11px/1.4 var(--vh-mono); letter-spacing: .12em; text-transform: uppercase; }
 .vh-vps-cfg-os { clear: both; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.vh-vps-cfg-os-static .vh-vps-cfg-os-tile { cursor: default; }
 .vh-vps-cfg-os-choice { position: relative; min-width: 0; }
 .vh-vps-cfg-os-choice input, .vh-vps-cfg-versions input { position: absolute; width: 1px; height: 1px; opacity: 0; }
 .vh-vps-cfg-os-tile { position: relative; display: flex; align-items: center; gap: 10px; height: 100%; min-height: 50px; padding: 9px 10px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-md); background: var(--vps-tile); cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease; }

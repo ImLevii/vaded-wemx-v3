@@ -22,7 +22,7 @@
 
     <section id="operating-systems" class="vh-vps-section vh-vps-distro" aria-labelledby="vps-os-title">
         <div class="vh-vps-section-heading">
-            <div><span class="vh-vps-label">One-click installs</span><h2 id="vps-os-title">VPS Operating Systems</h2><p>We offer a variety of operating systems installed via one click using your control panel.</p></div>
+            <div><span class="vh-vps-label">Your choice</span><h2 id="vps-os-title">VPS Operating Systems</h2><p>Pick from 20+ Linux distributions in your server console the first time it starts. These are some of the most popular.</p></div>
             <a href="#pricing" class="vh-vps-link">Choose your VPS <x-theme::icon name="arrow" /></a>
         </div>
         <div class="vh-vps-distro-grid">
@@ -53,7 +53,7 @@
                 @endif
             @endforeach
         </div>
-        <p class="vh-vps-distro-note"><span class="vh-vps-distro-badge">BYOL</span> <span><strong>Bring Your Own License</strong> means the operating system will not come with a license key.</span></p>
+        <p class="vh-vps-distro-note"><x-theme::icon name="console" /> <span>Your server boots to a menu where you choose and install your distribution &mdash; reinstall any time to switch.</span></p>
     </section>
 
     <section id="vps-details" class="vh-vps-section vh-vps-workloads" aria-labelledby="vps-workloads-title">
@@ -77,8 +77,8 @@
         <div class="vh-vps-faq-list">
             @foreach([
                 ['What resources come with my VPS?', 'Each plan lists its included resources and features. Open the plan configuration to review the full details, available options, and final price before ordering.'],
-                ['Which operating systems can I choose?', 'Ubuntu 18.04, 20.04, 22.04 & 24.04, Debian 10, 11, 12 & 13, Rocky Linux, AlmaLinux, Fedora 40, and Windows Server 2022 or Windows 10 (BYOL). Pick one at checkout and it is installed when your server is created; you can switch between versions of the same OS later from your control panel.'],
-                ['What does BYOL mean?', 'Bring Your Own License. A BYOL operating system is installed without a license key, so you activate it with your own.'],
+                ['Which operating systems can I choose?', 'Over 20 Linux distributions, including Ubuntu, Debian, Rocky Linux, AlmaLinux, CentOS, Fedora, Alpine and Arch. When your server first starts it opens a menu in the console where you pick and install your distribution, and you can reinstall to switch at any time.'],
+                ['Can I reinstall or change my OS?', 'Yes. Run the reinstall command in your server console to wipe it and install a different distribution. Your plan resources stay the same.'],
                 ['How does VPS billing work?', 'Choose one of the billing cycles offered for your plan. The listed price covers that cycle; any setup fees, configurable extras, and applicable taxes appear before checkout.'],
                 ['Where do I manage my server?', 'Your client dashboard keeps your services and payments in one place. Open your VPS service to see its details, available controls, and any linked management panel.'],
             ] as [$question, $answer])

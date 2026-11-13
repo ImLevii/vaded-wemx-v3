@@ -23,15 +23,18 @@ return [
      * `logo` is a path under public/. `match` words are used to find the same OS in a package's checkout OS option so the
      * picker can pre-select it; versions are listed oldest to newest (the newest is the default).
      */
-    // Must match the Docker image labels of the per-OS eggs in the panel's VPS nest (nest 8): the
-    // checkout OS option values are those labels, and the Pterodactyl module picks the egg by label.
+    // The VPS egg (panel nest 8, "Vaded VPS", ysdragon/Pterodactyl-VPS-Egg) is proot-based and
+    // installs the distro the customer picks from a console menu after purchase. This list is shown
+    // on the VPS page for information only; it does not drive checkout.
     'vps_operating_systems' => [
         'ubuntu' => ['name' => 'Ubuntu', 'logo' => 'assets/common/img/os/ubuntu.svg', 'mark' => 'U', 'versions' => ['18.04', '20.04', '22.04', '24.04'], 'match' => ['ubuntu']],
         'debian' => ['name' => 'Debian', 'logo' => 'assets/common/img/os/debian-color.svg', 'mark' => 'D', 'versions' => ['10', '11', '12', '13'], 'match' => ['debian']],
-        'rocky' => ['name' => 'Rocky Linux', 'logo' => 'assets/common/img/os/rockylinux.svg', 'mark' => 'R', 'versions' => ['Latest'], 'match' => ['rocky']],
-        'alma' => ['name' => 'AlmaLinux', 'logo' => 'assets/common/img/os/almalinux-color.svg', 'mark' => 'A', 'versions' => ['Latest'], 'match' => ['alma']],
-        'fedora' => ['name' => 'Fedora', 'logo' => 'assets/common/img/os/fedora.svg', 'mark' => 'F', 'versions' => ['40'], 'match' => ['fedora']],
-        'windows' => ['name' => 'Windows', 'logo' => 'assets/common/img/os/windows.svg', 'mark' => 'W', 'versions' => ['Server 2022', '10'], 'match' => ['windows'], 'badge' => 'BYOL'],
+        'rocky' => ['name' => 'Rocky Linux', 'logo' => 'assets/common/img/os/rockylinux.svg', 'mark' => 'R', 'versions' => ['8', '9'], 'match' => ['rocky']],
+        'alma' => ['name' => 'AlmaLinux', 'logo' => 'assets/common/img/os/almalinux-color.svg', 'mark' => 'A', 'versions' => ['8', '9'], 'match' => ['alma']],
+        'centos' => ['name' => 'CentOS', 'logo' => 'assets/common/img/os/centos.svg', 'mark' => 'C', 'versions' => ['Stream 9', 'Stream 10'], 'match' => ['centos']],
+        'fedora' => ['name' => 'Fedora', 'logo' => 'assets/common/img/os/fedora.svg', 'mark' => 'F', 'versions' => ['40', '41'], 'match' => ['fedora']],
+        'alpine' => ['name' => 'Alpine', 'mark' => 'A', 'versions' => ['3.19', '3.20', 'Edge'], 'match' => ['alpine']],
+        'arch' => ['name' => 'Arch Linux', 'mark' => 'A', 'versions' => ['Rolling'], 'match' => ['arch']],
     ],
     'vps_default_os' => ['ubuntu', '22.04'],
 
