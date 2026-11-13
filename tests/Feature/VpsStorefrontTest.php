@@ -48,8 +48,10 @@ class VpsStorefrontTest extends TestCase
             ->assertSee('A cloud for your next project.')
             ->assertSee('Basic VPS')
             ->assertSee('$10.00')
-            ->assertSee('2 vCores')->assertSee('4 GB DDR4 RAM')
-            ->assertSee('25 GB SSD Storage')->assertSee('Unlimited Bandwidth')
+            ->assertSee('Configure Your VPS Server')->assertSee('More plans are on the way.')
+            ->assertSeeInOrder(['VPS Cores', '2 vCores', 'Virtual CPU cores', 'Server Memory', '4 GB', 'DDR4 RAM'])
+            ->assertSeeInOrder(['VPS Storage', '25 GB', 'SSD Storage', 'Server Bandwidth', 'Unlimited', 'Bandwidth'])
+            ->assertSeeInOrder(['Current Configuration', 'Cores:', '2 vCores', 'Memory:', '4 GB', 'Disk:', '25 GB', 'Bandwidth:', 'Unlimited'])
             ->assertSee('Operating system')->assertSee('Ubuntu 22.04')
             ->assertSee('No setup fee')
             ->assertSee(route('packages.view', ['package' => $this->package->slug, 'packagePriceId' => $monthly->id]), false)
@@ -90,6 +92,8 @@ class VpsStorefrontTest extends TestCase
         for ($index = 2; $index <= 6; $index++) {
             $response->assertSee('VPS '.$index);
         }
+        // One slider stop per public plan (Basic VPS + VPS 2..6), not a card grid.
+        $response->assertSee('type="range" min="0" max="5"', false)->assertDontSee('More plans are on the way.');
     }
 
     public function test_vps_layout_is_scoped_to_an_available_vps_category(): void

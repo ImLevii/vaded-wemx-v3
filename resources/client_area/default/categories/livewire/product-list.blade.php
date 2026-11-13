@@ -147,11 +147,16 @@ new class extends Component
                 }
             }
 
+            $specs = collect($resources)->only(['cpu', 'memory', 'storage', 'network'])
+                ->map(fn (array $lines, string $resource): array => $this->vpsSpec($resource, $lines[0]))->all();
+
             return [
                 'package' => $package,
                 'prices' => $package->prices->sortBy('price')->unique('period_in_days')->values(),
                 'resources' => $resources,
                 'features' => $features,
+                'specs' => $specs,
+                'tick' => $specs['memory']['value'] ?? $package->name,
                 'os' => $this->vpsOperatingSystemOption($package),
             ];
         });
@@ -193,6 +198,27 @@ new class extends Component
         }
 
         return ['key' => $option->key, 'values' => $values];
+    }
+
+    /**
+     * Split a resource feature into the spec card's headline and detail line:
+     * "4 GB DDR4 RAM" -> 4 GB / DDR4 RAM, "1 vCPU (shared burstable)" -> 1 vCPU / Shared burstable,
+     * "Unlimited Bandwidth" -> Unlimited / Bandwidth. Unparseable text is kept whole.
+     *
+     * @return array{value: string, detail: string}
+     */
+    private function vpsSpec(string $resource, string $text): array
+    {
+        $text = trim(preg_replace('/\s+/', ' ', $text));
+        $fallback = ['cpu' => 'Virtual CPU cores', 'memory' => 'Server memory', 'storage' => 'Disk space', 'network' => 'Network bandwidth'][$resource];
+
+        if (preg_match('/^((?:\d+(?:[.,]\d+)?\s*(?:x\s*)?(?:[KMGTP]i?B|[KMGT]bps|v?cpus?|v?cores?|threads?)?)|unlimited|unmetered)\b\s*(.*)$/i', $text, $match)) {
+            $detail = trim($match[2], " \t-–—:·,()");
+
+            return ['value' => $match[1], 'detail' => $detail !== '' ? Str::ucfirst($detail) : $fallback];
+        }
+
+        return ['value' => $text, 'detail' => $fallback];
     }
 
     private function resourceType(string $description): ?string

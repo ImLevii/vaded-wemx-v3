@@ -41,13 +41,11 @@
 
 /* B. Product selection ----------------------------------------------------- */
 .vh-vps-catalog { scroll-margin-top: 100px; }
-.vh-vps-layout { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 24px; }
 
-/* Left: configurable options (OS picker + billing cycle) */
 .vh-vps-store [x-cloak] { display: none !important; }
 .vh-vps-options { display: flex; flex-direction: column; min-width: 0; padding: 24px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); }
 .vh-vps-options-head { display: flex; align-items: center; gap: 14px; padding-bottom: 20px; border-bottom: 1px solid var(--vps-line-soft); }
-.vaded-client .vh-vps-options-head h2 { margin: 0; color: var(--vh-text); font: 650 18px/1.3 var(--vh-display); letter-spacing: -.01em; }
+.vaded-client .vh-vps-options-head :is(h2, h3) { margin: 0; color: var(--vh-text); font: 650 18px/1.3 var(--vh-display); letter-spacing: -.01em; }
 .vh-vps-options-head p { margin-top: 2px; color: var(--vh-muted); font-size: 13px; line-height: 1.5; }
 .vh-vps-cfg-group { min-width: 0; margin: 0; padding: 20px 0; border: 0; border-bottom: 1px solid var(--vps-line-soft); }
 .vh-vps-cfg-group:last-child { padding-bottom: 0; border-bottom: 0; }
@@ -81,16 +79,7 @@
 .vh-vps-cycles input:checked + span { background: var(--vh-accent); color: #fff; }
 .vh-vps-cycles input:focus-visible + span { outline: 2px solid var(--vh-accent); outline-offset: 2px; }
 
-/* Center: plan card(s) */
-.vh-vps-main { min-width: 0; }
-.vh-vps-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
 .vh-vps-empty { grid-column: 1 / -1; }
-.vh-vps-plan-card { position: relative; display: flex; flex-direction: column; min-width: 0; padding: 28px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); transition: border-color 180ms ease, box-shadow 180ms ease; }
-.vh-vps-plan-card:hover { border-color: var(--vps-accent-line); }
-.vh-vps-plan-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.vaded-client .vh-vps-plan-heading h3 { margin: 0; color: var(--vh-text); font-size: 18px; font-weight: 650; line-height: 1.35; letter-spacing: -.01em; overflow-wrap: anywhere; }
-.vh-vps-plan-heading .vh-vps-icon-chip { color: var(--vh-muted); }
-.vh-vps-plan-description { margin-top: 8px; color: var(--vh-muted); font-size: 14px; line-height: 1.6; }
 .vh-vps-plan-price { margin-top: 22px; padding-bottom: 22px; border-bottom: 1px solid var(--vh-border); }
 .vh-vps-price-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
 .vh-vps-plan-price strong { color: var(--vh-text); font-size: 44px; font-weight: 700; line-height: 1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
@@ -99,41 +88,15 @@
 .vh-vps-plan-price small .vh-icon { width: 14px; height: 14px; color: var(--vh-accent); }
 .vh-vps-plan-price .vh-vps-unavailable { font-size: 20px; letter-spacing: -.02em; }
 .vh-vps-cycle-unavailable { padding: 18px 0; border-bottom: 1px solid var(--vh-border); color: var(--vh-muted); font-size: 13px; line-height: 1.6; }
-.vh-vps-resources { display: grid; margin: 0; padding: 12px 0; border-bottom: 1px solid var(--vh-border); }
-.vh-vps-spec { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; }
-.vh-vps-spec + .vh-vps-spec { border-top: 1px solid var(--vps-line-soft); }
-.vh-vps-spec dt { display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0; color: var(--vh-muted); font-size: 13px; }
-.vh-vps-spec dt .vh-icon { width: 16px; height: 16px; color: var(--vh-accent); }
-.vh-vps-spec dd { min-width: 0; margin: 0; color: var(--vh-text); text-align: right; font-size: 14px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
 .vh-vps-features { display: grid; gap: 10px; margin: 0; padding: 20px 0; list-style: none; }
 .vh-vps-features li { display: flex; align-items: flex-start; gap: 10px; color: var(--vh-muted); font-size: 14px; line-height: 1.5; }
 .vh-vps-features .vh-icon { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; color: var(--vh-accent); }
-.vh-vps-plan-footer { margin-top: auto; padding-top: 4px; }
-.vh-vps-resources + .vh-vps-plan-footer { padding-top: 20px; }
-.vh-vps-config-note { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; color: var(--vh-muted); font-size: 13px; }
-.vh-vps-config-note .vh-icon { width: 15px; height: 15px; }
 .vaded-theme .vh-vps-deploy { justify-content: space-between; width: 100%; min-height: 48px; padding: 12px 18px; border-radius: var(--vps-radius-sm); font-size: 15px; letter-spacing: 0; }
 .vh-vps-deploy .vh-icon { width: 18px; height: 18px; transition: transform 150ms ease; }
 .vh-vps-deploy:hover .vh-icon { transform: translateX(3px); }
 .vh-vps-catalog-note { margin-top: 20px; color: var(--vh-muted); font-size: 13px; line-height: 1.6; text-align: center; }
 
-/* Several plans: keep prices on one baseline across a row */
-.vh-vps-grid:not([data-single-plan]) .vh-vps-plan-card { padding: 24px; }
-.vh-vps-grid:not([data-single-plan]) .vh-vps-plan-heading { min-height: 49px; }
-.vh-vps-grid:not([data-single-plan]) .vh-vps-plan-description { min-height: calc(3 * 1.6em); }
-.vh-vps-grid:not([data-single-plan]) .vh-vps-plan-price strong { font-size: 40px; }
 
-/* Single plan: larger configuration card with a spec grid */
-.vh-vps-grid[data-single-plan] { grid-template-columns: minmax(0, 1fr); }
-.vh-vps-grid[data-single-plan] .vh-vps-plan-card { padding: 32px; }
-.vaded-client .vh-vps-grid[data-single-plan] .vh-vps-plan-heading h3 { font-size: 20px; }
-.vh-vps-grid[data-single-plan] .vh-vps-plan-price strong { font-size: 52px; }
-.vh-vps-grid[data-single-plan] .vh-vps-resources { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 22px 0; }
-.vh-vps-grid[data-single-plan] .vh-vps-spec { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 8px; padding: 14px; border: 1px solid var(--vps-line-soft); border-radius: var(--vps-radius-md); background: var(--vps-tile); }
-.vh-vps-grid[data-single-plan] .vh-vps-spec dt { font-size: 12px; }
-.vh-vps-grid[data-single-plan] .vh-vps-spec dd { text-align: left; font-size: 15px; }
-.vh-vps-grid[data-single-plan] .vh-vps-spec-wide { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; }
-.vh-vps-grid[data-single-plan] .vh-vps-spec-wide dd { text-align: right; }
 
 /* D. Benefits -------------------------------------------------------------- */
 .vh-vps-benefits { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: 72px; overflow: hidden; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); }
@@ -217,9 +180,61 @@
 
 .vh-vps-store :is(a, button, summary):focus-visible { outline: 2px solid var(--vh-accent); outline-offset: 4px; }
 
+/* Configure your VPS server (2026-11-13): plan slider > spec cards + options > current configuration */
+.vh-vps-builder { display: flex; flex-direction: column; gap: 20px; }
+.vaded-client .vh-vps-builder-head h2 { margin: 0; color: var(--vh-text); font: 700 clamp(24px, 3vw, 30px)/1.2 var(--vh-display); letter-spacing: -.01em; text-transform: uppercase; }
+.vh-vps-builder-head p { margin-top: 8px; color: var(--vh-muted); font-size: 15px; line-height: 1.6; }
+.vh-vps-panel { min-width: 0; padding: 24px 28px; border: 1px solid var(--vh-border); border-radius: var(--vps-radius-lg); background: var(--vh-surface); }
+.vh-vps-builder-body { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 20px; }
+.vh-vps-builder-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+.vaded-client .vh-vps-plan-name { margin: 0; color: var(--vh-text); font-size: 20px; font-weight: 650; line-height: 1.3; letter-spacing: -.01em; }
+.vh-vps-slider { --vps-thumb: 22px; --vps-track: 6px; position: relative; margin-top: 58px; padding-bottom: 34px; }
+.vh-vps-slider-bubble { position: absolute; bottom: calc(100% + 10px); left: calc(var(--vps-thumb) / 2 + var(--vps-plan-pos) * (100% - var(--vps-thumb))); width: max-content; max-width: min(80%, 320px); padding: 5px 12px; border-radius: 999px; background: var(--vh-accent); color: #fff; font-size: 12px; font-weight: 600; line-height: 1.4; text-align: center; transform: translateX(calc(-12% - var(--vps-plan-pos) * 76%)); pointer-events: none; transition: left 180ms ease, transform 180ms ease; }
+.vh-vps-slider-bubble::after { content: ""; position: absolute; top: 100%; left: calc(12% + var(--vps-plan-pos) * 76%); border: 5px solid transparent; border-top-color: var(--vh-accent); transform: translateX(-50%); transition: left 180ms ease; }
+.vh-vps-slider input[type="range"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: var(--vps-thumb); margin: 0; background: transparent; cursor: pointer; }
+.vh-vps-slider input[type="range"]::-webkit-slider-runnable-track { height: var(--vps-track); border-radius: 999px; background: linear-gradient(to right, var(--vh-accent) 0 calc(var(--vps-thumb) / 2 + var(--vps-plan-pos) * (100% - var(--vps-thumb))), var(--vh-border) 0); }
+.vh-vps-slider input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; box-sizing: border-box; width: var(--vps-thumb); height: var(--vps-thumb); margin-top: calc((var(--vps-track) - var(--vps-thumb)) / 2); border: 4px solid var(--vh-surface); border-radius: 50%; background: var(--vh-accent); box-shadow: 0 0 0 1px var(--vh-accent), 0 4px 14px rgba(0, 0, 0, .35); }
+.vh-vps-slider input[type="range"]::-moz-range-track { height: var(--vps-track); border-radius: 999px; background: var(--vh-border); }
+.vh-vps-slider input[type="range"]::-moz-range-progress { height: var(--vps-track); border-radius: 999px; background: var(--vh-accent); }
+.vh-vps-slider input[type="range"]::-moz-range-thumb { box-sizing: border-box; width: var(--vps-thumb); height: var(--vps-thumb); border: 4px solid var(--vh-surface); border-radius: 50%; background: var(--vh-accent); box-shadow: 0 0 0 1px var(--vh-accent), 0 4px 14px rgba(0, 0, 0, .35); }
+.vh-vps-slider input[type="range"]:focus-visible { outline: none; }
+.vh-vps-slider input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 1px var(--vh-accent), 0 0 0 5px var(--vh-accent-soft); }
+.vh-vps-slider input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 1px var(--vh-accent), 0 0 0 5px var(--vh-accent-soft); }
+.vh-vps-slider[data-single] input[type="range"] { cursor: default; pointer-events: none; }
+.vh-vps-slider-ticks { position: absolute; top: calc(var(--vps-thumb) + 4px); left: 0; right: 0; height: 28px; margin: 0; padding: 0; list-style: none; }
+.vh-vps-slider-ticks li { position: absolute; top: 0; left: calc(var(--vps-thumb) / 2 + var(--vps-tick-pos) * (100% - var(--vps-thumb))); transform: translateX(-50%); }
+.vh-vps-slider-ticks li::before { content: ""; display: block; width: 1px; height: 7px; margin: 0 auto 3px; background: var(--vh-muted); opacity: .55; }
+.vh-vps-slider-ticks button { display: block; padding: 0 2px; border: 0; background: none; color: var(--vh-muted); font: 600 12px/1.3 var(--vh-mono); white-space: nowrap; cursor: pointer; transition: color 150ms ease; }
+.vh-vps-slider-ticks button:hover, .vh-vps-slider-ticks button[aria-pressed="true"] { color: var(--vh-text); }
+.vh-vps-slider[data-single] .vh-vps-slider-ticks button { cursor: default; }
+.vh-vps-slider-note { margin-top: -6px; color: var(--vh-muted); font-size: 13px; text-align: right; }
+
+.vh-vps-spec-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.vh-vps-spec-card { display: flex; flex-direction: column; padding: 22px 24px 18px; }
+.vaded-client .vh-vps-spec-card h4 { margin: 0; color: var(--vh-text); font-size: 18px; font-weight: 500; line-height: 1.35; }
+.vh-vps-spec-card strong { margin-top: 6px; color: var(--vh-accent); font-size: 22px; font-weight: 600; line-height: 1.3; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.vh-vps-spec-card p { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: auto 0 0; padding-top: 14px; border-top: 1px solid var(--vps-line-soft); color: var(--vh-muted); font-size: 13px; line-height: 1.45; }
+.vh-vps-spec-card strong + p { margin-top: 16px; }
+.vh-vps-spec-card p .vh-icon { width: 24px; height: 24px; flex-shrink: 0; color: var(--vh-text); }
+.vh-vps-spec-cards .vh-vps-features { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 20px; padding: 2px 4px 0; }
+.vh-vps-spec-cards .vh-vps-features li { font-size: 13px; }
+
+.vh-vps-current { display: flex; flex-direction: column; }
+.vaded-client .vh-vps-current h3 { margin: 0; color: var(--vh-text); font-size: 19px; font-weight: 600; line-height: 1.35; }
+.vh-vps-current-intro { margin-top: 6px; color: var(--vh-muted); font-size: 13px; line-height: 1.6; }
+.vh-vps-current-list { display: grid; gap: 8px; margin: 22px 0 0; padding: 0 0 20px; border-bottom: 1px solid var(--vh-border); list-style: none; }
+.vh-vps-current-list li { color: var(--vh-text); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.vh-vps-current-list li::before { content: "\00bb"; margin-right: 8px; color: var(--vh-accent); }
+.vh-vps-current-list li > span:first-child { color: var(--vh-muted); }
+.vh-vps-current .vh-vps-plan-price { margin-top: 18px; padding-bottom: 0; border-bottom: 0; }
+.vh-vps-current .vh-vps-plan-price strong { font-size: 38px; }
+.vh-vps-current .vh-vps-cycle-unavailable { padding: 14px 0 0; border-bottom: 0; }
+.vh-vps-current .vh-vps-deploy { margin-top: 20px; }
+.vh-vps-current .vh-vps-catalog-note { margin-top: 16px; font-size: 12px; }
+
 /* Responsive --------------------------------------------------------------- */
 @media (min-width: 640px) {
-    .vh-vps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .vh-vps-distro-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .vh-vps-distro-preinstall { flex-wrap: nowrap; }
     .vh-vps-distro-preinstall .vh-vps-distro-versions { flex-shrink: 0; margin-left: auto; }
@@ -228,26 +243,15 @@
     .vh-vps-cta { flex-direction: row; align-items: center; justify-content: space-between; padding: 48px 52px; }
 }
 @media (min-width: 1024px) {
-    .vh-vps-layout { grid-template-columns: 300px minmax(0, 1fr); gap: 28px; }
-    .vh-vps-layout:not(.vh-vps-layout-single) { grid-template-columns: 320px minmax(0, 1fr); }
-    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-options { padding: 20px; }
-    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-tile { gap: 8px; padding: 8px; }
-    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-tile .vh-vps-distro-mark { width: 30px; height: 30px; font-size: 13px; }
-    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-cfg-os-name { font-size: 12.5px; }
-    .vh-vps-layout-single { grid-template-columns: minmax(0, 1fr) minmax(380px, 460px); }
-    .vh-vps-layout:not(.vh-vps-layout-single) .vh-vps-options { position: sticky; top: 104px; }
-    .vh-vps-layout-single .vh-vps-main { position: sticky; top: 104px; }
-    .vh-vps-layout-single .vh-vps-options { padding: 28px; }
-    .vh-vps-layout-single .vh-vps-cfg-os { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .vh-vps-builder-body { grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; }
+    .vh-vps-current { position: sticky; top: 104px; }
+    .vh-vps-options .vh-vps-cfg-os { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
     .vh-vps-benefits { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .vh-vps-benefit + .vh-vps-benefit { border-top: 0; border-left: 1px solid var(--vh-border); }
     .vh-vps-workload-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .vh-vps-distro-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .vh-vps-faq { grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); gap: 64px; }
     .vh-vps-faq-intro { position: sticky; top: 120px; align-self: start; }
-}
-@media (min-width: 1360px) {
-    .vh-vps-grid:not([data-single-plan]) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 1023px) {
     .vh-vps-hero { padding-top: 56px; }
@@ -260,13 +264,18 @@
     .vh-vps-hero { padding: 44px 0 40px; }
     .vh-vps-hero p { font-size: 16px; }
     .vh-vps-hero-note { font-size: 11px; letter-spacing: .06em; }
-    .vh-vps-options { padding: 18px; }
+    .vh-vps-options, .vh-vps-panel { padding: 18px; }
+    .vh-vps-spec-cards { gap: 10px; }
+    .vh-vps-spec-card { padding: 16px 16px 14px; }
+    .vaded-client .vh-vps-spec-card h4 { font-size: 14px; }
+    .vh-vps-spec-card strong { font-size: 18px; }
+    .vh-vps-spec-card p { font-size: 12px; }
+    .vh-vps-spec-card p .vh-icon { width: 20px; height: 20px; }
+    .vh-vps-slider-ticks button { font-size: 11px; }
+    .vh-vps-current .vh-vps-plan-price strong { font-size: 34px; }
     .vh-vps-cfg-os { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .vh-vps-cycles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .vh-vps-cycles label:last-child:nth-child(odd) { grid-column: 1 / -1; }
-    .vh-vps-plan-card, .vh-vps-grid[data-single-plan] .vh-vps-plan-card { padding: 22px; }
-    .vh-vps-plan-price strong, .vh-vps-grid[data-single-plan] .vh-vps-plan-price strong { font-size: 42px; }
-    .vh-vps-grid[data-single-plan] .vh-vps-spec { padding: 12px; }
     .vh-vps-benefits { margin-top: 48px; }
     .vh-vps-benefit { padding: 22px; }
     .vh-vps-section { padding-top: 64px; }
@@ -279,7 +288,6 @@
     .vaded-theme .vh-vps-cta-action { width: 100%; justify-content: space-between; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .vh-vps-plan-card, .vh-vps-workload, .vh-vps-distro-card, .vh-vps-cfg-os-tile, .vh-vps-cfg-versions span, .vh-vps-cycles span, .vh-vps-question-toggle, .vh-vps-question-toggle::before, .vh-vps-question-toggle::after, .vh-vps-deploy .vh-icon, .vh-vps-cta-action .vh-icon, .vh-vps-link, .vh-vps-question::details-content { transition: none; }
     .vh-vps-question[open] p { animation: none; }
 }
 @media (max-width: 359px) {
