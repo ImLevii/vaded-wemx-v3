@@ -10,11 +10,13 @@ use App\Models\ServerAccount;
 use App\Models\ServerConnection;
 use App\Models\User;
 use App\Services\CustomerServerCredentials;
+use App\Support\OperatingSystemOptions;
 use App\Support\PterodactylUpgradeOptions;
 use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -463,6 +465,10 @@ class Server extends ServerExtension
         $swapLimit = $this->megabytes($order->option('swap_limit', 0));
         $cpuLimit = $order->option('cpu_limit', 0);
 
+        // The customer's OS choice (if the package offers one) picks the egg + image. Resolve it
+        // before touching nodes or panel accounts so a misconfigured OS fails without side effects.
+        $egg = $this->resolveEgg($order, $connection);
+
         $node = Server::findViableNode(
             $connection,
             allowedLocations: [$locationId],
@@ -472,20 +478,21 @@ class Server extends ServerExtension
         );
         $pteroUserId = $this->getOrCreatePteroUser($order, $connection);
 
-        // merge environment variables from package and order
-        $environment = array_merge(
+        // merge environment variables from package and order, then fill the egg's defaults
+        // (the panel API does not apply variable defaults itself)
+        $environment = $this->withEggDefaults(array_merge(
             $order->package->data('environment', []),
             $order->option('environment', [])
-        );
+        ), $egg['variables']);
 
         // prepare the server data
         $serverData = [
             'external_id' => "wemx_{$order->id}",
             'name' => $package->name,
             'user' => $pteroUserId,
-            'egg' => $package->data('egg_id'),
-            'startup' => $package->data('startup'),
-            'docker_image' => $package->data('docker_image'),
+            'egg' => $egg['id'],
+            'startup' => $egg['startup'],
+            'docker_image' => $egg['docker_image'],
             'environment' => $environment,
             'limits' => [
                 'memory' => $memoryLimit,
@@ -801,6 +808,129 @@ class Server extends ServerExtension
         }
 
         return $owner;
+    }
+
+    /**
+     * Pick the egg, image and startup for a new server.
+     *
+     * When the package has an operating-system option and the customer chose one, the egg in the
+     * package's nest whose Docker images include that label (e.g. "Ubuntu 22.04") is used. If
+     * several eggs offer it, the one with the fewest images wins, so a per-OS egg beats an
+     * all-in-one egg. Without an OS choice the package's own egg/image/startup are used.
+     *
+     * @return array{id: mixed, startup: mixed, docker_image: mixed, variables: list<array<string, mixed>>|null}
+     */
+    private function resolveEgg(Order $order, ServerConnection $connection): array
+    {
+        $package = $order->package;
+        $nestId = (int) $package->data('nest_id', 0);
+        $osOption = $package->configOptions->first(fn ($option): bool => OperatingSystemOptions::recognizes($option));
+        $selected = $osOption ? trim((string) $order->prices->firstWhere('key', $osOption->key)?->value) : '';
+
+        if ($selected === '') {
+            return [
+                'id' => $package->data('egg_id'),
+                'startup' => $package->data('startup'),
+                'docker_image' => $package->data('docker_image'),
+                'variables' => $this->packageEggVariables($connection, $nestId, (int) $package->data('egg_id', 0)),
+            ];
+        }
+
+        $eggs = Server::makeRequest($connection->config, "/api/application/nests/{$nestId}/eggs", 'get', ['include' => 'variables'])->json('data');
+        if (! is_array($eggs)) {
+            throw new RuntimeException("The panel did not return the eggs of nest {$nestId}.");
+        }
+
+        $matches = [];
+        foreach ($eggs as $egg) {
+            $attributes = is_array($egg['attributes'] ?? null) ? $egg['attributes'] : [];
+            $images = is_array($attributes['docker_images'] ?? null) ? $attributes['docker_images'] : [];
+            foreach ($images as $label => $image) {
+                if (strcasecmp(trim((string) $label), $selected) === 0 || $image === $selected) {
+                    $matches[] = [
+                        'id' => (int) $attributes['id'],
+                        'startup' => $attributes['startup'] ?? $package->data('startup'),
+                        'docker_image' => $image,
+                        'variables' => $this->eggVariablesFrom($attributes),
+                        'images' => count($images),
+                    ];
+                    break;
+                }
+            }
+        }
+
+        if ($matches === []) {
+            throw new RuntimeException("No egg in nest {$nestId} offers the operating system \"{$selected}\". Add a Docker image with that exact label to the right egg.");
+        }
+
+        usort($matches, fn (array $a, array $b): int => [$a['images'], $a['id']] <=> [$b['images'], $b['id']]);
+        unset($matches[0]['images']);
+
+        return $matches[0];
+    }
+
+    /**
+     * Variables of the package's own egg, for filling defaults. Best effort: if the panel can't be
+     * asked, creation continues with the package environment as before.
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    private function packageEggVariables(ServerConnection $connection, int $nestId, int $eggId): ?array
+    {
+        if ($nestId < 1 || $eggId < 1) {
+            return null;
+        }
+
+        try {
+            $connectionId = $connection->id ?? ($connection->getKey() ?? 'default');
+            $attributes = Cache::remember("pterodactyl:egg:{$connectionId}:nest:{$nestId}:egg:{$eggId}", now()->addHour(), function () use ($connection, $nestId, $eggId) {
+                $egg = Server::makeRequest($connection->config, "/api/application/nests/{$nestId}/eggs/{$eggId}", 'get', ['include' => 'variables']);
+                if (! isset($egg['attributes'])) {
+                    throw new RuntimeException('Invalid egg response from panel.');
+                }
+
+                return $egg['attributes'];
+            });
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return $this->eggVariablesFrom(is_array($attributes) ? $attributes : []);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function eggVariablesFrom(array $attributes): array
+    {
+        return collect(data_get($attributes, 'relationships.variables.data', []))
+            ->map(fn ($variable): array => is_array($variable['attributes'] ?? null) ? $variable['attributes'] : [])
+            ->filter(fn (array $variable): bool => is_string($variable['env_variable'] ?? null) && $variable['env_variable'] !== '')
+            ->values()->all();
+    }
+
+    /**
+     * Add each egg variable the order doesn't set: its default value, or a generated password for a
+     * required password variable without one (customers see it in the panel's Startup tab).
+     *
+     * @param  array<string, mixed>  $environment
+     * @param  list<array<string, mixed>>|null  $variables
+     * @return array<string, mixed>
+     */
+    private function withEggDefaults(array $environment, ?array $variables): array
+    {
+        foreach ($variables ?? [] as $variable) {
+            $key = $variable['env_variable'];
+            if (array_key_exists($key, $environment)) {
+                continue;
+            }
+            $default = $variable['default_value'] ?? null;
+            if ($default !== null && $default !== '') {
+                $environment[$key] = $default;
+            } elseif (in_array('required', explode('|', (string) ($variable['rules'] ?? '')), true) && str_contains(strtoupper($key), 'PASSWORD')) {
+                $environment[$key] = Str::password(20, symbols: false);
+            }
+        }
+
+        return $environment;
     }
 
     private function megabytes(mixed $value): int

@@ -237,6 +237,63 @@ class PterodactylServerTest extends TestCase
             && $request['environment'] === ['SERVER_JARFILE' => 'server.jar', 'MINECRAFT_VERSION' => '1.21']);
     }
 
+    public function test_os_choice_provisions_the_matching_os_egg_with_its_image_and_egg_defaults(): void
+    {
+        $this->addOperatingSystemOption();
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs*' => Http::response(['data' => [
+            $this->egg(19, ['Ubuntu 22' => 'lumen:ubuntu-22', 'Debian 12' => 'lumen:debian-12', 'Windows 10' => 'lumen:windows-10'], '#all-in-one'),
+            $this->egg(48, ['Ubuntu 22.04' => 'lumen:ubuntu-22', 'Ubuntu 24.04' => 'lumen:ubuntu-24'], '#ubuntu'),
+            $this->egg(49, ['Debian 11' => 'lumen:debian-11', 'Debian 12' => 'lumen:debian-12'], '#debian'),
+        ]])]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'operating_system', 'value' => 'Debian 12', 'cycle_price' => 0, 'description' => 'Operating System']);
+
+        (new Server)->create($order, $this->connection);
+
+        // "Debian 12" is in the all-in-one egg (3 images) and the Debian egg (2): the specific one wins.
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
+            && $request['egg'] === 49 && $request['docker_image'] === 'lumen:debian-12' && $request['startup'] === '#debian'
+            && $request['environment']['SERVER_JARFILE'] === 'server.jar'
+            && $request['environment']['OS_HOSTNAME'] === 'lumenvm'
+            && is_string($request['environment']['OS_PASSWORD']) && strlen($request['environment']['OS_PASSWORD']) === 20
+            && ! array_key_exists('OS_PUBKEY', $request['environment']));
+    }
+
+    public function test_an_os_no_egg_offers_fails_before_creating_panel_accounts_or_servers(): void
+    {
+        $this->addOperatingSystemOption();
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs*' => Http::response(['data' => [
+            $this->egg(48, ['Ubuntu 22.04' => 'lumen:ubuntu-22'], '#ubuntu'),
+        ]])]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'operating_system', 'value' => 'Fedora 99', 'cycle_price' => 0, 'description' => 'Operating System']);
+
+        try {
+            (new Server)->create($order, $this->connection);
+            $this->fail('Provisioning an OS without an egg should fail.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('"Fedora 99"', $exception->getMessage());
+        }
+
+        Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
+        $this->assertNull($order->fresh()->external_id);
+    }
+
+    public function test_without_an_os_choice_the_package_egg_is_used_and_its_defaults_are_filled(): void
+    {
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/4*' => Http::response(
+            $this->egg(4, ['Java 21' => 'ghcr.io/pterodactyl/yolks:java_21'], 'from-egg'),
+        )]);
+        $order = $this->createOrder();
+
+        (new Server)->create($order, $this->connection);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
+            && $request['egg'] === 4 && $request['docker_image'] === 'ghcr.io/pterodactyl/yolks:java_21'
+            && $request['startup'] === 'java -jar server.jar'
+            && $request['environment']['SERVER_JARFILE'] === 'server.jar' && $request['environment']['OS_HOSTNAME'] === 'lumenvm');
+    }
+
     public function test_new_accounts_store_encrypted_passwords_and_email_the_real_panel_link(): void
     {
         $this->customer->update(['first_name' => null, 'last_name' => null]);
@@ -893,6 +950,28 @@ class PterodactylServerTest extends TestCase
                 'id' => $id * 10, 'assigned' => $assigned,
             ]]]]],
         ]];
+    }
+
+    protected function addOperatingSystemOption(): void
+    {
+        $this->package->configOptions()->create([
+            'key' => 'operating_system', 'label' => 'Operating System', 'type' => 'select', 'rules' => 'required', 'default_value' => 'Ubuntu 22.04',
+            'data' => ['options' => [['value' => 'Ubuntu 22.04', 'name' => 'Ubuntu 22.04'], ['value' => 'Debian 12', 'name' => 'Debian 12']]],
+        ]);
+    }
+
+    /**
+     * @param  array<string, string>  $images
+     * @return array{attributes: array<string, mixed>}
+     */
+    protected function egg(int $id, array $images, string $startup): array
+    {
+        return ['attributes' => ['id' => $id, 'startup' => $startup, 'docker_images' => $images, 'relationships' => ['variables' => ['data' => [
+            ['attributes' => ['env_variable' => 'OS_HOSTNAME', 'default_value' => 'lumenvm', 'rules' => 'required|string']],
+            ['attributes' => ['env_variable' => 'OS_PASSWORD', 'default_value' => '', 'rules' => 'required|string']],
+            ['attributes' => ['env_variable' => 'OS_PUBKEY', 'default_value' => '', 'rules' => 'string|nullable']],
+            ['attributes' => ['env_variable' => 'SERVER_JARFILE', 'default_value' => 'other.jar', 'rules' => 'required|string']],
+        ]]]]];
     }
 
     /** @param array<string, mixed> $overrides */

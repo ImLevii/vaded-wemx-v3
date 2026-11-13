@@ -121,11 +121,11 @@
                                     @endforeach
                                 </div>
                             @endforeach
-                            <p class="vh-vps-cfg-hint" x-show="osFamily === 'windows'" x-cloak><span class="vh-vps-distro-badge">BYOL</span> Bring Your Own License: Windows Server is installed without a license key.</p>
+                            <p class="vh-vps-cfg-hint" x-show="osFamily === 'windows'" x-cloak><span class="vh-vps-distro-badge">BYOL</span> Bring Your Own License: Windows is installed without a license key.</p>
                             @foreach($vpsSystems->filter(fn ($system) => $system['note']) as $key => $system)
                                 <p class="vh-vps-cfg-hint" x-show="osFamily === '{{ $key }}'" x-cloak><x-theme::icon name="console" /> {{ $system['note'] }}</p>
                             @endforeach
-                            <p class="vh-vps-cfg-hint" x-show="osFamily !== 'windows' && ! systems[osFamily]?.note"><x-theme::icon name="check" /> Installs with one click from your control panel.</p>
+                            <p class="vh-vps-cfg-hint" x-show="osFamily !== 'windows' && ! systems[osFamily]?.note"><x-theme::icon name="check" /> Installed automatically when your server is created.</p>
                         </fieldset>
                     @endif
 

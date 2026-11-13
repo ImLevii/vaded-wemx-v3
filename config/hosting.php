@@ -23,14 +23,15 @@ return [
      * `logo` is a path under public/. `match` words are used to find the same OS in a package's checkout OS option so the
      * picker can pre-select it; versions are listed oldest to newest (the newest is the default).
      */
+    // Must match the Docker image labels of the per-OS eggs in the panel's VPS nest (nest 8): the
+    // checkout OS option values are those labels, and the Pterodactyl module picks the egg by label.
     'vps_operating_systems' => [
-        'rocky' => ['name' => 'Rocky Linux', 'logo' => 'assets/common/img/os/rockylinux.svg', 'mark' => 'R', 'versions' => ['8', '9'], 'match' => ['rocky']],
-        'alma' => ['name' => 'Alma Linux', 'logo' => 'assets/common/img/os/almalinux-color.svg', 'mark' => 'A', 'versions' => ['8', '9'], 'match' => ['alma']],
-        'windows' => ['name' => 'Windows Server', 'logo' => 'assets/common/img/os/windows.svg', 'mark' => 'W', 'versions' => ['2019', '2022'], 'match' => ['windows'], 'badge' => 'BYOL'],
-        'debian' => ['name' => 'Debian', 'logo' => 'assets/common/img/os/debian-color.svg', 'mark' => 'D', 'versions' => ['10', '11'], 'match' => ['debian']],
-        'ubuntu' => ['name' => 'Ubuntu', 'logo' => 'assets/common/img/os/ubuntu.svg', 'mark' => 'U', 'versions' => ['18.04', '20.04', '22.04'], 'match' => ['ubuntu']],
-        'fedora' => ['name' => 'Fedora', 'logo' => 'assets/common/img/os/fedora.svg', 'mark' => 'F', 'versions' => ['36', '37', '38'], 'match' => ['fedora']],
-        'pterodactyl' => ['name' => 'Pterodactyl Preinstall', 'logo' => 'assets/common/img/os/pterodactyl.svg', 'short' => 'Pterodactyl', 'mark' => 'P', 'versions' => ['Rocky Linux base'], 'match' => ['pterodactyl'], 'note' => 'Panel Preinstalls use Rocky Linux as the Base OS.'],
+        'ubuntu' => ['name' => 'Ubuntu', 'logo' => 'assets/common/img/os/ubuntu.svg', 'mark' => 'U', 'versions' => ['18.04', '20.04', '22.04', '24.04'], 'match' => ['ubuntu']],
+        'debian' => ['name' => 'Debian', 'logo' => 'assets/common/img/os/debian-color.svg', 'mark' => 'D', 'versions' => ['10', '11', '12', '13'], 'match' => ['debian']],
+        'rocky' => ['name' => 'Rocky Linux', 'logo' => 'assets/common/img/os/rockylinux.svg', 'mark' => 'R', 'versions' => ['Latest'], 'match' => ['rocky']],
+        'alma' => ['name' => 'AlmaLinux', 'logo' => 'assets/common/img/os/almalinux-color.svg', 'mark' => 'A', 'versions' => ['Latest'], 'match' => ['alma']],
+        'fedora' => ['name' => 'Fedora', 'logo' => 'assets/common/img/os/fedora.svg', 'mark' => 'F', 'versions' => ['40'], 'match' => ['fedora']],
+        'windows' => ['name' => 'Windows', 'logo' => 'assets/common/img/os/windows.svg', 'mark' => 'W', 'versions' => ['Server 2022', '10'], 'match' => ['windows'], 'badge' => 'BYOL'],
     ],
     'vps_default_os' => ['ubuntu', '22.04'],
 

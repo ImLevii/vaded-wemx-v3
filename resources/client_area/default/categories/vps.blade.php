@@ -53,7 +53,7 @@
                 @endif
             @endforeach
         </div>
-        <p class="vh-vps-distro-note"><span class="vh-vps-distro-badge">BYOL</span> <span><strong>Bring Your Own License</strong> means the operating system/game panel will not come with a license key.</span></p>
+        <p class="vh-vps-distro-note"><span class="vh-vps-distro-badge">BYOL</span> <span><strong>Bring Your Own License</strong> means the operating system will not come with a license key.</span></p>
     </section>
 
     <section id="vps-details" class="vh-vps-section vh-vps-workloads" aria-labelledby="vps-workloads-title">
@@ -77,8 +77,8 @@
         <div class="vh-vps-faq-list">
             @foreach([
                 ['What resources come with my VPS?', 'Each plan lists its included resources and features. Open the plan configuration to review the full details, available options, and final price before ordering.'],
-                ['Which operating systems can I choose?', 'Rocky Linux 8 & 9, Alma Linux 8 & 9, Windows Server 2019 & 2022 (BYOL), Debian 10 & 11, Ubuntu 18.04, 20.04 & 22.04, Fedora 36, 37 & 38, or a Pterodactyl preinstall built on Rocky Linux. Each one installs with one click from your control panel.'],
-                ['What does BYOL mean?', 'Bring Your Own License. A BYOL operating system or game panel is installed without a license key, so you activate it with your own.'],
+                ['Which operating systems can I choose?', 'Ubuntu 18.04, 20.04, 22.04 & 24.04, Debian 10, 11, 12 & 13, Rocky Linux, AlmaLinux, Fedora 40, and Windows Server 2022 or Windows 10 (BYOL). Pick one at checkout and it is installed when your server is created; you can switch between versions of the same OS later from your control panel.'],
+                ['What does BYOL mean?', 'Bring Your Own License. A BYOL operating system is installed without a license key, so you activate it with your own.'],
                 ['How does VPS billing work?', 'Choose one of the billing cycles offered for your plan. The listed price covers that cycle; any setup fees, configurable extras, and applicable taxes appear before checkout.'],
                 ['Where do I manage my server?', 'Your client dashboard keeps your services and payments in one place. Open your VPS service to see its details, available controls, and any linked management panel.'],
             ] as [$question, $answer])
