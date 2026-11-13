@@ -69,11 +69,11 @@ class VpsCheckoutTest extends TestCase
     public function test_vps_checkout_groups_real_options_and_escapes_descriptions(): void
     {
         $this->get(route('packages.view', $this->package->slug))->assertOk()
-            ->assertSee('Complete your order for B-VPS-2')->assertSee('50GB SSD Storage')
-            ->assertSee('Service Configuration')->assertSee('Server Name')->assertSee('Hostname')
-            ->assertSee('Choose Operating System')->assertSee('Debian 12 (Bookworm)')
+            ->assertSee('Complete your order for B-VPS-2')->assertSee('Server Specifications')->assertSee('50GB SSD Storage')
+            ->assertSeeInOrder(['Choose a Billing Cycle', 'Server Options', 'Hostname', 'Operating System', 'IPv4 Addresses', 'Server Name'])
+            ->assertSee('Debian 12 (Bookworm)')
             ->assertSee('Ubuntu 24.04')->assertSee('Other')->assertSee('Windows Server 2022')
-            ->assertSee('IP Addresses')->assertSee('2 IPv4 Addresses')->assertSee('Order summary')
+            ->assertSee('2 IPv4 Addresses')->assertSee('Order Summary')->assertSee('Total Due Today')
             ->assertSee('wire:model.change="config_options.operating_system"', false)
             ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)
             ->assertDontSee('<script>alert(1)</script>', false)
@@ -102,7 +102,7 @@ class VpsCheckoutTest extends TestCase
             ->set('config_options.operating_system', 'windows-2022')
             ->set('config_options.ip_addresses', '2')->assertSee('$19.00')
             ->set('packagePriceId', $this->yearly->id)->assertSee('$209.50')
-            ->assertSee('Plus $5.00 one-time setup fee.');
+            ->assertSeeInOrder(['Setup Fees', '$5.00', 'Annually', '$209.50', '$214.50', 'Total Due Today']);
 
         $this->assertStringContainsString('group: \'other\'', $component->html());
         $this->assertMatchesRegularExpression('/value="windows-2022"[^>]*checked/', $component->html());
@@ -143,8 +143,48 @@ class VpsCheckoutTest extends TestCase
 
         $this->get(route('packages.view', $this->package->slug))->assertOk()
             ->assertSee('Complete your order for B-VPS-2')->assertSee('This plan is currently unavailable')
-            ->assertDontSee('Choose Operating System')->assertDontSee('Service Configuration')
-            ->assertDontSee('IP Addresses')->assertDontSee('Add to cart');
+            ->assertDontSee('Server Options')->assertDontSee('IPv4 Addresses')
+            ->assertDontSee('Total Due Today')->assertDontSee('vh-vps-next', false);
+    }
+
+    public function test_billing_cycles_show_the_saving_against_the_monthly_price(): void
+    {
+        // 12 x $10 = $120 a year, so $100 is a 17% discount.
+        $this->get(route('packages.view', $this->package->slug))->assertOk()
+            ->assertSeeInOrder(['Every Month', '$10.00', '0% discount', 'Every 12 Months', '$100.00', '17% discount', '+ $5.00 setup fee']);
+
+        $this->package->prices()->whereKey($this->yearly->id)->delete();
+        $this->get(route('packages.view', $this->package->slug))->assertOk()
+            ->assertSee('Every Month')->assertDontSee('% discount');
+    }
+
+    public function test_invalid_hostname_is_rejected_with_a_readable_message(): void
+    {
+        $cart = $this->currentCart();
+
+        Livewire::withQueryParams(['cart' => $cart])
+            ->test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->set('config_options.hostname', 'bad host!')
+            ->set('config_options.server_name', '')
+            ->call('addToCart')
+            ->assertHasErrors(['config_options.hostname' => 'regex', 'config_options.server_name' => 'required'])
+            ->assertSee('Use letters, numbers, hyphens and dots only, for example vps.example.com.')
+            ->assertSee('The Server Name field is required.')
+            ->assertSee('Please complete the highlighted fields.');
+
+        $this->assertSame(0, $cart->items()->count());
+    }
+
+    public function test_hostname_is_trimmed_and_lowercased_before_it_is_saved(): void
+    {
+        $cart = $this->currentCart();
+
+        Livewire::withQueryParams(['cart' => $cart])
+            ->test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->set('config_options.hostname', '  VPS1.Example.COM ')
+            ->call('addToCart')->assertHasNoErrors()->assertRedirect(route('cart'));
+
+        $this->assertSame('vps1.example.com', $cart->items()->firstOrFail()->options()->where('key', 'hostname')->firstOrFail()->value);
     }
 
     private function currentCart(): Cart

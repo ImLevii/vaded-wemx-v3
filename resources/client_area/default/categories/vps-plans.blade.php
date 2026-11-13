@@ -127,7 +127,7 @@
                         <span class="vh-vps-config-note"><x-theme::icon name="sliders" /> Your configuration. Your server.</span>
                         @foreach($prices as $planPrice)
                             @php($configureUrl = route('packages.view', ['package' => $package->slug, 'packagePriceId' => $planPrice->id]))
-                            <a class="vh-action vh-vps-deploy" href="{{ $configureUrl }}" :href="configureHref(@js($configureUrl), @js($plan['os']))" wire:navigate x-show="period === '{{ $planPrice->period_in_days }}' || (period === 'all' && {{ $loop->first ? 'true' : 'false' }})" @if((string) $planPrice->period_in_days !== $defaultVpsPeriod) x-cloak @endif aria-label="Configure {{ $package->name }}, {{ $planPrice->cycle() }}">Configure VPS <x-theme::icon name="arrow" /></a>
+                            <a class="vh-action vh-vps-deploy" href="{{ $configureUrl }}" :href="configureHref(@js($configureUrl), @js($plan['os']))" wire:navigate x-show="period === '{{ $planPrice->period_in_days }}' || (period === 'all' && {{ $loop->first ? 'true' : 'false' }})" @if((string) $planPrice->period_in_days !== $defaultVpsPeriod) x-cloak @endif aria-label="Order {{ $package->name }}, {{ $planPrice->cycle() }}">Order Now <x-theme::icon name="arrow" /></a>
                         @endforeach
                     </div>
                 </article>

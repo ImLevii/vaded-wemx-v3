@@ -165,7 +165,7 @@ new class extends Component
 
     /**
      * Map each OS picker choice ("family|version") to the value of the package's own checkout OS option,
-     * so "Configure VPS" can pre-select the operating system the visitor picked.
+     * so "Order Now" can pre-select the operating system the visitor picked.
      *
      * @return array{key: string, values: array<string, string>}|null
      */

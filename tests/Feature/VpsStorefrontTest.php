@@ -50,9 +50,10 @@ class VpsStorefrontTest extends TestCase
             ->assertSee('$10.00')
             ->assertSee('2 vCores')->assertSee('4 GB DDR4 RAM')
             ->assertSee('25 GB SSD Storage')->assertSee('Unlimited Bandwidth')
-            ->assertSee('Ubuntu 22.04 OS')
+            ->assertSee('Operating system')->assertSee('Ubuntu 22.04')
             ->assertSee('No setup fee')
             ->assertSee(route('packages.view', ['package' => $this->package->slug, 'packagePriceId' => $monthly->id]), false)
+            ->assertSee('Order Now')->assertDontSee('Configure VPS')
             ->assertDontSee('vh-hero-wordmark', false)
             ->assertDontSee('Most popular')->assertDontSee('Buffalo')->assertDontSee('9950X');
     }

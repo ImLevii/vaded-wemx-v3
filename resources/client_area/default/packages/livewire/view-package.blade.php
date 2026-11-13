@@ -73,6 +73,9 @@ new class extends Component {
 
             return;
         }
+        if ($this->isVpsCheckout) {
+            $this->validateVpsOptions();
+        }
         if ($this->isMinecraftCheckout) {
             foreach ($this->package->configOptions as $option) {
                 if (MinecraftCheckoutOptions::kind($option) !== 'service') {
@@ -208,21 +211,151 @@ new class extends Component {
     }
 
     /**
-     * @return array{service: \Illuminate\Support\Collection, operatingSystems: \Illuminate\Support\Collection, network: \Illuminate\Support\Collection}
+     * VPS "Server Options", grouped in the order the checkout shows them.
+     * Each package option lands in exactly one group, matched by its key/label.
+     *
+     * @return array{intendedUse: \Illuminate\Support\Collection, hostname: \Illuminate\Support\Collection, location: \Illuminate\Support\Collection, operatingSystems: \Illuminate\Support\Collection, network: \Illuminate\Support\Collection, service: \Illuminate\Support\Collection}
      */
     #[Computed]
     public function vpsConfiguration(): array
     {
-        $options = $this->package->configOptions;
-        $operatingSystems = $options->filter(fn (PackageConfigOption $option): bool => OperatingSystemOptions::recognizes($option));
-        $network = $options->reject(fn (PackageConfigOption $option): bool => $operatingSystems->contains($option))
-            ->filter(fn (PackageConfigOption $option): bool => preg_match('/(?:^|[\s_.-])(?:ipv?[46]?|ips|ip[\s_.-]*addresses?)(?:$|[\s_.-])/i', $option->key.' '.$option->label) === 1);
+        $remaining = $this->package->configOptions->keyBy('id');
+        $take = function (callable $matches) use (&$remaining): \Illuminate\Support\Collection {
+            $found = $remaining->filter($matches);
+            $remaining = $remaining->diffKeys($found);
+
+            return $found->values();
+        };
+        $named = fn (array $types, string $pattern): callable => fn (PackageConfigOption $option): bool => in_array($option->type, $types, true) && preg_match($pattern, $option->key.' '.$option->label) === 1;
+
+        $operatingSystems = $take(fn (PackageConfigOption $option): bool => OperatingSystemOptions::recognizes($option));
+        $network = $take($named(['select', 'radio', 'number', 'range'], '/(?:^|[\s_.-])(?:ipv?[46]?|ips|ip[\s_.-]*addresses?)(?:$|[\s_.-])/i'));
+        $hostname = $take($named(['text'], '/host[\s_.-]*name|fqdn/i'));
+        $intendedUse = $take($named(['text', 'textarea'], '/intended|purpose|use[\s_.-]*case|usage/i'));
+        $location = $take($named(['select', 'radio'], '/location|region|data[\s_.-]*cent(?:er|re)|country/i'));
 
         return [
-            'service' => $options->reject(fn (PackageConfigOption $option): bool => $operatingSystems->contains($option) || $network->contains($option)),
+            'intendedUse' => $intendedUse,
+            'hostname' => $hostname,
+            'location' => $location,
             'operatingSystems' => $operatingSystems,
             'network' => $network,
+            'service' => $remaining->values(),
         ];
+    }
+
+    /**
+     * Billing cycles shortest first, with the saving against paying monthly.
+     *
+     * @return \Illuminate\Support\Collection<int, array{price: PackagePrice, label: string, discount: int|null}>
+     */
+    #[Computed]
+    public function vpsBillingCycles(): \Illuminate\Support\Collection
+    {
+        $prices = $this->package->prices->sortBy('period_in_days')->values();
+        $base = $prices->firstWhere('period_in_days', 30) ?? $prices->first(fn (PackagePrice $price): bool => $price->period_in_days > 0);
+
+        return $prices->map(function (PackagePrice $price) use ($base): array {
+            $days = (int) $price->period_in_days;
+            $months = $days >= 28 ? (int) round($days / 30) : 0;
+            $wholeMonths = $months >= 1 && abs($days - $months * 30) <= 6;
+
+            $label = match (true) {
+                $wholeMonths && $months === 1 => 'Every Month',
+                $wholeMonths => "Every {$months} Months",
+                default => $price->cycle(),
+            };
+
+            $discount = null;
+            if ($base && $days > 0 && (float) $base->price > 0) {
+                // Compare with paying the monthly price for the same span (12 x monthly for a year).
+                $standard = $wholeMonths && (int) $base->period_in_days === 30
+                    ? (float) $base->price * $months
+                    : (float) $base->price / $base->period_in_days * $days;
+                $discount = max(0, (int) round((1 - (float) $price->price / $standard) * 100));
+            }
+
+            return ['price' => $price, 'label' => $label, 'discount' => $discount];
+        });
+    }
+
+    /**
+     * Itemised VPS order summary. Priced options only, so an empty required
+     * text field (hostname, intended use) can't blank the breakdown.
+     *
+     * @return array{lines: list<array{label: string, value: string, total: float}>, base: float, setup: float, recurring: float, dueToday: float}
+     */
+    #[Computed]
+    public function vpsPricing(): array
+    {
+        $price = $this->packagePrice;
+        if (! $price) {
+            return ['lines' => [], 'base' => 0.0, 'setup' => 0.0, 'recurring' => 0.0, 'dueToday' => 0.0];
+        }
+        $priced = [];
+        foreach ($this->package->configOptions as $option) {
+            if (in_array($option->type, ['select', 'radio', 'number', 'range'], true) && Arr::has($this->config_options, $option->key)) {
+                Arr::set($priced, $option->key, Arr::get($this->config_options, $option->key));
+            }
+        }
+
+        try {
+            $breakdown = collect($this->package->configurableOptionCalculator($priced, $price->period_in_days)['breakdown'])->keyBy('key');
+        } catch (ValidationException $e) {
+            $breakdown = collect();
+        }
+
+        $lines = [];
+        $groups = $this->vpsConfiguration;
+        foreach ([...$groups['location'], ...$groups['operatingSystems'], ...$groups['network'], ...$groups['service']] as $option) {
+            $item = $breakdown->get($option->key);
+            if (! $item) {
+                continue;
+            }
+            $value = in_array($option->type, ['select', 'radio'], true)
+                ? (collect($option->data['options'] ?? [])->firstWhere('value', $item['value'])['name'] ?? $item['value'])
+                : $item['value'];
+            $lines[] = ['label' => $option->label, 'value' => (string) $value, 'total' => (float) $item['total']];
+        }
+
+        $base = (float) $price->price;
+        $setup = (float) $price->setup_fee;
+        $recurring = $base + array_sum(array_column($lines, 'total'));
+
+        return ['lines' => $lines, 'base' => $base, 'setup' => $setup, 'recurring' => $recurring, 'dueToday' => $recurring + $setup];
+    }
+
+    /**
+     * Run each option's admin rules with its label as the field name (so errors read
+     * "The Hostname field is required." rather than "config options.hostname"), and
+     * require hostnames to be valid DNS names whatever rules they have in admin.
+     */
+    private function validateVpsOptions(): void
+    {
+        $rules = [];
+        $attributes = [];
+        foreach ($this->package->configOptions as $option) {
+            $path = 'config_options.'.$option->key;
+            $rules[$path] = array_values(array_filter(explode('|', (string) $option->rules)));
+            $attributes[$path] = $option->label;
+        }
+
+        foreach ($this->vpsConfiguration['hostname'] as $option) {
+            $path = 'config_options.'.$option->key;
+            $value = Arr::get($this->config_options, $option->key);
+            if (is_string($value)) {
+                $value = Str::lower(trim($value));
+                Arr::set($this->config_options, $option->key, $value);
+            }
+            if (filled($value)) {
+                $rules[$path] = [...$rules[$path], 'string', 'max:253', 'regex:/^(?!-)[a-z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-z0-9-]{1,63}(?<!-))*$/'];
+            }
+        }
+
+        $rules = array_filter($rules);
+        if ($rules) {
+            $this->validate($rules, ['regex' => 'Use letters, numbers, hyphens and dots only, for example vps.example.com.'], $attributes);
+        }
     }
 };
 ?>
