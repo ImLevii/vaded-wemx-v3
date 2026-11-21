@@ -35,7 +35,9 @@
             <div class="dropdown-menu dropdown-menu-end">
                 <label for="quick-theme-mode" class="form-label">Your display</label>
                 <select id="quick-theme-mode" class="form-select" data-personal-theme><option value="site">Site default</option><option value="auto">Day / night</option><option value="system">Device preference</option><option value="light">Light</option><option value="dark">Dark</option></select>
-                @perm('admin.settings.index')<a href="{{ route('admin.settings.index', ['page' => 'appearance']) }}" wire:navigate class="dropdown-item mt-2">Site appearance &amp; seasonal logo <x-admin::icon icon="arrow-right" /></a>@endperm
+                <label for="quick-effects" class="form-label mt-3">Page effects</label>
+                <select id="quick-effects" class="form-select" data-personal-effects><option value="site">Site default</option><option value="off">Off in this browser</option></select>
+                @perm('admin.settings.index')<a href="{{ route('admin.settings.index', ['page' => 'appearance']) }}" wire:navigate class="dropdown-item mt-2">Site appearance, seasonal logo &amp; effects <x-admin::icon icon="arrow-right" /></a>@endperm
             </div>
         </div>
         <a href="?theme=dark" data-theme-mode="dark" class="nav-link px-0 hide-theme-dark me-2" data-bs-toggle="tooltip"

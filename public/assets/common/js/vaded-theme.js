@@ -1,5 +1,6 @@
 (() => {
     if (window.WemxTheme) { window.WemxTheme.apply(); return; }
+    const themeScript = document.currentScript?.src || '';
     const themes = ['spring', 'summer', 'autumn', 'winter', 'newYear', 'valentines', 'stPatrickDay', 'easter', 'july4', 'halloween', 'thanksgiving', 'christmas'];
     const names = ['Spring', 'Summer', 'Autumn', 'Winter', 'New Year’s', 'Valentine’s Day', 'St. Patrick’s Day', 'Easter', 'July 4th', 'Halloween', 'Thanksgiving', 'Christmas'];
     const editions = {
@@ -28,7 +29,11 @@
     const settings = () => {
         let config = {};
         try { config = JSON.parse(document.querySelector('meta[name="wemx-appearance"]')?.content || '{}'); } catch {}
-        return { mode: 'auto', accent: 'vaded', seasonal: 'auto', motion: true, logoMotion: true, ...config };
+        return {
+            mode: 'auto', accent: 'vaded', seasonal: 'auto', motion: true, logoMotion: true,
+            effects: false, effectMap: {}, effectIntensity: 'normal', effectSpeed: 'normal', effectStrength: 'normal', effectAreas: 'client',
+            ...config,
+        };
     };
     const easterDate = year => {
         const a = year % 19, b = Math.floor(year / 100), c = year % 100;
@@ -78,6 +83,90 @@
         const replay = element.querySelector('[data-logo-replay]');
         if (replay) replay.disabled = !playing || resolved === 'none';
         element.querySelectorAll('.vh-seasonal-palette i').forEach((swatch, index) => { swatch.style.backgroundColor = edition?.palette[index] || 'var(--vh-muted)'; });
+        syncPreviewEffect(element);
+    };
+    // Seasonal page effects. vaded-effects.js is only downloaded when an effect should actually play.
+    let effectsEngine;
+    let pageField;
+    let pageEffectKey = '';
+    const previewFields = new Map();
+    const area = () => (document.documentElement.dataset.vadedArea === 'admin' ? 'admin' : 'client');
+    const isDark = () => document.documentElement.dataset.bsTheme === 'dark';
+    const personalEffects = () => (readStorage('wemx-effects') === 'off' ? 'off' : 'site');
+    const loadEffects = () => {
+        if (window.WemxEffects) return Promise.resolve(window.WemxEffects);
+        effectsEngine ??= new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = settings().effectsScript || themeScript.replace(/vaded-theme\.js(?=\?|$)/, 'vaded-effects.js') || '/assets/common/js/vaded-effects.js';
+            script.async = true;
+            script.onload = () => (window.WemxEffects ? resolve(window.WemxEffects) : reject(new Error('effects unavailable')));
+            script.onerror = () => { effectsEngine = undefined; script.remove(); reject(new Error('effects failed to load')); };
+            document.head.appendChild(script);
+        });
+        return effectsEngine;
+    };
+    const effectFor = (theme, map) => {
+        const effect = map?.[theme];
+        return theme !== 'none' && typeof effect === 'string' && /^[a-z]+$/.test(effect) ? effect : 'none';
+    };
+    const effectOptions = (theme, effect, values) => ({
+        effect, palette: editions[theme]?.palette || [], dark: isDark(),
+        intensity: values.intensity, speed: values.speed, strength: values.strength,
+    });
+    const syncPageEffect = () => {
+        const config = settings();
+        const theme = resolveLogoTheme(new Date(), config.seasonal);
+        const effect = config.effects && config.motion && ['both', area()].includes(config.effectAreas) ? effectFor(theme, config.effectMap) : 'none';
+        const personal = personalEffects();
+        document.querySelectorAll('[data-effects-toggle]').forEach(button => {
+            button.hidden = effect === 'none' || motionPreference.matches || !!navigator.connection?.saveData;
+            button.setAttribute('aria-pressed', String(personal !== 'off'));
+            button.textContent = personal === 'off' ? 'Effects: Off' : 'Effects: On';
+        });
+        document.querySelectorAll('[data-personal-effects]').forEach(control => { control.value = personal; });
+        if (effect === 'none' || personal === 'off' || !motionAllowed() || !document.body) {
+            pageField?.destroy(); pageField = undefined; pageEffectKey = '';
+            return;
+        }
+        const options = effectOptions(theme, effect, { intensity: config.effectIntensity, speed: config.effectSpeed, strength: config.effectStrength });
+        const key = JSON.stringify(options);
+        if (key === pageEffectKey && pageField?.connected()) return;
+        pageEffectKey = key;
+        loadEffects().then(engine => {
+            if (key !== pageEffectKey) return;
+            if (pageField?.connected()) pageField.update(options);
+            else { pageField?.destroy(); pageField = engine.mount(document.body, options); }
+        }).catch(() => { pageEffectKey = ''; });
+    };
+    const syncPreviewEffect = element => {
+        const stage = element.querySelector('.vh-seasonal-stage');
+        if (!stage) return;
+        const panel = element.closest('.vh-appearance-panel') || document;
+        const theme = element.dataset.logoTheme || 'none';
+        const select = panel.querySelector(`[data-effect-edition="${theme}"]`);
+        const effect = select ? effectFor(theme, { [theme]: select.value }) : 'none';
+        const enabled = !!panel.querySelector('[data-effects-enabled]')?.checked && panel.querySelector('[data-motion-control]')?.checked !== false;
+        panel.querySelectorAll('[data-effect-row]').forEach(row => { row.dataset.active = String(row.dataset.effectRow === theme); });
+        const label = element.querySelector('[data-effect-name]');
+        if (label) {
+            const name = effect === 'none' ? 'No page effect' : select.selectedOptions[0]?.textContent.trim();
+            label.textContent = theme === 'none' ? 'Page effects follow the seasonal logo' : `${name}${effect === 'none' ? '' : enabled ? ' · page effect' : ' · switched off'}`;
+        }
+        const run = enabled && effect !== 'none' && motionAllowed();
+        const options = run && effectOptions(theme, effect, {
+            intensity: panel.querySelector('[data-effect-intensity]')?.value, speed: panel.querySelector('[data-effect-speed]')?.value, strength: panel.querySelector('[data-effect-strength]')?.value,
+        });
+        const key = run ? JSON.stringify(options) : '';
+        const current = previewFields.get(stage);
+        if (current?.key === key && (!run || current.field?.connected())) return;
+        if (!run) { current?.field?.destroy(); previewFields.delete(stage); return; }
+        previewFields.set(stage, { key, field: current?.field });
+        loadEffects().then(engine => {
+            const entry = previewFields.get(stage);
+            if (entry?.key !== key) return;
+            if (entry.field?.connected()) entry.field.update(options);
+            else entry.field = engine.mount(stage, options);
+        }).catch(() => previewFields.delete(stage));
     };
     const updateLogo = logo => {
         const config = settings();
@@ -130,6 +219,7 @@
         }
         document.querySelectorAll('[data-personal-theme]').forEach(control => { control.value = personal; });
         refreshLogos();
+        syncPageEffect();
     };
     const setMode = mode => {
         if (!canChooseTheme() || !modes.includes(mode)) return;
@@ -151,12 +241,25 @@
         element.dataset.previewMotion = enabled ? 'on' : 'off';
         element.querySelectorAll('[data-brand-logo]').forEach(logo => { logo.dataset.logoPreview = theme; updateLogo(logo); });
     };
-    window.WemxTheme = { apply, setMode, resolveLogoTheme, refreshLogos, preview };
+    const setEffects = choice => {
+        if (choice === 'off') writeStorage('wemx-effects', 'off');
+        else { try { localStorage.removeItem('wemx-effects'); } catch {} }
+        syncPageEffect();
+    };
+    window.WemxTheme = { apply, setMode, resolveLogoTheme, refreshLogos, preview, setEffects };
     window.toggleDarkmode = () => setMode(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
-    document.addEventListener('change', event => { if (event.target.matches('[data-personal-theme]')) setMode(event.target.value); });
+    document.addEventListener('change', event => {
+        if (event.target.matches('[data-personal-theme]')) setMode(event.target.value);
+        if (event.target.matches('[data-personal-effects]')) setEffects(event.target.value);
+        if (event.target.closest('[data-effect-control]')) {
+            (event.target.closest('.vh-appearance-panel') || document).querySelectorAll('.vh-seasonal-preview').forEach(syncPreviewEffect);
+        }
+    });
     document.addEventListener('click', event => {
         const modeLink = event.target.closest('[data-theme-mode]');
         if (modeLink) { event.preventDefault(); setMode(modeLink.dataset.themeMode); return; }
+        const effectsToggle = event.target.closest('[data-effects-toggle]');
+        if (effectsToggle) { setEffects(personalEffects() === 'off' ? 'site' : 'off'); return; }
         const button = event.target.closest('[data-logo-replay]');
         if (!button) return;
         button.closest('.vh-seasonal-preview')?.querySelectorAll('[data-brand-logo]').forEach(logo => {
@@ -174,6 +277,7 @@
     document.addEventListener('livewire:navigated', () => { apply(); revealSections(); });
     document.addEventListener('livewire:navigating', event => {
         revealObserver?.disconnect(); logoObserver?.disconnect();
+        pageField?.destroy(); pageField = undefined; pageEffectKey = '';
         document.querySelectorAll('[data-logo-observed]').forEach(logo => { delete logo.dataset.logoObserved; });
         event.detail?.onSwap?.(() => apply());
     });
@@ -181,6 +285,7 @@
     motionPreference.addEventListener('change', () => { apply(); revealSections(); });
     window.addEventListener('storage', event => {
         if (['wemx-display-mode', 'wemx-theme', null].includes(event.key)) { memoryMode = undefined; apply(); }
+        if (event.key === 'wemx-effects') syncPageEffect();
     });
     window.setInterval(() => apply(), 60_000);
     window.addEventListener('focus', () => apply());

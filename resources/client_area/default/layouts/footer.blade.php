@@ -48,6 +48,7 @@
         <div>
             @foreach(config('hosting.legal', []) as $label => $href)<a href="{{ $href }}">{{ $label }}</a>@endforeach
             @foreach($legalLinks as $element)<a href="{{ $element['attributes']['href'] ?? '#' }}">{{ $element['attributes']['name'] }}</a>@endforeach
+            <button type="button" data-effects-toggle aria-pressed="true" title="Turn seasonal page effects on or off in this browser" hidden>Effects: On</button>
             @if(auth()->user()?->hasPermission('admin.dashboard'))
                 <button type="button" onclick="toggleDarkmode()" aria-label="Toggle light and dark theme">Light / Dark</button>
             @endif

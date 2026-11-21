@@ -363,3 +363,8 @@ html:not(.dark):not([data-bs-theme="dark"]) .vaded-theme:not([data-bs-theme="dar
 :is(html, body)[data-bs-theme="dark"][data-accent="amber"] { --vh-accent: #fbbf24; }
 .vaded-theme[data-accent]:not([data-accent="vaded"]) :is(.vh-action:not(.vh-action-secondary), .btn-primary, :where(a,button)[class*="bg-primary-"]) { background: var(--vh-accent); border-color: var(--vh-accent); color: #111827; }
 .vaded-theme[data-bs-theme="light"][data-accent]:not([data-accent="vaded"]) :is(.vh-action:not(.vh-action-secondary), .btn-primary, :where(a,button)[class*="bg-primary-"]) { color: #fff; }
+
+/* Seasonal page effects (public/assets/common/js/vaded-effects.js). Never intercepts clicks. */
+.vh-effects-canvas { position: fixed; inset: 0; z-index: 1040; display: block; width: 100%; height: 100%; pointer-events: none; }
+.vh-effects-canvas[data-effects-contained] { position: absolute; z-index: -1; border-radius: inherit; }
+@media print { .vh-effects-canvas { display: none !important; } }
