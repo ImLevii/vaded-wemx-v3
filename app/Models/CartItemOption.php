@@ -43,6 +43,17 @@ class CartItemOption extends Model
             return '********';
         }
 
+        // A select/radio choice shows its name ("Miami, Florida") instead of its stored value ("1").
+        $item = $this->relationLoaded('item') ? $this->item : $this->item()->with('cartable.package.configOptions')->first();
+        $option = $item?->cartable instanceof PackagePrice
+            ? $item->cartable->package?->configOptions->firstWhere('key', $this->key) : null;
+        if ($option && in_array($option->type, ['select', 'radio'], true)) {
+            $choice = collect($option->data['options'] ?? [])->first(fn ($choice): bool => is_array($choice) && (string) ($choice['value'] ?? '') === (string) $this->value);
+            if (is_string($choice['name'] ?? null) && $choice['name'] !== '') {
+                return $choice['name'];
+            }
+        }
+
         return (string) $this->value;
     }
 }

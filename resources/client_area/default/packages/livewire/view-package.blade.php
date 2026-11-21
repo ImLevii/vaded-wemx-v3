@@ -46,6 +46,10 @@ new class extends Component {
             $this->packagePriceId = $firstPrice->id;
         }
 
+        if ($this->isMinecraftCheckout && ! $this->cartItemId) {
+            $this->preselectMinecraftDefaults();
+        }
+
         if ($this->cartItemId) {
             $item = $this->editableCartItem();
             $this->packagePriceId = $item->cartable_id;
@@ -77,8 +81,13 @@ new class extends Component {
             $this->validateVpsOptions();
         }
         if ($this->isMinecraftCheckout) {
+            $this->syncMinecraftVersion();
             foreach ($this->package->configOptions as $option) {
-                if (MinecraftCheckoutOptions::kind($option) !== 'service') {
+                $kind = MinecraftCheckoutOptions::kind($option);
+                if ($kind === 'version') {
+                    $this->validate(['config_options.'.$option->key => [\Illuminate\Validation\Rule::in(array_column(MinecraftCheckoutOptions::versionChoices($option, $this->minecraftSoftware), 'value'))]],
+                        ['config_options.'.$option->key.'.in' => 'Choose a Minecraft version that your server software supports.']);
+                } elseif ($kind !== 'service') {
                     $this->validate(['config_options.'.$option->key => [\Illuminate\Validation\Rule::in(array_column(MinecraftCheckoutOptions::choices($option), 'value'))]]);
                 }
             }
@@ -151,7 +160,12 @@ new class extends Component {
 
     public function rendering($view)
     {
+        $versionless = $this->isMinecraftCheckout && ! MinecraftCheckoutOptions::choosesVersion($this->selectedMinecraftSoftware());
         foreach ($this->package->configOptions as $option) {
+            // A modpack sets its own Minecraft version, so don't put the version default back for it.
+            if ($versionless && MinecraftCheckoutOptions::kind($option) === 'version') {
+                continue;
+            }
             if (! Arr::has($this->config_options, $option->key)) {
                 Arr::set($this->config_options, $option->key, $option->default_value ?? '');
             }
@@ -191,8 +205,65 @@ new class extends Component {
         return [
             'locations' => $groups->get('locations', collect()),
             'software' => $groups->get('software', collect()),
+            'versions' => $groups->get('version', collect()),
             'service' => $groups->get('service', collect()),
         ];
+    }
+
+    /** The selected server software value (first software option), or null when the plan has none. */
+    #[Computed]
+    public function minecraftSoftware(): ?string
+    {
+        return $this->selectedMinecraftSoftware();
+    }
+
+    private function selectedMinecraftSoftware(): ?string
+    {
+        $option = $this->package->configOptions->first(fn (PackageConfigOption $option): bool => MinecraftCheckoutOptions::kind($option) === 'software');
+        $value = $option ? data_get($this->config_options, $option->key) : null;
+
+        return $value === null || $value === '' ? null : (string) $value;
+    }
+
+    /** Pre-select each location/software/version option's default when it is an available choice. */
+    private function preselectMinecraftDefaults(): void
+    {
+        foreach ($this->package->configOptions as $option) {
+            if (MinecraftCheckoutOptions::kind($option) === 'service' || filled(data_get($this->config_options, $option->key))) {
+                continue;
+            }
+            $values = array_map('strval', array_column(MinecraftCheckoutOptions::choices($option), 'value'));
+            if (in_array((string) $option->default_value, $values, true)) {
+                Arr::set($this->config_options, $option->key, (string) $option->default_value);
+            }
+        }
+        unset($this->minecraftSoftware);
+        $this->syncMinecraftVersion();
+    }
+
+    /**
+     * Keep the Minecraft version valid for the selected software: drop it when the software has no version choice
+     * (modpacks), and fall back to the option's default (or first supported version) when it isn't supported.
+     */
+    private function syncMinecraftVersion(): void
+    {
+        unset($this->minecraftSoftware);
+        foreach ($this->minecraftConfiguration['versions'] as $option) {
+            $allowed = array_map('strval', array_column(MinecraftCheckoutOptions::versionChoices($option, $this->minecraftSoftware), 'value'));
+            $current = (string) data_get($this->config_options, $option->key, '');
+            if ($allowed === []) {
+                Arr::forget($this->config_options, $option->key);
+            } elseif (! in_array($current, $allowed, true)) {
+                Arr::set($this->config_options, $option->key, in_array((string) $option->default_value, $allowed, true) ? (string) $option->default_value : $allowed[0]);
+            }
+        }
+    }
+
+    public function updatedConfigOptions(mixed $value, ?string $key = null): void
+    {
+        if ($this->isMinecraftCheckout && $this->minecraftConfiguration['versions']->isNotEmpty()) {
+            $this->syncMinecraftVersion();
+        }
     }
 
     public function useRecommendedMinecraftConfiguration(): void
@@ -206,6 +277,7 @@ new class extends Component {
                 Arr::set($this->config_options, $option->key, $recommended['value']);
             }
         }
+        $this->syncMinecraftVersion();
 
         $this->resetValidation();
     }

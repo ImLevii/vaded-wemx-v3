@@ -52,6 +52,16 @@ class MinecraftCheckoutTest extends TestCase
                 ['value' => 'vanilla', 'name' => 'Vanilla'],
                 ['value' => 'fabric', 'name' => 'Fabric', 'description' => '<script>alert(1)</script>'],
                 ['value' => 'ftb', 'name' => 'FTB Modpack', 'group' => 'modpacks', 'daily_price' => 4 / 30],
+                ['value' => 'forge', 'name' => 'Forge'],
+                ['value' => 'modpack', 'name' => 'Choose in panel', 'group' => 'modpacks'],
+            ]],
+        ]);
+        $this->package->configOptions()->create([
+            'key' => 'minecraft_version', 'label' => 'Minecraft version', 'type' => 'select', 'rules' => 'nullable|string', 'default_value' => 'latest',
+            'data' => ['options' => [
+                ['value' => 'latest', 'name' => 'Latest release'],
+                ['value' => '1.20.1', 'name' => '1.20.1'],
+                ['value' => '1.8.8', 'name' => '1.8.8 (PvP)'],
             ]],
         ]);
         $this->package->configOptions()->create(['key' => 'server_name', 'label' => 'Server name', 'type' => 'text', 'rules' => 'required|string', 'default_value' => 'My world']);
@@ -173,5 +183,51 @@ class MinecraftCheckoutTest extends TestCase
         });
 
         return $cart;
+    }
+
+    public function test_location_software_and_version_defaults_are_preselected(): void
+    {
+        Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->assertSet('config_options.location_id', '1')->assertSet('config_options.server_software', 'vanilla')
+            ->assertSet('config_options.minecraft_version', 'latest')
+            ->assertSee('Minecraft version')->assertSee('1.8.8 (PvP)')->assertSee('The matching Java version is set up for you');
+    }
+
+    public function test_versions_follow_the_selected_software(): void
+    {
+        // Forge can't install 1.8.8 (config hosting.minecraft_versions), so switching to Forge resets it to the default.
+        Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->set('config_options.minecraft_version', '1.8.8')->assertSet('config_options.minecraft_version', '1.8.8')
+            ->set('config_options.server_software', 'forge')->assertSet('config_options.minecraft_version', 'latest')
+            ->assertDontSee('1.8.8 (PvP)')->assertSee('1.20.1')
+            ->set('config_options.minecraft_version', '1.8.8')->assertSet('config_options.minecraft_version', 'latest');
+    }
+
+    public function test_modpack_choice_hides_the_version_and_points_to_the_panel(): void
+    {
+        $cart = $this->currentCart();
+        Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->set('config_options.server_software', 'modpack')
+            ->assertSee('Pick your modpack in the panel')->assertDontSee('1.8.8 (PvP)')
+            ->assertSet('config_options.minecraft_version', null)
+            ->call('addToCart')->assertHasNoErrors();
+        $item = $cart->items()->firstOrFail();
+        $this->assertSame('modpack', $item->options()->where('key', 'server_software')->firstOrFail()->value);
+        $this->assertNull($item->options()->where('key', 'minecraft_version')->first());
+    }
+
+    public function test_chosen_version_is_saved_with_the_software(): void
+    {
+        $cart = $this->currentCart();
+        Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->set('config_options.server_software', 'paper')->set('config_options.minecraft_version', '1.20.1')
+            ->call('addToCart')->assertHasNoErrors();
+        $item = $cart->items()->firstOrFail();
+        $this->assertSame('paper', $item->options()->where('key', 'server_software')->firstOrFail()->value);
+        $this->assertSame('1.20.1', $item->options()->where('key', 'minecraft_version')->firstOrFail()->value);
+        // The cart shows choice names, not stored values.
+        $this->assertSame('Europe', $item->options()->where('key', 'location_id')->firstOrFail()->displayValueForCart());
+        $this->assertSame('Paper', $item->options()->where('key', 'server_software')->firstOrFail()->displayValueForCart());
+        $this->assertSame('My world', $item->options()->where('key', 'server_name')->firstOrFail()->displayValueForCart());
     }
 }

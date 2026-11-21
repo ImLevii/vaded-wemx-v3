@@ -28,3 +28,10 @@
 .vh-minecraft-help { color: var(--vh-muted); font-size: 13px; line-height: 1.8; }
 .vh-minecraft-checkout .vh-vps-config-field label { display: block; margin-bottom: 8px; color: var(--vh-text); font-size: 13px; }
 .vh-minecraft-checkout .vh-package-main > .vh-purchase-panel > h2 { margin-bottom: 16px; font-size: 17px; font-weight: 650; }
+.vh-minecraft-version { display: grid; gap: 8px; max-width: 360px; margin-top: 20px; }
+.vh-minecraft-version label { color: var(--vh-text); font-size: 13px; font-weight: 650; }
+.vh-minecraft-version small { color: var(--vh-muted); font-size: 11px; line-height: 1.6; }
+.vh-minecraft-modpack-note { display: flex; align-items: flex-start; gap: 12px; margin-top: 18px; padding: 14px 16px; border: 1px solid var(--vh-border); border-radius: 12px; background: var(--vh-input); color: var(--vh-muted); font-size: 13px; line-height: 1.7; }
+.vh-minecraft-modpack-note > svg { flex-shrink: 0; width: 20px; height: 20px; margin-top: 2px; color: var(--vh-accent); }
+.vh-minecraft-modpack-note strong { color: var(--vh-text); }
+.vh-minecraft-modpack-note p { margin: 0; }

@@ -43,6 +43,21 @@
                     @empty
                         <p class="vh-minecraft-help">Server software is included with this plan. Software selection is not available.</p>
                     @endforelse
+                    @if(! \App\Support\MinecraftCheckoutOptions::choosesVersion($this->minecraftSoftware))
+                        <div class="vh-minecraft-modpack-note" role="note">
+                            <x-theme::icon name="cube" />
+                            <p><strong>Pick your modpack in the panel.</strong> After checkout, open your server’s <strong>Modpacks</strong> tab to browse CurseForge, Modrinth, FTB, ATLauncher and Technic packs and install one in a click. The modpack sets the Minecraft version and Java for you.</p>
+                        </div>
+                    @else
+                        @foreach($this->minecraftConfiguration['versions'] as $option)
+                            @php($versionChoices = \App\Support\MinecraftCheckoutOptions::versionChoices($option, $this->minecraftSoftware))
+                            <div class="vh-minecraft-version" wire:key="minecraft-version-{{ $option->id }}">
+                                <label for="minecraft-version-{{ $option->id }}">{{ $option->label }}</label>
+                                <x-theme::form.select id="minecraft-version-{{ $option->id }}" :options="collect($versionChoices)->mapWithKeys(fn (array $choice): array => [(string) $choice['value'] => $choice['name'] ?? $choice['value']])->all()" :default_value="data_get($config_options, $option->key)" wire:model.live="config_options.{{ $option->key }}" />
+                                @error('config_options.'.$option->key)<div role="alert"><x-theme::form.error :text="$message" /></div>@else<small>The matching Java version is set up for you. You can switch versions later with Version Changer in your panel.</small>@enderror
+                            </div>
+                        @endforeach
+                    @endif
                 </section>
                 @if($this->minecraftConfiguration['service']->isNotEmpty())
                     <section class="vh-purchase-panel" aria-labelledby="minecraft-service-heading"><div class="vh-purchase-section-heading"><span class="vh-purchase-section-icon" aria-hidden="true">04</span><div><h2 id="minecraft-service-heading">Service Configuration</h2><p>Adjust your server details and resources.</p></div></div><div class="grid grid-cols-1 gap-4 md:grid-cols-2">

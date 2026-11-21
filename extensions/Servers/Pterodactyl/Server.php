@@ -10,6 +10,7 @@ use App\Models\ServerAccount;
 use App\Models\ServerConnection;
 use App\Models\User;
 use App\Services\CustomerServerCredentials;
+use App\Support\MinecraftCheckoutOptions;
 use App\Support\OperatingSystemOptions;
 use App\Support\PterodactylUpgradeOptions;
 use Exception;
@@ -478,11 +479,21 @@ class Server extends ServerExtension
         );
         $pteroUserId = $this->getOrCreatePteroUser($order, $connection);
 
-        // merge environment variables from package and order, then fill the egg's defaults
-        // (the panel API does not apply variable defaults itself)
+        // merge environment variables from package, the customer's software/version choice and order, then fill the
+        // egg's defaults (the panel API does not apply variable defaults itself). When the choice switched the server to
+        // another egg, only package variables that egg also has are kept.
+        $packageEnvironment = (array) $order->package->data('environment', []);
+        if (($egg['switched'] ?? false) && is_array($egg['variables'])) {
+            $packageEnvironment = array_intersect_key($packageEnvironment, array_flip(array_column($egg['variables'], 'env_variable')));
+        }
+        // Order::option() falls back to the package's data when the order has no environment.* values; that fallback
+        // must not override the software/version choice, so only values the order actually carries are applied last.
+        $orderEnvironment = $order->prices->contains(fn ($price): bool => Str::startsWith((string) $price->key, 'environment.'))
+            ? (array) $order->option('environment', []) : [];
         $environment = $this->withEggDefaults(array_merge(
-            $order->package->data('environment', []),
-            $order->option('environment', [])
+            $packageEnvironment,
+            $egg['environment'] ?? [],
+            $orderEnvironment
         ), $egg['variables']);
 
         // prepare the server data
@@ -824,6 +835,9 @@ class Server extends ServerExtension
     {
         $package = $order->package;
         $nestId = (int) $package->data('nest_id', 0);
+        if (($minecraft = $this->resolveMinecraftEgg($order, $connection, $nestId)) !== null) {
+            return $minecraft;
+        }
         $osOption = $package->configOptions->first(fn ($option): bool => OperatingSystemOptions::recognizes($option));
         $selected = $osOption ? trim((string) $order->prices->firstWhere('key', $osOption->key)?->value) : '';
 
@@ -867,6 +881,63 @@ class Server extends ServerExtension
         unset($matches[0]['images']);
 
         return $matches[0];
+    }
+
+    /**
+     * Minecraft checkout: the customer's server software picks the egg (config hosting.minecraft_software), the chosen
+     * Minecraft version goes into that egg's version variable, and the Java image follows the version
+     * (config hosting.minecraft_versions). Returns null when the package has no software option or the choice is not
+     * mapped, so the package's own egg is used as before.
+     *
+     * @return array{id: int, startup: mixed, docker_image: mixed, variables: list<array<string, mixed>>, environment: array<string, string>, switched: bool}|null
+     */
+    private function resolveMinecraftEgg(Order $order, ServerConnection $connection, int $nestId): ?array
+    {
+        $package = $order->package;
+        $softwareOption = $package->configOptions->first(fn ($option): bool => MinecraftCheckoutOptions::kind($option) === 'software');
+        $value = $softwareOption ? trim((string) $order->prices->firstWhere('key', $softwareOption->key)?->value) : '';
+        $software = MinecraftCheckoutOptions::software($value === '' ? null : $value);
+        if ($software === null) {
+            return null;
+        }
+
+        $eggId = (int) $software['egg_id'];
+        if ($nestId < 1 || $eggId < 1) {
+            throw new RuntimeException("Server software \"{$value}\" needs the package nest and a mapped egg.");
+        }
+        $connectionId = $connection->id ?? ($connection->getKey() ?? 'default');
+        $attributes = Cache::remember("pterodactyl:egg:{$connectionId}:nest:{$nestId}:egg:{$eggId}", now()->addHour(), function () use ($connection, $nestId, $eggId) {
+            $egg = Server::makeRequest($connection->config, "/api/application/nests/{$nestId}/eggs/{$eggId}", 'get', ['include' => 'variables']);
+            if (! isset($egg['attributes'])) {
+                throw new RuntimeException("The panel did not return egg {$eggId} of nest {$nestId} for server software.");
+            }
+
+            return $egg['attributes'];
+        });
+
+        $environment = $software['environment'] ?? [];
+        $java = $software['java'] ?? null;
+        $versionOption = $package->configOptions->first(fn ($option): bool => MinecraftCheckoutOptions::kind($option) === 'version');
+        $version = $versionOption ? trim((string) $order->prices->firstWhere('key', $versionOption->key)?->value) : '';
+        if (($software['version_variable'] ?? null) !== null && $version !== '') {
+            $environment[$software['version_variable']] = $version;
+            $java = MinecraftCheckoutOptions::javaFor($version) ?? $java;
+        }
+
+        $images = is_array($attributes['docker_images'] ?? null) ? $attributes['docker_images'] : [];
+        $image = $java !== null && isset($images[$java]) ? $images[$java] : (reset($images) ?: ($attributes['docker_image'] ?? $package->data('docker_image')));
+
+        // Same egg as the package: keep the package's (possibly tuned) startup. Another egg: use that egg's startup.
+        $switched = $eggId !== (int) $package->data('egg_id');
+
+        return [
+            'id' => $eggId,
+            'startup' => $switched ? ($attributes['startup'] ?? $package->data('startup')) : ($package->data('startup') ?: ($attributes['startup'] ?? null)),
+            'docker_image' => $image,
+            'variables' => $this->eggVariablesFrom($attributes),
+            'environment' => array_map('strval', $environment),
+            'switched' => $switched,
+        ];
     }
 
     /**

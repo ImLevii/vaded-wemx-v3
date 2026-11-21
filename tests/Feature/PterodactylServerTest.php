@@ -294,6 +294,98 @@ class PterodactylServerTest extends TestCase
             && $request['environment']['SERVER_JARFILE'] === 'server.jar' && $request['environment']['OS_HOSTNAME'] === 'lumenvm');
     }
 
+    public function test_minecraft_software_picks_its_egg_version_variable_and_java_image(): void
+    {
+        $this->addMinecraftOptions();
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/5*' => Http::response($this->minecraftEgg(5, '#paper', ['SERVER_JARFILE', 'MINECRAFT_VERSION', 'BUILD_NUMBER', 'DL_PATH']))]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'server_software', 'value' => 'paper', 'cycle_price' => 0, 'description' => 'Server software']);
+        $order->prices()->create(['key' => 'minecraft_version', 'value' => '1.20.1', 'cycle_price' => 0, 'description' => 'Minecraft version']);
+
+        (new Server)->create($order, $this->connection);
+
+        // Paper (egg 5) replaces the package's egg 4; 1.20.1 needs Java 17; the package's SERVER_JARFILE carries over.
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
+            && $request['egg'] === 5 && $request['docker_image'] === 'yolks:java_17' && $request['startup'] === '#paper'
+            && $request['environment'] == ['SERVER_JARFILE' => 'server.jar', 'MINECRAFT_VERSION' => '1.20.1', 'BUILD_NUMBER' => 'latest']);
+    }
+
+    public function test_switching_to_forge_drops_package_variables_the_forge_egg_does_not_have(): void
+    {
+        $this->addMinecraftOptions();
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/1*' => Http::response($this->minecraftEgg(1, '#forge', ['SERVER_JARFILE', 'MC_VERSION', 'BUILD_TYPE', 'FORGE_VERSION']))]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'server_software', 'value' => 'forge', 'cycle_price' => 0, 'description' => 'Server software']);
+        $order->prices()->create(['key' => 'minecraft_version', 'value' => '1.12.2', 'cycle_price' => 0, 'description' => 'Minecraft version']);
+
+        (new Server)->create($order, $this->connection);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
+            && $request['egg'] === 1 && $request['docker_image'] === 'yolks:java_8' && $request['startup'] === '#forge'
+            && $request['environment'] == ['SERVER_JARFILE' => 'server.jar', 'MC_VERSION' => '1.12.2', 'BUILD_TYPE' => 'recommended']);
+    }
+
+    public function test_modpack_servers_start_as_forge_latest_ready_for_the_panel_modpack_installer(): void
+    {
+        $this->addMinecraftOptions();
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/1*' => Http::response($this->minecraftEgg(1, '#forge', ['SERVER_JARFILE', 'MC_VERSION', 'BUILD_TYPE', 'FORGE_VERSION']))]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'server_software', 'value' => 'modpack', 'cycle_price' => 0, 'description' => 'Server software']);
+        // A stale version value is ignored: the modpack chooses its own version in the panel.
+        $order->prices()->create(['key' => 'minecraft_version', 'value' => '1.8.8', 'cycle_price' => 0, 'description' => 'Minecraft version']);
+
+        (new Server)->create($order, $this->connection);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
+            && $request['egg'] === 1 && $request['docker_image'] === 'yolks:java_25'
+            && $request['environment']['MC_VERSION'] === 'latest' && $request['environment']['BUILD_TYPE'] === 'recommended');
+    }
+
+    public function test_software_on_the_package_egg_keeps_the_package_startup(): void
+    {
+        $this->addMinecraftOptions();
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/4*' => Http::response($this->minecraftEgg(4, '#vanilla-egg-default', ['SERVER_JARFILE', 'VANILLA_VERSION']))]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'server_software', 'value' => 'vanilla', 'cycle_price' => 0, 'description' => 'Server software']);
+        $order->prices()->create(['key' => 'minecraft_version', 'value' => '1.8.8', 'cycle_price' => 0, 'description' => 'Minecraft version']);
+
+        (new Server)->create($order, $this->connection);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
+            && $request['egg'] === 4 && $request['startup'] === 'java -jar server.jar' && $request['docker_image'] === 'yolks:java_8'
+            && $request['environment']['VANILLA_VERSION'] === '1.8.8');
+    }
+
+    public function test_unmapped_software_uses_the_package_egg(): void
+    {
+        $this->addMinecraftOptions();
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/4*' => Http::response($this->minecraftEgg(4, '#vanilla-egg-default', ['SERVER_JARFILE', 'VANILLA_VERSION']))]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'server_software', 'value' => 'purpur', 'cycle_price' => 0, 'description' => 'Server software']);
+
+        (new Server)->create($order, $this->connection);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
+            && $request['egg'] === 4 && $request['docker_image'] === 'ghcr.io/pterodactyl/yolks:java_21' && $request['startup'] === 'java -jar server.jar');
+    }
+
+    public function test_a_missing_software_egg_fails_before_creating_panel_accounts_or_servers(): void
+    {
+        $this->addMinecraftOptions();
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/46*' => Http::response(['errors' => [['code' => 'NotFound']]], 404)]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'server_software', 'value' => 'folia', 'cycle_price' => 0, 'description' => 'Server software']);
+
+        try {
+            (new Server)->create($order, $this->connection);
+            $this->fail('A missing egg must stop provisioning.');
+        } catch (\Throwable) {
+        }
+
+        Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
+        $this->assertNull($order->fresh()->external_id);
+    }
+
     public function test_new_accounts_store_encrypted_passwords_and_email_the_real_panel_link(): void
     {
         $this->customer->update(['first_name' => null, 'last_name' => null]);
@@ -949,6 +1041,33 @@ class PterodactylServerTest extends TestCase
             'relationships' => ['allocations' => ['data' => [['attributes' => [
                 'id' => $id * 10, 'assigned' => $assigned,
             ]]]]],
+        ]];
+    }
+
+    protected function addMinecraftOptions(): void
+    {
+        $this->package->configOptions()->create([
+            'key' => 'server_software', 'label' => 'Server software', 'type' => 'select', 'rules' => 'required|string', 'default_value' => 'paper',
+            'data' => ['options' => array_map(fn (string $value): array => ['value' => $value, 'name' => ucfirst($value)], ['paper', 'vanilla', 'forge', 'folia', 'modpack', 'purpur'])],
+        ]);
+        $this->package->configOptions()->create([
+            'key' => 'minecraft_version', 'label' => 'Minecraft version', 'type' => 'select', 'rules' => 'nullable|string', 'default_value' => 'latest',
+            'data' => ['options' => array_map(fn (string $value): array => ['value' => $value, 'name' => $value], ['latest', '1.20.1', '1.12.2', '1.8.8'])],
+        ]);
+    }
+
+    /**
+     * @param  list<string>  $variables
+     * @return array{attributes: array<string, mixed>}
+     */
+    protected function minecraftEgg(int $id, string $startup, array $variables): array
+    {
+        return ['attributes' => [
+            'id' => $id, 'startup' => $startup,
+            'docker_images' => ['Java 25' => 'yolks:java_25', 'Java 21' => 'yolks:java_21', 'Java 17' => 'yolks:java_17', 'Java 8' => 'yolks:java_8'],
+            'relationships' => ['variables' => ['data' => array_map(fn (string $name): array => ['attributes' => [
+                'env_variable' => $name, 'default_value' => '', 'rules' => 'nullable|string',
+            ]], $variables)]],
         ]];
     }
 
