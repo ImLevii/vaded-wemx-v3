@@ -14,6 +14,9 @@
 .vh-minecraft-cycle { display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; }
 .vh-minecraft-cycle-price { font-size: 21px; font-weight: 700; letter-spacing: -.03em; }
 .vh-minecraft-cycle small { margin-top: 0; }
+.vh-minecraft-cycle-discount { color: var(--vh-muted); font-size: 11px; line-height: 1.6; }
+.vh-minecraft-cycle-discount[data-saving] { padding: 2px 8px; border-radius: 999px; color: #4ade80; background: rgba(74, 222, 128, .1); font-weight: 600; }
+.vaded-client[data-bs-theme="light"] .vh-minecraft-cycle-discount[data-saving] { color: #15803d; background: rgba(21, 128, 61, .1); }
 .vh-minecraft-divider { display: flex; align-items: center; gap: 18px; color: var(--vh-muted); font-size: 12px; }
 .vh-minecraft-divider::before, .vh-minecraft-divider::after { content: ''; flex: 1; height: 1px; background: var(--vh-border); }
 .vh-minecraft-tabs { margin-bottom: 18px; }

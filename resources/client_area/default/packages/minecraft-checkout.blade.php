@@ -19,7 +19,7 @@
                         @php($discount = \App\Support\MinecraftCheckoutOptions::discount($price, $this->minecraftBillingCycles))
                         <div wire:key="minecraft-billing-{{ $price->id }}">
                             <input type="radio" name="package-billing-cycle" id="minecraft-price-{{ $price->id }}" value="{{ $price->id }}" wire:model.live="packagePriceId" class="sr-only" @checked((string) $packagePriceId === (string) $price->id)>
-                            <label class="vh-minecraft-choice vh-minecraft-cycle" for="minecraft-price-{{ $price->id }}"><strong>{{ $price->cycle() }}</strong><span class="vh-minecraft-cycle-price">{{ price($price->price) }}</span>@if($discount !== null)<small>{{ $discount }}% discount</small>@endif<small>{{ $price->setup_fee > 0 ? price($price->setup_fee).' setup fee' : 'No setup fee' }}</small></label>
+                            <label class="vh-minecraft-choice vh-minecraft-cycle" for="minecraft-price-{{ $price->id }}"><strong>{{ $price->cycle() }}</strong><span class="vh-minecraft-cycle-price">{{ price($price->price) }}</span>@if($discount !== null)<span class="vh-minecraft-cycle-discount" @if($discount > 0) data-saving @endif>{{ $discount }}% discount</span>@endif<small>{{ $price->setup_fee > 0 ? price($price->setup_fee).' setup fee' : 'No setup fee' }}</small></label>
                         </div>
                     @empty
                         <p class="vh-package-unavailable">No billing options are currently available for this plan.</p>

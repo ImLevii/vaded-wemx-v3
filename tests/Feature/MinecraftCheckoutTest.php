@@ -59,7 +59,11 @@ class MinecraftCheckoutTest extends TestCase
 
     public function test_minecraft_checkout_renders_real_cycles_locations_and_grouped_software(): void
     {
-        $this->get(route('packages.view', $this->package->slug))->assertOk()
+        $response = $this->get(route('packages.view', $this->package->slug));
+        // Savings get the green pill (data-saving) like the VPS checkout; the 0% monthly line stays muted.
+        $this->assertMatchesRegularExpression('/class="vh-minecraft-cycle-discount"\s+data-saving\s*>3% discount</', $response->getContent());
+        $this->assertMatchesRegularExpression('/class="vh-minecraft-cycle-discount"\s*>0% discount</', $response->getContent());
+        $response->assertOk()
             ->assertSee('Choose a Billing Cycle')->assertSee('3% discount')->assertSee('0% discount')
             ->assertSee('Choose a Location')->assertSee('Europe')->assertSee('North America')
             ->assertSee('Test my ping')->assertSee('Ping not tested')->assertDontSee('149ms')
