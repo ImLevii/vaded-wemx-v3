@@ -53,7 +53,10 @@ class MinecraftCheckoutTest extends TestCase
                 ['value' => 'fabric', 'name' => 'Fabric', 'description' => '<script>alert(1)</script>'],
                 ['value' => 'ftb', 'name' => 'FTB Modpack', 'group' => 'modpacks', 'daily_price' => 4 / 30],
                 ['value' => 'forge', 'name' => 'Forge'],
-                ['value' => 'modpack', 'name' => 'Choose in panel', 'group' => 'modpacks'],
+                ['value' => 'cobblemon', 'name' => 'Cobblemon', 'group' => 'modpacks', 'min_memory' => 2,
+                    'modpack' => ['provider' => 'modrinth', 'id' => '5FFgwNNP', 'version_id' => 'YQpPe5Iu', 'minecraft' => '1.21.1', 'loader' => 'Fabric']],
+                ['value' => 'atm10', 'name' => 'All the Mods 10', 'group' => 'modpacks', 'min_memory' => 8,
+                    'modpack' => ['provider' => 'curseforge', 'id' => '925200', 'version_id' => '9620701', 'minecraft' => '1.21.1', 'loader' => 'NeoForge']],
             ]],
         ]);
         $this->package->configOptions()->create([
@@ -203,17 +206,34 @@ class MinecraftCheckoutTest extends TestCase
             ->set('config_options.minecraft_version', '1.8.8')->assertSet('config_options.minecraft_version', 'latest');
     }
 
-    public function test_modpack_choice_hides_the_version_and_points_to_the_panel(): void
+    public function test_modpack_choice_hides_the_version_and_installs_automatically(): void
     {
         $cart = $this->currentCart();
         Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
-            ->set('config_options.server_software', 'modpack')
-            ->assertSee('Pick your modpack in the panel')->assertDontSee('1.8.8 (PvP)')
+            ->set('config_options.server_software', 'cobblemon')
+            ->assertSee('Installs automatically')->assertSee('Minecraft 1.21.1 · Fabric')->assertDontSee('1.8.8 (PvP)')
+            ->assertDontSee('Pick your modpack in the panel')
             ->assertSet('config_options.minecraft_version', null)
             ->call('addToCart')->assertHasNoErrors();
         $item = $cart->items()->firstOrFail();
-        $this->assertSame('modpack', $item->options()->where('key', 'server_software')->firstOrFail()->value);
+        $this->assertSame('cobblemon', $item->options()->where('key', 'server_software')->firstOrFail()->value);
+        $this->assertSame('Cobblemon', $item->options()->where('key', 'server_software')->firstOrFail()->displayValueForCart());
         $this->assertNull($item->options()->where('key', 'minecraft_version')->first());
+    }
+
+    public function test_modpacks_too_big_for_the_plan_are_hidden_and_rejected(): void
+    {
+        // "Minecraft 2GB": All the Mods 10 needs 8 GB.
+        $cart = $this->currentCart();
+        Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->assertSee('Cobblemon')->assertDontSee('All the Mods 10')->assertSee('1 more modpack is available on plans with more memory')
+            ->set('config_options.server_software', 'atm10')->call('addToCart')->assertHasErrors('config_options.server_software');
+        $this->assertSame(0, $cart->items()->count());
+
+        $this->package->update(['data' => ['memory_limit' => 8]]);
+        Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->assertSee('All the Mods 10')->assertDontSee('available on plans with more memory')
+            ->set('config_options.server_software', 'atm10')->call('addToCart')->assertHasNoErrors();
     }
 
     public function test_chosen_version_is_saved_with_the_software(): void

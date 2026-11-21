@@ -896,7 +896,15 @@ class Server extends ServerExtension
         $package = $order->package;
         $softwareOption = $package->configOptions->first(fn ($option): bool => MinecraftCheckoutOptions::kind($option) === 'software');
         $value = $softwareOption ? trim((string) $order->prices->firstWhere('key', $softwareOption->key)?->value) : '';
-        $software = MinecraftCheckoutOptions::software($value === '' ? null : $value);
+        $modpack = MinecraftCheckoutOptions::modpack($softwareOption, $value === '' ? null : $value);
+        if ($modpack === null && $softwareOption && $value !== '' && $this->choiceClaimsModpack($softwareOption, $value)) {
+            throw new RuntimeException("The modpack \"{$value}\" is missing its provider, id or version id.");
+        }
+        $software = $modpack !== null
+            ? ['egg_id' => (int) config('hosting.minecraft_modpack_egg', 0), 'version_variable' => null, 'environment' => [
+                'MODPACK_PROVIDER' => $modpack['provider'], 'MODPACK_ID' => $modpack['id'], 'MODPACK_VERSION_ID' => $modpack['version_id'],
+            ]]
+            : MinecraftCheckoutOptions::software($value === '' ? null : $value);
         if ($software === null) {
             return null;
         }
@@ -923,9 +931,12 @@ class Server extends ServerExtension
             $environment[$software['version_variable']] = $version;
             $java = MinecraftCheckoutOptions::javaFor($version) ?? $java;
         }
+        if ($modpack !== null && ($needed = MinecraftCheckoutOptions::javaForMinecraft($modpack['minecraft'])) !== null) {
+            $java = 'Java '.$needed;
+        }
 
         $images = is_array($attributes['docker_images'] ?? null) ? $attributes['docker_images'] : [];
-        $image = $java !== null && isset($images[$java]) ? $images[$java] : (reset($images) ?: ($attributes['docker_image'] ?? $package->data('docker_image')));
+        $image = $this->javaImage($images, $java) ?? ($attributes['docker_image'] ?? $package->data('docker_image'));
 
         // Same egg as the package: keep the package's (possibly tuned) startup. Another egg: use that egg's startup.
         $switched = $eggId !== (int) $package->data('egg_id');
@@ -938,6 +949,50 @@ class Server extends ServerExtension
             'environment' => array_map('strval', $environment),
             'switched' => $switched,
         ];
+    }
+
+    /** A software choice that has "modpack" data, valid or not (incomplete data must not fall back to the package egg). */
+    private function choiceClaimsModpack($option, string $value): bool
+    {
+        return collect($option->data['options'] ?? [])->contains(fn ($choice): bool => is_array($choice)
+            && (string) ($choice['value'] ?? '') === $value && array_key_exists('modpack', $choice));
+    }
+
+    /**
+     * The egg image for a Java label ("Java 21"): that image, else the lowest newer Java the egg has, else the newest
+     * the egg has. With no label, the egg's first image (its default).
+     *
+     * @param  array<string, string>  $images
+     */
+    private function javaImage(array $images, ?string $java): ?string
+    {
+        if ($images === []) {
+            return null;
+        }
+        if ($java === null) {
+            return reset($images);
+        }
+        if (isset($images[$java])) {
+            return $images[$java];
+        }
+        $wanted = (int) preg_replace('/\D+/', '', $java);
+        $versions = [];
+        foreach ($images as $label => $image) {
+            if (preg_match('/(\d+)\s*$/', (string) $label, $m)) {
+                $versions[(int) $m[1]] = $image;
+            }
+        }
+        if ($versions === []) {
+            return reset($images);
+        }
+        ksort($versions);
+        foreach ($versions as $version => $image) {
+            if ($version >= $wanted) {
+                return $image;
+            }
+        }
+
+        return end($versions);
     }
 
     /**

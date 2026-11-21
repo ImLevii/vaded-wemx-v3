@@ -85,7 +85,7 @@ new class extends Component {
             foreach ($this->package->configOptions as $option) {
                 $kind = MinecraftCheckoutOptions::kind($option);
                 if ($kind === 'version') {
-                    $this->validate(['config_options.'.$option->key => [\Illuminate\Validation\Rule::in(array_column(MinecraftCheckoutOptions::versionChoices($option, $this->minecraftSoftware), 'value'))]],
+                    $this->validate(['config_options.'.$option->key => [\Illuminate\Validation\Rule::in(array_column(MinecraftCheckoutOptions::versionChoices($option, $this->minecraftSoftware, $this->minecraftSoftwareOption()), 'value'))]],
                         ['config_options.'.$option->key.'.in' => 'Choose a Minecraft version that your server software supports.']);
                 } elseif ($kind !== 'service') {
                     $this->validate(['config_options.'.$option->key => [\Illuminate\Validation\Rule::in(array_column(MinecraftCheckoutOptions::choices($option), 'value'))]]);
@@ -160,7 +160,7 @@ new class extends Component {
 
     public function rendering($view)
     {
-        $versionless = $this->isMinecraftCheckout && ! MinecraftCheckoutOptions::choosesVersion($this->selectedMinecraftSoftware());
+        $versionless = $this->isMinecraftCheckout && ! MinecraftCheckoutOptions::choosesVersion($this->selectedMinecraftSoftware(), $this->minecraftSoftwareOption());
         foreach ($this->package->configOptions as $option) {
             // A modpack sets its own Minecraft version, so don't put the version default back for it.
             if ($versionless && MinecraftCheckoutOptions::kind($option) === 'version') {
@@ -219,10 +219,16 @@ new class extends Component {
 
     private function selectedMinecraftSoftware(): ?string
     {
-        $option = $this->package->configOptions->first(fn (PackageConfigOption $option): bool => MinecraftCheckoutOptions::kind($option) === 'software');
+        $option = $this->minecraftSoftwareOption();
         $value = $option ? data_get($this->config_options, $option->key) : null;
 
         return $value === null || $value === '' ? null : (string) $value;
+    }
+
+    /** The plan's server software option (its choices include the checkout modpacks). */
+    public function minecraftSoftwareOption(): ?PackageConfigOption
+    {
+        return $this->package->configOptions->first(fn (PackageConfigOption $option): bool => MinecraftCheckoutOptions::kind($option) === 'software');
     }
 
     /** Pre-select each location/software/version option's default when it is an available choice. */
@@ -249,7 +255,7 @@ new class extends Component {
     {
         unset($this->minecraftSoftware);
         foreach ($this->minecraftConfiguration['versions'] as $option) {
-            $allowed = array_map('strval', array_column(MinecraftCheckoutOptions::versionChoices($option, $this->minecraftSoftware), 'value'));
+            $allowed = array_map('strval', array_column(MinecraftCheckoutOptions::versionChoices($option, $this->minecraftSoftware, $this->minecraftSoftwareOption()), 'value'));
             $current = (string) data_get($this->config_options, $option->key, '');
             if ($allowed === []) {
                 Arr::forget($this->config_options, $option->key);

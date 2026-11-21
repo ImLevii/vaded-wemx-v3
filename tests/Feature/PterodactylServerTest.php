@@ -325,20 +325,65 @@ class PterodactylServerTest extends TestCase
             && $request['environment'] == ['SERVER_JARFILE' => 'server.jar', 'MC_VERSION' => '1.12.2', 'BUILD_TYPE' => 'recommended']);
     }
 
-    public function test_modpack_servers_start_as_forge_latest_ready_for_the_panel_modpack_installer(): void
+    public function test_checkout_modpacks_install_on_the_modpack_egg_with_the_java_their_minecraft_needs(): void
+    {
+        $this->addMinecraftOptions();
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/33*' => Http::response($this->minecraftEgg(33, '#modpack-installer', ['MODPACK_ID', 'MODPACK_VERSION_ID', 'MODPACK_PROVIDER'], ['Java 21', 'Java 17', 'Java 11', 'Java 8']))]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'server_software', 'value' => 'rlcraft', 'cycle_price' => 0, 'description' => 'Server software']);
+        // A stale version value is ignored: the modpack brings its own Minecraft version.
+        $order->prices()->create(['key' => 'minecraft_version', 'value' => '1.20.1', 'cycle_price' => 0, 'description' => 'Minecraft version']);
+
+        (new Server)->create($order, $this->connection);
+
+        // RLCraft is Minecraft 1.12.2, so Java 8; package variables the installer egg doesn't have are dropped.
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
+            && $request['egg'] === 33 && $request['docker_image'] === 'yolks:java_8' && $request['startup'] === '#modpack-installer'
+            && $request['environment'] == ['MODPACK_PROVIDER' => 'curseforge', 'MODPACK_ID' => '285109', 'MODPACK_VERSION_ID' => '4612979']);
+    }
+
+    public function test_legacy_choose_in_panel_modpack_starts_as_forge_latest(): void
     {
         $this->addMinecraftOptions();
         $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/1*' => Http::response($this->minecraftEgg(1, '#forge', ['SERVER_JARFILE', 'MC_VERSION', 'BUILD_TYPE', 'FORGE_VERSION']))]);
         $order = $this->createOrder();
         $order->prices()->create(['key' => 'server_software', 'value' => 'modpack', 'cycle_price' => 0, 'description' => 'Server software']);
-        // A stale version value is ignored: the modpack chooses its own version in the panel.
-        $order->prices()->create(['key' => 'minecraft_version', 'value' => '1.8.8', 'cycle_price' => 0, 'description' => 'Minecraft version']);
 
         (new Server)->create($order, $this->connection);
 
         Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
-            && $request['egg'] === 1 && $request['docker_image'] === 'yolks:java_25'
-            && $request['environment']['MC_VERSION'] === 'latest' && $request['environment']['BUILD_TYPE'] === 'recommended');
+            && $request['egg'] === 1 && $request['docker_image'] === 'yolks:java_25' && $request['environment']['MC_VERSION'] === 'latest');
+    }
+
+    public function test_modpacks_on_newer_minecraft_use_the_closest_java_the_egg_has(): void
+    {
+        $this->addMinecraftOptions();
+        // Minecraft 26.1 needs Java 25, which the installer egg doesn't have: its newest (Java 21) is used.
+        $this->fakePanel(['https://panel.example.test/api/application/nests/1/eggs/33*' => Http::response($this->minecraftEgg(33, '#modpack-installer', ['MODPACK_ID', 'MODPACK_VERSION_ID', 'MODPACK_PROVIDER'], ['Java 21', 'Java 17', 'Java 8']))]);
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'server_software', 'value' => 'futurepack', 'cycle_price' => 0, 'description' => 'Server software']);
+
+        (new Server)->create($order, $this->connection);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST' && str_ends_with($request->url(), '/servers')
+            && $request['egg'] === 33 && $request['docker_image'] === 'yolks:java_21');
+    }
+
+    public function test_incomplete_modpack_data_fails_before_creating_panel_accounts_or_servers(): void
+    {
+        $this->addMinecraftOptions();
+        $this->fakePanel();
+        $order = $this->createOrder();
+        $order->prices()->create(['key' => 'server_software', 'value' => 'brokenpack', 'cycle_price' => 0, 'description' => 'Server software']);
+
+        try {
+            (new Server)->create($order, $this->connection);
+            $this->fail('Incomplete modpack data must stop provisioning.');
+        } catch (RuntimeException $e) {
+            $this->assertStringContainsString('brokenpack', $e->getMessage());
+        }
+
+        Http::assertNotSent(fn (Request $request) => $request->method() === 'POST');
     }
 
     public function test_software_on_the_package_egg_keeps_the_package_startup(): void
@@ -1048,7 +1093,12 @@ class PterodactylServerTest extends TestCase
     {
         $this->package->configOptions()->create([
             'key' => 'server_software', 'label' => 'Server software', 'type' => 'select', 'rules' => 'required|string', 'default_value' => 'paper',
-            'data' => ['options' => array_map(fn (string $value): array => ['value' => $value, 'name' => ucfirst($value)], ['paper', 'vanilla', 'forge', 'folia', 'modpack', 'purpur'])],
+            'data' => ['options' => [
+                ...array_map(fn (string $value): array => ['value' => $value, 'name' => ucfirst($value)], ['paper', 'vanilla', 'forge', 'folia', 'purpur', 'modpack']),
+                ['value' => 'rlcraft', 'name' => 'RLCraft', 'group' => 'modpacks', 'modpack' => ['provider' => 'curseforge', 'id' => '285109', 'version_id' => '4612979', 'minecraft' => '1.12.2', 'loader' => 'Forge']],
+                ['value' => 'futurepack', 'name' => 'Future pack', 'group' => 'modpacks', 'modpack' => ['provider' => 'modrinth', 'id' => 'abc', 'version_id' => 'def', 'minecraft' => '26.1']],
+                ['value' => 'brokenpack', 'name' => 'Broken pack', 'group' => 'modpacks', 'modpack' => ['provider' => 'curseforge', 'id' => '1']],
+            ]],
         ]);
         $this->package->configOptions()->create([
             'key' => 'minecraft_version', 'label' => 'Minecraft version', 'type' => 'select', 'rules' => 'nullable|string', 'default_value' => 'latest',
@@ -1060,11 +1110,11 @@ class PterodactylServerTest extends TestCase
      * @param  list<string>  $variables
      * @return array{attributes: array<string, mixed>}
      */
-    protected function minecraftEgg(int $id, string $startup, array $variables): array
+    protected function minecraftEgg(int $id, string $startup, array $variables, array $java = ['Java 25', 'Java 21', 'Java 17', 'Java 8']): array
     {
         return ['attributes' => [
             'id' => $id, 'startup' => $startup,
-            'docker_images' => ['Java 25' => 'yolks:java_25', 'Java 21' => 'yolks:java_21', 'Java 17' => 'yolks:java_17', 'Java 8' => 'yolks:java_8'],
+            'docker_images' => collect($java)->mapWithKeys(fn (string $label): array => [$label => 'yolks:java_'.preg_replace('/\\D+/', '', $label)])->all(),
             'relationships' => ['variables' => ['data' => array_map(fn (string $name): array => ['attributes' => [
                 'env_variable' => $name, 'default_value' => '', 'rules' => 'nullable|string',
             ]], $variables)]],

@@ -35,3 +35,4 @@
 .vh-minecraft-modpack-note > svg { flex-shrink: 0; width: 20px; height: 20px; margin-top: 2px; color: var(--vh-accent); }
 .vh-minecraft-modpack-note strong { color: var(--vh-text); }
 .vh-minecraft-modpack-note p { margin: 0; }
+.vh-minecraft-more { margin: 12px 0 0; font-size: 12px; }

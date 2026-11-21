@@ -52,10 +52,19 @@ return [
         'vanilla' => ['egg_id' => 4, 'version_variable' => 'VANILLA_VERSION', 'environment' => []],
         'forge' => ['egg_id' => 1, 'version_variable' => 'MC_VERSION', 'environment' => ['BUILD_TYPE' => 'recommended']],
         'folia' => ['egg_id' => 46, 'version_variable' => 'MINECRAFT_VERSION', 'environment' => ['BUILD_NUMBER' => 'latest']],
-        // Modpacks are picked in the panel's Modpacks tab (Modpack Installer extension), which switches the server to the
-        // installer egg itself. The server starts as Forge on the latest release until a pack is installed.
+        // Legacy "Modpack (choose in panel)" choice: a Forge server; the customer installs a pack from the panel's Modpacks
+        // tab. Kept for carts/orders made before the checkout modpacks replaced it.
         'modpack' => ['egg_id' => 1, 'version_variable' => null, 'environment' => ['MC_VERSION' => 'latest', 'BUILD_TYPE' => 'recommended'], 'java' => 'Java 25'],
     ],
+    /*
+     * Modpacks chosen at checkout are software choices whose option data carries
+     * "modpack": {"provider", "id", "version_id", "minecraft", "loader"} plus "min_memory" (GB; hidden on smaller plans).
+     * They are created on the Modpack Installer egg (ric-rac, "Minecraft: Java Edition Modpack Installer"), which installs
+     * the pack on first boot; its startup runs unix_args.txt or server.jar. Its Java images stop at Java 21, so only
+     * packs on Minecraft 1.21.x or older can be offered. The panel's Modpacks tab still works on these servers later.
+     */
+    'minecraft_modpack_egg' => 33,
+    'minecraft_modpack_providers' => ['atlauncher', 'curseforge', 'feedthebeast', 'modrinth', 'technic', 'voidswrath'],
     'minecraft_versions' => [
         'latest' => ['java' => 'Java 25', 'software' => ['paper', 'vanilla', 'forge', 'folia']],
         '26.3' => ['java' => 'Java 25', 'software' => ['paper', 'vanilla', 'forge', 'folia']],

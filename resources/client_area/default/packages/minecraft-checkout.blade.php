@@ -43,14 +43,28 @@
                     @empty
                         <p class="vh-minecraft-help">Server software is included with this plan. Software selection is not available.</p>
                     @endforelse
-                    @if(! \App\Support\MinecraftCheckoutOptions::choosesVersion($this->minecraftSoftware))
+                    @foreach($this->minecraftConfiguration['software'] as $option)
+                        @php($hiddenChoices = \App\Support\MinecraftCheckoutOptions::hiddenChoicesForMemory($option))
+                        @if($hiddenChoices !== [])
+                            @php($hidden = count($hiddenChoices))
+                            @php($noun = collect($hiddenChoices)->every(fn (array $choice): bool => isset($choice['modpack'])) ? Str::plural('modpack', $hidden) : Str::plural('option', $hidden))
+                            <p class="vh-minecraft-help vh-minecraft-more">{{ $hidden }} more {{ $noun }} {{ $hidden === 1 ? 'is' : 'are' }} available on plans with more memory.</p>
+                        @endif
+                    @endforeach
+                    @if($modpack = \App\Support\MinecraftCheckoutOptions::modpack($this->minecraftSoftwareOption(), $this->minecraftSoftware))
                         <div class="vh-minecraft-modpack-note" role="note">
                             <x-theme::icon name="cube" />
-                            <p><strong>Pick your modpack in the panel.</strong> After checkout, open your server’s <strong>Modpacks</strong> tab to browse CurseForge, Modrinth, FTB, ATLauncher and Technic packs and install one in a click. The modpack sets the Minecraft version and Java for you.</p>
+                            @php($modpackMeta = collect([$modpack['minecraft'] ? 'Minecraft '.$modpack['minecraft'] : null, $modpack['loader']])->filter()->implode(' · '))
+                            <p><strong>Installs automatically.</strong> We set up this modpack when your server is created{{ $modpackMeta !== '' ? ' ('.$modpackMeta.')' : '' }}, with the right Java version. You can switch to another pack any time from your server’s <strong>Modpacks</strong> tab.</p>
+                        </div>
+                    @elseif(! \App\Support\MinecraftCheckoutOptions::choosesVersion($this->minecraftSoftware, $this->minecraftSoftwareOption()))
+                        <div class="vh-minecraft-modpack-note" role="note">
+                            <x-theme::icon name="cube" />
+                            <p><strong>Pick your modpack in the panel.</strong> After checkout, open your server’s <strong>Modpacks</strong> tab to browse CurseForge, Modrinth, FTB, ATLauncher and Technic packs and install one in a click.</p>
                         </div>
                     @else
                         @foreach($this->minecraftConfiguration['versions'] as $option)
-                            @php($versionChoices = \App\Support\MinecraftCheckoutOptions::versionChoices($option, $this->minecraftSoftware))
+                            @php($versionChoices = \App\Support\MinecraftCheckoutOptions::versionChoices($option, $this->minecraftSoftware, $this->minecraftSoftwareOption()))
                             <div class="vh-minecraft-version" wire:key="minecraft-version-{{ $option->id }}">
                                 <label for="minecraft-version-{{ $option->id }}">{{ $option->label }}</label>
                                 <x-theme::form.select id="minecraft-version-{{ $option->id }}" :options="collect($versionChoices)->mapWithKeys(fn (array $choice): array => [(string) $choice['value'] => $choice['name'] ?? $choice['value']])->all()" :default_value="data_get($config_options, $option->key)" wire:model.live="config_options.{{ $option->key }}" />
