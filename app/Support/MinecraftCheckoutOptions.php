@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Package;
 use App\Models\PackageConfigOption;
 use App\Models\PackagePrice;
 use Illuminate\Support\Collection;
@@ -76,14 +77,76 @@ class MinecraftCheckoutOptions
         return 'service';
     }
 
-    /** @return array<string, list<array<string, mixed>>> */
+    /**
+     * Server Version choices grouped into Jars and Modpacks. Choices the plan has too little memory for (big modpacks)
+     * still show, after the pickable ones and smallest first, as locked cards: `_locked` = true and `_upgrade` = the
+     * smallest listed plan in the same category that offers the choice ({name, memory, url}), or null. The url opens
+     * that plan with the choice already selected. Locked choices are never pickable here (see choices()).
+     *
+     * @return array<string, list<array<string, mixed>>>
+     */
     public static function softwareGroups(PackageConfigOption $option): array
     {
-        return collect(self::choices($option))->groupBy(function (array $choice): string {
+        $plans = null;
+        $locked = collect(self::hiddenChoicesForMemory($option))
+            ->sortBy(fn (array $choice): float => (float) $choice['min_memory'])
+            ->map(function (array $choice) use ($option, &$plans): array {
+                $plans ??= self::upgradePlans($option);
+
+                return [...$choice, '_locked' => true, '_upgrade' => self::upgradeFor($plans, $option, $choice)];
+            })->values()->all();
+
+        return collect([...self::choices($option), ...$locked])->groupBy(function (array $choice): string {
             return ($choice['group'] ?? '') === 'modpacks'
                 || Str::contains(Str::lower($choice['name'] ?? ''), ['modpack', 'curseforge', 'ftb', 'technic', 'atlauncher'])
                     ? 'Modpacks' : 'Jars';
         })->map->all()->all();
+    }
+
+    /**
+     * Other plans a customer can order in the option's category, smallest memory first.
+     *
+     * @return Collection<int, array{package: Package, memory: float}>
+     */
+    private static function upgradePlans(PackageConfigOption $option): Collection
+    {
+        $package = $option->package;
+        if (! $package) {
+            return collect();
+        }
+
+        return Package::query()->with(['features', 'prices', 'configOptions'])
+            ->where('category_id', $package->category_id)->whereKeyNot($package->getKey())
+            ->visibleToUser(auth()->user(), false)->get()
+            ->filter(fn (Package $plan): bool => $plan->prices->contains('is_active', true))
+            ->each(fn (Package $plan) => $plan->configOptions->each->setRelation('package', $plan))
+            ->map(fn (Package $plan): array => ['package' => $plan, 'memory' => MinecraftOrderOptions::memory($plan)])
+            ->filter(fn (array $plan): bool => $plan['memory'] !== null)
+            ->sortBy('memory')->values();
+    }
+
+    /**
+     * The smallest plan with enough memory whose own option (same key) lets the customer pick this choice.
+     *
+     * @param  Collection<int, array{package: Package, memory: float}>  $plans
+     * @param  array<string, mixed>  $choice
+     * @return array{name: string, memory: float, url: string}|null
+     */
+    private static function upgradeFor(Collection $plans, PackageConfigOption $option, array $choice): ?array
+    {
+        $value = (string) ($choice['value'] ?? '');
+        foreach ($plans as ['package' => $plan, 'memory' => $memory]) {
+            $planOption = $memory >= (float) $choice['min_memory'] ? $plan->configOptions->firstWhere('key', $option->key) : null;
+            if ($planOption && in_array($value, array_map('strval', array_column(self::choices($planOption), 'value')), true)) {
+                return [
+                    'name' => (string) $plan->name,
+                    'memory' => $memory,
+                    'url' => route('packages.view', ['package' => $plan->slug, 'config_options' => [$option->key => $value]]),
+                ];
+            }
+        }
+
+        return null;
     }
 
     /**

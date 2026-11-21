@@ -5,6 +5,9 @@
     $choiceGroups = [];
     foreach ($groups as $group => $choices) {
         foreach ($choices as $index => $choice) {
+            if (! empty($choice['_locked'])) {
+                continue;
+            }
             $choiceGroups[(string) $choice['value']] = $group;
             if ((string) ($choice['value'] ?? '') === (string) $selected) {
                 $selectedGroup = $group;
@@ -34,8 +37,15 @@
         @foreach($groups as $group => $choices)
             <fieldset id="minecraft-{{ $option->id }}-{{ $loop->index }}" x-show="group === @js($group)" @if($selectedGroup !== $group) x-cloak @endif>
                 <legend class="sr-only">{{ $option->label }}: {{ $group }}</legend>
-                <div class="grid grid-cols-1 gap-3 {{ $group === 'Locations' ? 'md:grid-cols-2' : 'sm:grid-cols-2 xl:grid-cols-3' }}">
-                    @foreach($choices as $index => $choice)
+                @php
+                    // Keys are kept so ids and ping keys stay tied to each choice's position in the group.
+                    $pickable = array_filter($choices, fn (array $choice): bool => empty($choice['_locked']));
+                    $locked = array_filter($choices, fn (array $choice): bool => ! empty($choice['_locked']));
+                    $gridClass = 'grid grid-cols-1 gap-3 '.($group === 'Locations' ? 'md:grid-cols-2' : 'sm:grid-cols-2 xl:grid-cols-3');
+                @endphp
+                @if($pickable !== [])
+                <div class="{{ $gridClass }}">
+                    @foreach($pickable as $index => $choice)
                         @php
                             $id = 'minecraft-option-'.$option->id.'-'.$group.'-'.$index;
                             $pingKey = $group.'-'.$index;
@@ -55,6 +65,30 @@
                         </div>
                     @endforeach
                 </div>
+                @endif
+                @if($locked !== [])
+                    <p class="vh-minecraft-locked-heading"><x-theme::icon name="lock" /><span><strong>Needs a bigger plan.</strong> {{ $pickable === [] ? 'These' : 'The ones below' }} need more memory than this plan has. Pick one to switch to a plan that runs it, with it already selected.</span></p>
+                    <div class="{{ $gridClass }}">
+                        @foreach($locked as $index => $choice)
+                            @php
+                                $upgrade = $choice['_upgrade'] ?? null;
+                                $needs = rtrim(rtrim(number_format((float) $choice['min_memory'], 1, '.', ''), '0'), '.');
+                                $planMemory = $upgrade ? rtrim(rtrim(number_format((float) $upgrade['memory'], 1, '.', ''), '0'), '.') : null;
+                            @endphp
+                            <div wire:key="minecraft-locked-{{ $option->id }}-{{ $group }}-{{ $index }}" class="vh-minecraft-choice is-locked flex items-center gap-3" data-locked-choice="{{ $choice['value'] }}">
+                                @if(!empty($choice['icon_url']))<img src="{{ $choice['icon_url'] }}" alt="" width="36" height="36" loading="lazy">@else<x-theme::icon name="cube" />@endif
+                                <span class="vh-minecraft-choice-copy"><strong>{{ $choice['name'] ?? $choice['value'] }}</strong>@if(!empty($choice['description']))<small>{{ $choice['description'] }}</small>@endif
+                                    @if($upgrade)
+                                        <a href="{{ $upgrade['url'] }}" class="vh-minecraft-upgrade" aria-label="Switch to the {{ $planMemory }} GB plan ({{ $upgrade['name'] }}) for {{ $choice['name'] ?? $choice['value'] }}">Switch to the {{ $planMemory }} GB plan <x-theme::icon name="arrow" /></a>
+                                    @else
+                                        <small>Not available on this plan.</small>
+                                    @endif
+                                </span>
+                                <span class="vh-minecraft-badge vh-minecraft-lock-badge"><x-theme::icon name="lock" />{{ $needs }} GB+</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </fieldset>
         @endforeach
     </div>

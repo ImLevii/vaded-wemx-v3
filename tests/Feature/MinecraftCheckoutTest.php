@@ -221,19 +221,59 @@ class MinecraftCheckoutTest extends TestCase
         $this->assertNull($item->options()->where('key', 'minecraft_version')->first());
     }
 
-    public function test_modpacks_too_big_for_the_plan_are_hidden_and_rejected(): void
+    public function test_modpacks_too_big_for_the_plan_show_locked_with_a_switch_link_and_are_rejected(): void
     {
-        // "Minecraft 2GB": All the Mods 10 needs 8 GB.
+        // "Minecraft 2GB": All the Mods 10 needs 8 GB. It still shows under Modpacks, locked, linking to the
+        // smallest plan customers can order that runs it: not the 6 GB one (too small) or the unlisted 8 GB one.
+        $this->biggerPlan('minecraft-6gb', 6);
+        $this->biggerPlan('minecraft-8gb-unlisted', 8, 'unlisted');
+        $twelve = $this->biggerPlan('minecraft-12gb', 12);
         $cart = $this->currentCart();
+        $html = Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->assertSee('Cobblemon')->assertSee('All the Mods 10')->assertSee('Needs a bigger plan')->assertSee('8 GB+')
+            ->assertSee('Switch to the 12 GB plan')->assertDontSee('available on plans with more memory')
+            ->html();
+        $this->assertStringNotContainsString('value="atm10"', $html);
+        $this->assertStringContainsString('data-locked-choice="atm10"', $html);
+        $this->assertStringContainsString('href="'.e(route('packages.view', ['package' => $twelve->slug, 'config_options' => ['server_software' => 'atm10']])).'"', $html);
+
         Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
-            ->assertSee('Cobblemon')->assertDontSee('All the Mods 10')->assertSee('1 more modpack is available on plans with more memory')
             ->set('config_options.server_software', 'atm10')->call('addToCart')->assertHasErrors('config_options.server_software');
         $this->assertSame(0, $cart->items()->count());
 
         $this->package->update(['data' => ['memory_limit' => 8]]);
+        $html = Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
+            ->assertSee('All the Mods 10')->assertDontSee('Needs a bigger plan')
+            ->set('config_options.server_software', 'atm10')->call('addToCart')->assertHasNoErrors()->html();
+        $this->assertStringNotContainsString('data-locked-choice', $html);
+    }
+
+    public function test_locked_modpack_without_a_bigger_plan_says_it_is_not_available(): void
+    {
         Volt::test(client_view_path('packages.livewire.view-package'), ['packageSlug' => $this->package->slug])
-            ->assertSee('All the Mods 10')->assertDontSee('available on plans with more memory')
-            ->set('config_options.server_software', 'atm10')->call('addToCart')->assertHasNoErrors();
+            ->assertSee('All the Mods 10')->assertSee('Not available on this plan.')->assertDontSee('Switch to the');
+    }
+
+    public function test_switch_link_opens_the_bigger_plan_with_the_modpack_selected(): void
+    {
+        $eight = $this->biggerPlan('minecraft-8gb', 8);
+        $response = $this->get(route('packages.view', ['package' => $eight->slug, 'config_options' => ['server_software' => 'atm10']]))
+            ->assertOk()->assertSee('Installs automatically')->assertSee('Minecraft 1.21.1 · NeoForge')->assertDontSee('Needs a bigger plan');
+        $this->assertStringContainsString("group: 'Modpacks'", $response->getContent());
+        $this->assertMatchesRegularExpression('/value="atm10"[^>]*checked/', $response->getContent());
+    }
+
+    /** Another plan in the same category with the same options and the given memory (GB). */
+    private function biggerPlan(string $slug, int $memory, string $status = 'active'): Package
+    {
+        $plan = $this->package->replicate()->fill(['name' => 'Minecraft '.$memory.'GB', 'slug' => $slug, 'status' => $status, 'data' => ['memory_limit' => $memory]]);
+        $plan->save();
+        $plan->prices()->create(['period_in_days' => 30, 'price' => $memory * 3, 'setup_fee' => 0, 'is_active' => true]);
+        foreach ($this->package->configOptions as $option) {
+            $plan->configOptions()->create($option->replicate()->only(['key', 'label', 'type', 'rules', 'default_value', 'data']));
+        }
+
+        return $plan;
     }
 
     public function test_chosen_version_is_saved_with_the_software(): void

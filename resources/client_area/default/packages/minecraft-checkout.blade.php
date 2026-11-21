@@ -43,14 +43,6 @@
                     @empty
                         <p class="vh-minecraft-help">Server software is included with this plan. Software selection is not available.</p>
                     @endforelse
-                    @foreach($this->minecraftConfiguration['software'] as $option)
-                        @php($hiddenChoices = \App\Support\MinecraftCheckoutOptions::hiddenChoicesForMemory($option))
-                        @if($hiddenChoices !== [])
-                            @php($hidden = count($hiddenChoices))
-                            @php($noun = collect($hiddenChoices)->every(fn (array $choice): bool => isset($choice['modpack'])) ? Str::plural('modpack', $hidden) : Str::plural('option', $hidden))
-                            <p class="vh-minecraft-help vh-minecraft-more">{{ $hidden }} more {{ $noun }} {{ $hidden === 1 ? 'is' : 'are' }} available on plans with more memory.</p>
-                        @endif
-                    @endforeach
                     @if($modpack = \App\Support\MinecraftCheckoutOptions::modpack($this->minecraftSoftwareOption(), $this->minecraftSoftware))
                         <div class="vh-minecraft-modpack-note" role="note">
                             <x-theme::icon name="cube" />

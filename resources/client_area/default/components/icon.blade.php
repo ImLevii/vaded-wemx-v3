@@ -19,6 +19,7 @@
         'check' => 'M5 12l4 4L19 6',
         'guide' => 'M5 3h10l4 4v14H5z M14 3v5h5 M8 12h8 M8 16h6',
         'search' => 'M10 3a7 7 0 1 0 0 14 7 7 0 0 0 0-14 M15 15l6 6',
+        'lock' => 'M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0v4 M12 15v2',
     ];
 @endphp
 <svg {{ $attributes->class('vh-icon') }} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ $paths[$name] ?? $paths['server'] }}" /></svg>

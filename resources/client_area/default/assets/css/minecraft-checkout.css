@@ -35,4 +35,19 @@
 .vh-minecraft-modpack-note > svg { flex-shrink: 0; width: 20px; height: 20px; margin-top: 2px; color: var(--vh-accent); }
 .vh-minecraft-modpack-note strong { color: var(--vh-text); }
 .vh-minecraft-modpack-note p { margin: 0; }
-.vh-minecraft-more { margin: 12px 0 0; font-size: 12px; }
+.vh-minecraft-locked-heading { display: flex; align-items: flex-start; gap: 8px; margin: 18px 0 12px; color: var(--vh-muted); font-size: 12px; line-height: 1.7; }
+legend + .vh-minecraft-locked-heading { margin-top: 0; }
+.vh-minecraft-locked-heading > svg { flex-shrink: 0; width: 14px; height: 14px; margin-top: 3px; color: var(--vh-accent); }
+.vh-minecraft-locked-heading strong { color: var(--vh-text); font-weight: 650; }
+.vh-minecraft-choice.is-locked { position: relative; border-style: dashed; background: transparent; cursor: default; }
+.vh-minecraft-choice.is-locked:hover { border-color: var(--vh-border); }
+.vh-minecraft-choice.is-locked:has(.vh-minecraft-upgrade):hover { border-color: var(--vh-accent); background: var(--vh-accent-soft); }
+.vh-minecraft-choice.is-locked:has(.vh-minecraft-upgrade:focus-visible) { outline: 2px solid var(--vh-accent); outline-offset: 3px; }
+.vh-minecraft-choice.is-locked img { opacity: .55; filter: grayscale(.6); transition: opacity .15s, filter .15s; }
+.vh-minecraft-choice.is-locked:has(.vh-minecraft-upgrade):hover img { opacity: 1; filter: none; }
+.vh-minecraft-upgrade { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; color: var(--vh-accent); font-size: 11px; font-weight: 650; text-decoration: none; }
+.vh-minecraft-upgrade::after { content: ''; position: absolute; inset: 0; border-radius: inherit; }
+.vh-minecraft-upgrade:focus-visible { outline: none; }
+.vh-minecraft-upgrade svg { width: 12px; height: 12px; }
+.vh-minecraft-lock-badge { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; border: 1px solid var(--vh-border); background: var(--vh-input); color: var(--vh-muted); }
+.vh-minecraft-lock-badge svg { width: 11px; height: 11px; }
