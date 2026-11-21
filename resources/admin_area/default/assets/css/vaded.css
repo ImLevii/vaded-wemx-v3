@@ -302,8 +302,18 @@
     .vaded-admin .card-footer .d-flex { flex-wrap: wrap; gap: 12px; }
 }
 
-.vh-appearance-shortcut { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; border: 1px solid var(--vh-border); border-radius: 12px; background: var(--vh-surface); }
-.vh-appearance-shortcut strong { display: block; margin-bottom: 4px; font-size: 14px; }
+.vh-appearance-shortcut { display: flex; align-items: center; gap: 14px 18px; padding: 18px 22px; color: var(--vh-text); border: 1px solid var(--vh-border); border-radius: var(--vh-admin-radius, 12px); background: linear-gradient(145deg, var(--vh-glass-highlight), transparent 48%), var(--vh-surface); box-shadow: inset 0 1px var(--vh-glass-highlight), var(--vh-shadow); }
+.vh-appearance-shortcut-mark { display: grid; flex: 0 0 auto; place-items: center; width: 48px; height: 48px; border: 1px solid rgba(239, 48, 56, .2); border-radius: 12px; background: var(--vh-accent-soft); }
+.vh-appearance-shortcut-copy { flex: 1 1 auto; min-width: 0; }
+.vh-appearance-shortcut-title { display: block; margin-bottom: 4px; font: 800 15px/1.35 'Orbitron', var(--vh-display); letter-spacing: .065em; text-transform: uppercase; background: linear-gradient(110deg, var(--vh-text) 45%, var(--vh-accent) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.vh-appearance-shortcut-copy p { font-size: 13px; line-height: 1.5; }
+.vh-appearance-shortcut-action { flex: 0 0 auto; gap: 8px; }
+.vh-appearance-shortcut-action .icon { margin: 0 0 0 -2px; }
+@media (max-width: 575px) {
+    .vh-appearance-shortcut { flex-wrap: wrap; padding: 16px; }
+    .vh-appearance-shortcut-copy { flex-basis: calc(100% - 66px); }
+    .vh-appearance-shortcut-action { flex: 1 1 100%; justify-content: center; }
+}
 .vh-theme-controls .dropdown-menu { width: 290px; padding: 16px; }
 .vh-personal-appearance { display: grid; grid-template-columns: minmax(0,1fr) 200px; gap: 8px 20px; padding: 20px; border: 1px solid var(--vh-border); border-radius: 12px; background: var(--vh-raised); }
 .vh-personal-appearance > div { grid-row: span 2; }

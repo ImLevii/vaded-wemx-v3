@@ -8,8 +8,12 @@
 
     @perm('admin.settings.index')
         <div class="vh-appearance-shortcut mb-3">
-            <div><strong>Make it yours</strong><p class="text-secondary mb-0">Manage site colors, motion and seasonal logo editions.</p></div>
-            <a href="{{ route('admin.settings.index', ['page' => 'appearance']) }}" wire:navigate class="btn btn-outline-secondary">Theme &amp; appearance <x-admin::icon icon="palette" /></a>
+            <span class="vh-appearance-shortcut-mark"><x-theme::brand-logo width="30" height="30" /></span>
+            <div class="vh-appearance-shortcut-copy">
+                <strong class="vh-appearance-shortcut-title">VADED HOSTING</strong>
+                <p class="text-secondary mb-0">Manage appearance, site colors, motion and seasonal logo editions.</p>
+            </div>
+            <a href="{{ route('admin.settings.index', ['page' => 'appearance']) }}" wire:navigate class="btn btn-outline-secondary vh-appearance-shortcut-action"><x-admin::icon icon="palette" /> Theme &amp; appearance</a>
         </div>
     @endperm
 

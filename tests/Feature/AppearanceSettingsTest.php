@@ -89,6 +89,8 @@ class AppearanceSettingsTest extends TestCase
         foreach (config('appearance.themes') as $key => $theme) {
             $response->assertSee('data-logo-preview="'.$key.'"', false);
         }
-        $this->get(route('admin.index'))->assertOk()->assertSee('Make it yours');
+        $this->get(route('admin.index'))->assertOk()->assertSee('VADED HOSTING')
+            ->assertSee('Manage appearance, site colors, motion and seasonal logo editions.')
+            ->assertDontSee('Make it yours');
     }
 }
